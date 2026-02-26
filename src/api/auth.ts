@@ -78,6 +78,7 @@ export async function signup(
         full_name: payload.name,
         role: 'guest' as UserRole,
       },
+      emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/verify`,
     },
   })
 

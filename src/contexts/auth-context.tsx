@@ -95,7 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName, role: 'guest' } },
+        options: {
+          data: { full_name: fullName, role: 'guest' },
+          emailRedirectTo: `${window.location.origin}/verify`,
+        },
       })
       if (error) {
         auditLog('signup_failure', { email, error: error.message })

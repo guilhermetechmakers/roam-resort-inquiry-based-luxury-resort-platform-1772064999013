@@ -10,6 +10,7 @@ import { DestinationsPage } from '@/pages/destinations'
 import { DestinationDetailPage } from '@/pages/destination-detail'
 import { LoginPage } from '@/pages/login'
 import { PasswordResetPage } from '@/pages/password-reset'
+import { VerifyPage } from '@/pages/verify'
 import { InquiryFormPage } from '@/pages/inquiry-form'
 import { InquiryConfirmationPage } from '@/pages/inquiry-confirmation'
 import { ProfilePage } from '@/pages/profile'
@@ -93,6 +94,14 @@ export default function App() {
               }
             />
             <Route
+              path="/verify"
+              element={
+                <AppLayout>
+                  <VerifyPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/password-reset"
               element={
                 <AppLayout>
@@ -113,6 +122,14 @@ export default function App() {
               element={
                 <AppLayout>
                   <PasswordResetPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/verify"
+              element={
+                <AppLayout>
+                  <VerifyPage />
                 </AppLayout>
               }
             />
