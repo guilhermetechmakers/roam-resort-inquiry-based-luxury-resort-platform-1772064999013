@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ExternalLink, MoreHorizontal, Inbox, FilterX } from 'lucide-react'
+import { ExternalLink, MoreHorizontal, Inbox, FilterX, LayoutDashboard } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -145,9 +145,9 @@ export function AdminInquiryListTable({
             aria-hidden
           >
             {isFiltered ? (
-              <FilterX className="h-8 w-8 text-muted-foreground" />
+              <FilterX className="h-8 w-8 text-muted-foreground" aria-hidden />
             ) : (
-              <Inbox className="h-8 w-8 text-muted-foreground" />
+              <Inbox className="h-8 w-8 text-muted-foreground" aria-hidden />
             )}
           </div>
           <h3 className="font-serif text-lg font-semibold text-foreground">
@@ -158,18 +158,34 @@ export function AdminInquiryListTable({
               ? 'Try adjusting your search or filter criteria to see more results.'
               : 'Your first inquiry will appear here when guests submit stay requests.'}
           </p>
-          {isFiltered && onClearFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearFilters}
-              className="mt-6 border-accent/50 text-accent hover:bg-accent/10"
-              aria-label="Clear all filters"
-            >
-              <FilterX className="mr-2 h-4 w-4" aria-hidden />
-              Clear filters
-            </Button>
-          )}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+            {isFiltered && onClearFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClearFilters}
+                className="border-accent/50 text-accent hover:bg-accent/10 focus-visible:ring-accent"
+                aria-label="Clear all filters and show all inquiries"
+              >
+                <FilterX className="mr-2 h-4 w-4" aria-hidden />
+                Clear filters
+              </Button>
+            )}
+            {!isFiltered && (
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-accent text-accent-foreground hover:bg-accent/90 focus-visible:ring-accent"
+                aria-label="Go to dashboard overview"
+                asChild
+              >
+                <Link to="/admin/concierge">
+                  <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
+                  Go to Dashboard
+                </Link>
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     )
@@ -185,32 +201,32 @@ export function AdminInquiryListTable({
       >
         <thead>
           <tr className="border-b border-border">
-            <th className="sticky left-0 z-10 bg-card px-4 py-3 text-left">
+            <th scope="col" className="sticky left-0 z-10 bg-card px-4 py-3 text-left w-12">
               <Checkbox
                 checked={selectedIds.size === list.length && list.length > 0}
                 onCheckedChange={toggleSelectAll}
-                aria-label="Select all"
+                aria-label="Select all inquiries"
               />
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Reference
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Guest
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Destination
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Status
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Payment
             </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Created At
             </th>
-            <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+            <th scope="col" className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
               Actions
             </th>
           </tr>
@@ -238,6 +254,7 @@ export function AdminInquiryListTable({
                   <Link
                     to={`/admin/inquiries/${inquiry.id}`}
                     className="font-mono text-sm text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`View inquiry ${inquiry.reference ?? inquiry.id}`}
                   >
                     {inquiry.reference ?? inquiry.id}
                   </Link>
@@ -253,6 +270,7 @@ export function AdminInquiryListTable({
                 <td className="px-4 py-3 font-medium">{title}</td>
                 <td className="px-4 py-3">
                   <span
+                    aria-label={`Status: ${(inquiry.status ?? '').replace('_', ' ')}`}
                     className={cn(
                       'inline-flex rounded-full px-2 py-1 text-xs font-medium',
                       getStatusBadgeClass(inquiry.status ?? '')
@@ -263,6 +281,7 @@ export function AdminInquiryListTable({
                 </td>
                 <td className="px-4 py-3">
                   <span
+                    aria-label={`Payment: ${(inquiry.payment_state ?? 'pending').replace('_', ' ')}`}
                     className={cn(
                       'inline-flex rounded-full px-2 py-1 text-xs font-medium',
                       getPaymentBadgeClass(inquiry.payment_state)
@@ -359,6 +378,7 @@ export function AdminInquiryListTable({
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
                     <span
+                      aria-label={`Status: ${(inquiry.status ?? '').replace('_', ' ')}`}
                       className={cn(
                         'rounded-full px-2 py-1 text-xs',
                         getStatusBadgeClass(inquiry.status ?? '')
@@ -367,6 +387,7 @@ export function AdminInquiryListTable({
                       {(inquiry.status ?? '').replace('_', ' ')}
                     </span>
                     <span
+                      aria-label={`Payment: ${(inquiry.payment_state ?? 'pending').replace('_', ' ')}`}
                       className={cn(
                         'rounded-full px-2 py-1 text-xs',
                         getPaymentBadgeClass(inquiry.payment_state)
