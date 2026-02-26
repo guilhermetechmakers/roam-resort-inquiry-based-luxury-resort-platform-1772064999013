@@ -25,7 +25,7 @@ export interface LineItem {
 export interface PaymentPanelProps {
   payments: AdminPayment[] | null | undefined
   onCreateStripeLink: (payload: StripeLinkPayload) => Promise<{ paymentLinkUrl: string } | null>
-  onMarkReceived?: () => Promise<void>
+  onMarkReceived?: (paymentId: string) => Promise<void>
   isLoading?: boolean
   isCreating?: boolean
   className?: string
@@ -117,9 +117,14 @@ export function PaymentPanel({
 
   const handleMarkReceived = async () => {
     if (!onMarkReceived) return
+    const paymentId = latestPayment?.id
+    if (!paymentId) {
+      toast.error('No payment to mark')
+      return
+    }
     setIsMarking(true)
     try {
-      await onMarkReceived()
+      await onMarkReceived(paymentId)
       toast.success('Payment marked as received')
     } catch {
       toast.error('Failed to update payment status')

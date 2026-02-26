@@ -116,8 +116,8 @@ Deno.serve(async (req) => {
         'line_items[0][price_data][unit_amount]': String(Math.round(amount * 100)),
         'line_items[0][quantity]': '1',
         'mode': 'payment',
-        'success_url': `${Deno.env.get('SITE_URL') ?? 'https://example.com'}/inquiries/confirmation/{CHECKOUT_SESSION_ID}`,
-        'cancel_url': `${Deno.env.get('SITE_URL') ?? 'https://example.com'}/admin/inquiries/${inquiryId}`,
+        'success_url': `${Deno.env.get('SITE_URL') ?? 'https://example.com'}/checkout/complete/${inquiryId}?session_id={CHECKOUT_SESSION_ID}&status=success`,
+        'cancel_url': `${Deno.env.get('SITE_URL') ?? 'https://example.com'}/checkout/bridge/${inquiryId}?status=cancelled`,
         'metadata[inquiry_id]': inquiryId,
       }),
     })

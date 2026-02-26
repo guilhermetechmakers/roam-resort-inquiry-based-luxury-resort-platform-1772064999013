@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = (await req.json().catch(() => ({}))) as RequestPayload
+    const inquiryId = typeof payload?.inquiryId === 'string' ? payload.inquiryId : ''
     const amount = Number(payload?.amount) ?? 0
     const items = Array.isArray(payload?.items) ? payload.items : []
     const notes = typeof payload?.notes === 'string' ? payload.notes : ''
@@ -65,14 +66,25 @@ Deno.serve(async (req) => {
 
     const productName = items.length > 0 ? (items[0]?.name ?? 'Deposit') : 'Deposit'
 
+    const siteUrl = Deno.env.get('SITE_URL') ?? 'https://example.com'
     const params = new URLSearchParams({
       'line_items[0][price_data][currency]': 'usd',
       'line_items[0][price_data][product_data][name]': productName,
       'line_items[0][price_data][unit_amount]': String(totalCents),
       'line_items[0][quantity]': '1',
     })
+    if (inquiryId) {
+      params.set('metadata[inquiry_id]', inquiryId)
+    }
     if (notes) {
       params.set('metadata[notes]', notes)
+    }
+    if (inquiryId) {
+      params.set('after_completion[type]', 'redirect')
+      params.set(
+        'after_completion[redirect][url]',
+        `${siteUrl}/checkout/complete/${inquiryId}?session_id={CHECKOUT_SESSION_ID}&status=success`
+      )
     }
 
     const res = await fetch('https://api.stripe.com/v1/payment_links', {

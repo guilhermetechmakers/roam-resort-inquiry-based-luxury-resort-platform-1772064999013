@@ -31,6 +31,8 @@ import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
 import { AdminExportsPage } from '@/pages/admin-exports'
 import { ContactPage } from '@/pages/contact'
 import { CheckoutPage } from '@/pages/checkout'
+import { CheckoutBridgePage } from '@/pages/checkout-bridge'
+import { CheckoutCompletePage } from '@/pages/checkout-complete'
 import { SettingsPage } from '@/pages/settings'
 import { StaticPage } from '@/pages/static-page'
 import { NotFoundPage } from '@/pages/not-found'
@@ -60,6 +62,15 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 flex pt-16">{children}</div>
+    </div>
+  )
+}
+
+function CheckoutLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   )
 }
@@ -293,6 +304,22 @@ export default function App() {
                 <AppLayout>
                   <CheckoutPage />
                 </AppLayout>
+              }
+            />
+            <Route
+              path="/checkout/bridge/:inquiryId"
+              element={
+                <CheckoutLayout>
+                  <CheckoutBridgePage />
+                </CheckoutLayout>
+              }
+            />
+            <Route
+              path="/checkout/complete/:inquiryId"
+              element={
+                <CheckoutLayout>
+                  <CheckoutCompletePage />
+                </CheckoutLayout>
               }
             />
             <Route

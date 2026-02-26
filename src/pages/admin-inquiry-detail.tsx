@@ -292,7 +292,7 @@ export function AdminInquiryDetailPage() {
                 onCreateStripeLink={handleCreateStripeLink}
                 onMarkReceived={
                   payments?.some((p) => p.status !== 'paid')
-                    ? handleMarkPaymentReceived
+                    ? (paymentId) => handleMarkPaymentReceived(paymentId)
                     : undefined
                 }
                 isLoading={paymentsLoading}
