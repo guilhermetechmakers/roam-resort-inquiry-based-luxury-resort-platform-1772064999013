@@ -13,6 +13,29 @@ export function formatDate(date: string | Date): string {
   }).format(new Date(date))
 }
 
+/** Short format for tables: MMM D, YYYY */
+export function formatDateShort(date: string | Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(date))
+}
+
+/** Format currency amount */
+export function formatCurrency(
+  amount: number | null | undefined,
+  currency: string = 'USD'
+): string {
+  if (amount == null || Number.isNaN(amount)) return '—'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency ?? 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}
+
 export function formatDateTime(date: string | Date): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',

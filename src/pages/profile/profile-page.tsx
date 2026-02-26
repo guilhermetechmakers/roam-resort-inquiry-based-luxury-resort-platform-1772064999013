@@ -176,8 +176,7 @@ export function ProfilePage() {
 
             <TabsContent value="history" className="space-y-6">
               <GuestInquiryHistoryPanel
-                inquiries={inquiries ?? []}
-                isLoading={inquiriesLoading}
+                userId={user?.id}
                 onInquiryClick={handleInquiryClick}
               />
             </TabsContent>
