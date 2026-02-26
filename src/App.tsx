@@ -23,6 +23,7 @@ import {
   ProfileSettings,
 } from '@/pages/profile'
 import { HostDashboardListingsPage } from '@/pages/host-dashboard-listings'
+import { HostListingDetailPage } from '@/pages/host-listing-detail'
 import { HostListingEditPage } from '@/pages/host-listing-edit'
 import { AdminDashboardPage } from '@/pages/admin-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
@@ -200,6 +201,16 @@ export default function App() {
                 <DashboardLayout>
                   <ProtectedRoute role="host">
                     <HostDashboardListingsPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/host/dashboard/listings/:listingId"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="host">
+                    <HostListingDetailPage />
                   </ProtectedRoute>
                 </DashboardLayout>
               }

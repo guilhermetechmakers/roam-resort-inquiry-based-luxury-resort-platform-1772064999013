@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Pencil, MessageSquare } from 'lucide-react'
+import { Pencil, MessageSquare, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { formatDate } from '@/lib/utils'
@@ -72,6 +72,17 @@ export function ListingCard({ listing, onViewInquiries }: ListingCardProps) {
         </p>
 
         <div className="flex flex-wrap gap-2">
+          <Link to={`/host/dashboard/listings/${listing.id}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hover:border-accent hover:bg-accent/10 hover:text-accent"
+              aria-label={`View ${listing.title}`}
+            >
+              <Eye className="mr-1.5 h-4 w-4" aria-hidden />
+              View
+            </Button>
+          </Link>
           <Link to={`/host/listings/${listing.id}`}>
             <Button
               variant="outline"
