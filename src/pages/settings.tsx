@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -8,9 +9,12 @@ import {
   NotificationPreferences,
   AccountSettings,
   SecuritySettings,
-  PrivacyActionsPanel,
   PrivacyRequestsStatusTray,
 } from '@/components/settings'
+import {
+  DataExportRequestForm,
+  AccountDeletionRequestForm,
+} from '@/components/privacy'
 import { ProfileEditorPanel } from '@/components/profile'
 import {
   Dialog,
@@ -26,9 +30,14 @@ import {
   useSessions,
   useLogoutOtherSessions,
   usePrivacyRequests,
-  useInitiateDataExport,
-  useInitiateAccountDeletion,
 } from '@/hooks/use-settings'
+import {
+  requestDataExport,
+  requestAccountDeletion,
+  updatePreferences,
+  fetchPreferences,
+} from '@/api/privacy-compliance'
+import { useQuery } from '@tanstack/react-query'
 import { mapAuthToProfile } from '@/api/profile'
 import type { SettingsUserProfile } from '@/types/settings'
 import type { UserProfile } from '@/types'
@@ -52,34 +61,55 @@ function settingsToUserProfile(s: SettingsUserProfile | null | undefined): UserP
 
 export function SettingsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const queryClient = useQueryClient()
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
+  const [exportLoading, setExportLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const { data: profile, isLoading: profileLoading } = useUserSettings(!!user?.id)
+  const { data: privacyPrefs } = useQuery({
+    queryKey: ['settings', 'privacy-prefs'],
+    queryFn: fetchPreferences,
+    enabled: !!user?.id,
+  })
   const updateSettings = useUpdateSettings()
   const changePasswordMutation = useChangePassword()
   const { data: sessions = [], isLoading: sessionsLoading } = useSessions(!!user?.id)
   const logoutOthers = useLogoutOtherSessions()
   const { data: privacyRequests = [], isLoading: privacyLoading } = usePrivacyRequests(!!user?.id)
-  const exportMutation = useInitiateDataExport()
-  const deleteMutation = useInitiateAccountDeletion()
-
-  const hasPendingDeletion = (privacyRequests ?? []).some(
-    (r) => r.type === 'delete' && (r.status === 'Pending' || r.status === 'InProgress')
-  )
 
   const handleSaveNotifications = useCallback(
-    async (prefs: { inquiryUpdates: boolean; marketing: boolean; reminders: boolean }) => {
+    async (prefs: {
+      inquiryUpdates: boolean
+      marketing: boolean
+      reminders: boolean
+      dataSharingOptOut?: boolean
+      adPersonalizationOptOut?: boolean
+    }) => {
       try {
         await updateSettings.mutateAsync({
-          preferences: { notifications: prefs },
+          preferences: {
+            notifications: {
+              inquiryUpdates: prefs.inquiryUpdates,
+              marketing: prefs.marketing,
+              reminders: prefs.reminders,
+            },
+            dataSharingOptOut: prefs.dataSharingOptOut ?? false,
+            adPersonalizationOptOut: prefs.adPersonalizationOptOut ?? false,
+          },
         })
-        toast.success('Notification preferences saved')
+        await updatePreferences({
+          dataSharingOptOut: prefs.dataSharingOptOut ?? false,
+          adPersonalizationOptOut: prefs.adPersonalizationOptOut ?? false,
+        })
+        queryClient.invalidateQueries({ queryKey: ['settings', 'privacy-prefs'] })
+        toast.success('Preferences saved')
       } catch (err) {
         toast.error((err as Error).message)
       }
     },
-    [updateSettings]
+    [updateSettings, queryClient]
   )
 
   const handleSaveAccount = useCallback(
@@ -128,23 +158,37 @@ export function SettingsPage() {
     }
   }, [logoutOthers])
 
-  const handleRequestExport = useCallback(async () => {
-    try {
-      await exportMutation.mutateAsync()
-      toast.success('Data export requested. You will receive an email when ready.')
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }, [exportMutation])
+  const handleRequestExport = useCallback(
+    async (data: { scope: string[] }) => {
+      setExportLoading(true)
+      try {
+        await requestDataExport(data.scope)
+        queryClient.invalidateQueries({ queryKey: ['settings', 'privacy'] })
+        toast.success('Data export requested. You will receive an email when ready.')
+      } catch (err) {
+        toast.error((err as Error).message ?? 'Request failed')
+      } finally {
+        setExportLoading(false)
+      }
+    },
+    [queryClient]
+  )
 
-  const handleDeleteAccount = useCallback(async () => {
-    try {
-      await deleteMutation.mutateAsync()
-      toast.success('Account deletion requested. Our team will contact you within 48 hours.')
-    } catch (err) {
-      toast.error((err as Error).message)
-    }
-  }, [deleteMutation])
+  const handleDeleteAccount = useCallback(
+    async (data: { reason?: string }) => {
+      setDeleteLoading(true)
+      try {
+        await requestAccountDeletion(data.reason)
+        queryClient.invalidateQueries({ queryKey: ['settings', 'privacy'] })
+        toast.success('Account deletion requested. Our team will contact you within 48 hours.')
+      } catch (err) {
+        toast.error((err as Error).message ?? 'Request failed')
+      } finally {
+        setDeleteLoading(false)
+      }
+    },
+    [queryClient]
+  )
 
   if (authLoading) {
     return (
@@ -175,7 +219,18 @@ export function SettingsPage() {
       />
 
       <NotificationPreferences
-        profile={profile}
+        profile={
+          profile
+            ? {
+                ...profile,
+                preferences: {
+                  ...profile.preferences,
+                  dataSharingOptOut: privacyPrefs?.dataSharingOptOut ?? profile.preferences?.dataSharingOptOut ?? false,
+                  adPersonalizationOptOut: privacyPrefs?.adPersonalizationOptOut ?? profile.preferences?.adPersonalizationOptOut ?? false,
+                },
+              }
+            : profile
+        }
         onSave={handleSaveNotifications}
         isSaving={updateSettings.isPending}
       />
@@ -195,12 +250,16 @@ export function SettingsPage() {
         onLogoutOthers={handleLogoutOthers}
       />
 
-      <PrivacyActionsPanel
-        onRequestExport={handleRequestExport}
-        onDeleteAccount={handleDeleteAccount}
-        isExporting={exportMutation.isPending}
-        isDeleting={deleteMutation.isPending}
-        hasPendingDeletion={hasPendingDeletion}
+      <DataExportRequestForm
+        onSubmit={handleRequestExport}
+        isLoading={exportLoading}
+        userEmail={user?.email}
+      />
+
+      <AccountDeletionRequestForm
+        onSubmit={handleDeleteAccount}
+        isLoading={deleteLoading}
+        retentionDays={30}
       />
 
       <PrivacyRequestsStatusTray

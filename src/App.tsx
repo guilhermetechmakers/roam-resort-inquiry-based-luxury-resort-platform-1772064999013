@@ -32,6 +32,7 @@ import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
 import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
 import { AdminExportsPage } from '@/pages/admin-exports'
 import { AdminAuditLogsPage } from '@/pages/admin-audit-logs'
+import { AdminPrivacyRequestsPage } from '@/pages/admin-privacy-requests'
 import { AdminContactInquiriesPage } from '@/pages/admin-contact-inquiries'
 import { ContactConfirmationPage } from '@/pages/contact-confirmation'
 import { ContactPage } from '@/pages/contact'
@@ -341,6 +342,16 @@ export default function App() {
                 <DashboardLayout>
                   <ProtectedRoute role="concierge">
                     <AdminAuditLogsPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/privacy-requests"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="concierge">
+                    <AdminPrivacyRequestsPage />
                   </ProtectedRoute>
                 </DashboardLayout>
               }

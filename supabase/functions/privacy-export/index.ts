@@ -47,6 +47,9 @@ Deno.serve(async (req) => {
       )
     }
 
+    const body = await req.json().catch(() => ({})) as { scope?: string[] }
+    const scope = Array.isArray(body?.scope) ? body.scope : ['profile', 'inquiries', 'payments', 'communications']
+
     const exportId = `export-${user.id}-${Date.now()}`
     const status = 'received'
 
@@ -59,9 +62,24 @@ Deno.serve(async (req) => {
           type: 'export',
           status: 'Pending',
           requested_at: new Date().toISOString(),
+          scope,
         })
         .select('id')
         .single()
+
+      if (!insertError && inserted?.id) {
+        try {
+          await supabase.from('audit_logs').insert({
+            actor_user_id: user.id,
+            action_type: 'export_requested',
+            resource: 'privacy_request',
+            resource_id: String(inserted.id),
+            details: { scope, description: 'User requested data export' },
+          })
+        } catch {
+          // Audit optional
+        }
+      }
       if (!insertError && inserted?.id) {
         return new Response(
           JSON.stringify({ exportId: inserted.id, status: 'Pending' }),

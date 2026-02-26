@@ -47,6 +47,9 @@ Deno.serve(async (req) => {
       )
     }
 
+    const body = (await req.json().catch(() => ({}))) as { reason?: string }
+    const reason = typeof body?.reason === 'string' ? body.reason : null
+
     const requestId = `delete-${user.id}-${Date.now()}`
 
     // If privacy_requests table exists, insert the request for admin processing
@@ -58,10 +61,23 @@ Deno.serve(async (req) => {
           type: 'delete',
           status: 'Pending',
           requested_at: new Date().toISOString(),
+          notes: reason,
+          updated_at: new Date().toISOString(),
         })
         .select('id')
         .single()
       if (!insertError && inserted?.id) {
+        try {
+          await supabase.from('audit_logs').insert({
+            actor_user_id: user.id,
+            action_type: 'delete_requested',
+            resource: 'privacy_request',
+            resource_id: String(inserted.id),
+            details: reason ? { reason } : {},
+          })
+        } catch {
+          // Audit optional
+        }
         return new Response(
           JSON.stringify({ requestId: inserted.id, status: 'Pending' }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

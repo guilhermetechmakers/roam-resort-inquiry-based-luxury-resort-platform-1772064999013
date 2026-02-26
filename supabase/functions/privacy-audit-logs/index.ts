@@ -1,9 +1,8 @@
 /**
- * Privacy Admin Requests - Supabase Edge Function
- * GET /functions/v1/privacy-admin-requests
- * Returns all privacy requests for admin/staff review.
- * Requires: Authorization Bearer token with admin/concierge role.
- * Admin can update status, add notes, and export as CSV via the database.
+ * Privacy Audit Logs - Supabase Edge Function
+ * GET /functions/v1/privacy-audit-logs
+ * Returns audit logs with filters (type, date range, userId, action).
+ * Requires: Authorization Bearer token with concierge role.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -29,7 +28,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', message: 'Authentication required' }),
+        JSON.stringify({ error: 'Authentication required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -42,45 +41,38 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', message: 'Invalid or expired token' }),
+        JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Check concierge role via profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    const role = (profile as { role?: string } | null)?.role ?? ''
-    const isAdmin = role === 'concierge'
-    if (!isAdmin) {
+    const role = (user.user_metadata?.role ?? user.app_metadata?.role) as string | undefined
+    const isConcierge = role === 'concierge' || role === 'admin' || role === 'Concierge' || role === 'Admin'
+    if (!isConcierge) {
       return new Response(
-        JSON.stringify({ error: 'Forbidden', message: 'Admin access required' }),
+        JSON.stringify({ error: 'Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     const url = new URL(req.url)
-    const typeFilter = url.searchParams.get('type')
-    const statusFilter = url.searchParams.get('status')
-    const userIdFilter = url.searchParams.get('userId')
+    const actionType = url.searchParams.get('actionType')
+    const userId = url.searchParams.get('userId')
+    const from = url.searchParams.get('from')
+    const to = url.searchParams.get('to')
+    const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '100', 10), 500)
 
     let query = supabase
-      .from('privacy_requests')
-      .select('id, user_id, type, status, scope, notes, admin_id, requested_at, completed_at, download_url, updated_at')
-      .order('requested_at', { ascending: false })
+      .from('audit_logs')
+      .select('id, actor_user_id, action_type, resource_id, timestamp, details')
+      .eq('resource', 'privacy_request')
+      .order('timestamp', { ascending: false })
+      .limit(limit)
 
-    if (typeFilter === 'export' || typeFilter === 'delete') {
-      query = query.eq('type', typeFilter)
-    }
-    if (statusFilter) {
-      query = query.eq('status', statusFilter)
-    }
-    if (userIdFilter) {
-      query = query.eq('user_id', userIdFilter)
-    }
+    if (actionType) query = query.eq('action_type', actionType)
+    if (userId) query = query.eq('actor_user_id', userId)
+    if (from) query = query.gte('timestamp', from)
+    if (to) query = query.lte('timestamp', to)
 
     const { data, error } = await query
     if (error) {
@@ -90,24 +82,17 @@ Deno.serve(async (req) => {
       )
     }
 
-    const requests = Array.isArray(data)
-      ? data.map((r: Record<string, unknown>) => ({
-          id: r.id,
-          userId: r.user_id,
-          type: r.type,
-          status: r.status,
-          scope: Array.isArray(r.scope) ? r.scope : [],
-          notes: r.notes ?? null,
-          adminId: r.admin_id ?? null,
-          requestedAt: r.requested_at,
-          completedAt: r.completed_at,
-          updatedAt: r.updated_at ?? r.requested_at,
-          downloadUrl: r.download_url ?? null,
-        }))
-      : []
-
+    const logs = (Array.isArray(data) ? data : []).map((r: Record<string, unknown>) => ({
+      id: r.id,
+      userId: r.actor_user_id,
+      actionType: r.action_type,
+      targetId: r.resource_id,
+      description: (r.details as Record<string, unknown>)?.description ?? '',
+      metadata: (r.details as Record<string, unknown>) ?? {},
+      createdAt: r.timestamp,
+    }))
     return new Response(
-      JSON.stringify({ requests }),
+      JSON.stringify({ logs }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

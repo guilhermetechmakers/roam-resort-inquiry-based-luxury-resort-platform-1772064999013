@@ -12,6 +12,8 @@ export interface SettingsUserProfile {
       marketing?: boolean
       reminders?: boolean
     }
+    dataSharingOptOut?: boolean
+    adPersonalizationOptOut?: boolean
   }
 }
 
