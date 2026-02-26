@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  FileText,
+  Cookie,
+  Settings,
+  Mail,
+  HelpCircle,
+} from 'lucide-react'
 import { HeroBar } from '@/components/terms/hero-bar'
 import { FooterLinks } from '@/components/terms/footer-links'
 import { AccessibilityToolbar } from '@/components/terms/accessibility-toolbar'
@@ -9,7 +16,11 @@ import {
   PdfDownloadButton,
   PrivacyToolsBanner,
 } from '@/components/privacy'
+import { ErrorBanner } from '@/components/auth/error-banner'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
   PRIVACY_POLICY_SECTIONS,
   DEFAULT_PRIVACY_LAST_UPDATED,
@@ -30,13 +41,29 @@ const FOOTER_LINKS = [
   { text: 'Help', href: '/help' },
 ]
 
+const RELATED_LINKS = [
+  { text: 'Terms of Service', href: '/terms', icon: FileText, ariaLabel: 'View Terms of Service' },
+  { text: 'Cookie Policy', href: '/cookie-policy', icon: Cookie, ariaLabel: 'View Cookie Policy' },
+  { text: 'Privacy & Data Tools', href: '/settings', icon: Settings, ariaLabel: 'Manage cookie preferences and data tools' },
+  { text: 'Contact Us', href: '/contact', icon: Mail, ariaLabel: 'Contact us' },
+  { text: 'Help', href: '/help', icon: HelpCircle, ariaLabel: 'Get help' },
+] as const
+
 export function PrivacyPolicyPage() {
   const [sections, setSections] = useState<PolicySection[]>([])
   const [lastUpdated, setLastUpdated] = useState<string>(DEFAULT_PRIVACY_LAST_UPDATED)
   const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
+
+  const [retryCount, setRetryCount] = useState(0)
+
+  const handleRetry = () => {
+    setRetryCount((c) => c + 1)
+  }
 
   useEffect(() => {
     let cancelled = false
+    setIsLoading(true)
     async function load() {
       try {
         const content = await fetchPrivacyPolicy()
@@ -45,14 +72,17 @@ export function PrivacyPolicyPage() {
           const safeSections = Array.isArray(content.sections) ? content.sections : []
           setSections(safeSections.length > 0 ? safeSections : PRIVACY_POLICY_SECTIONS)
           setLastUpdated(content.lastUpdated ?? DEFAULT_PRIVACY_LAST_UPDATED)
+          setHasError(false)
         } else {
           setSections(PRIVACY_POLICY_SECTIONS)
           setLastUpdated(DEFAULT_PRIVACY_LAST_UPDATED)
+          setHasError(false)
         }
       } catch {
         if (!cancelled) {
           setSections(PRIVACY_POLICY_SECTIONS)
           setLastUpdated(DEFAULT_PRIVACY_LAST_UPDATED)
+          setHasError(true)
         }
       } finally {
         if (!cancelled) setIsLoading(false)
@@ -62,7 +92,7 @@ export function PrivacyPolicyPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [retryCount])
 
   const displaySections =
     Array.isArray(sections) && sections.length > 0 ? sections : PRIVACY_POLICY_SECTIONS
@@ -150,14 +180,26 @@ export function PrivacyPolicyPage() {
         aria-label="Privacy Policy content"
       >
         {isLoading ? (
-          <div className="space-y-8">
-            <div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-full animate-pulse rounded bg-muted" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+          <div className="space-y-8" role="status" aria-label="Loading privacy policy">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-1/2" />
+            <span className="sr-only">Loading privacy policy content…</span>
           </div>
         ) : (
           <>
+            {hasError ? (
+              <ErrorBanner
+                message="Could not load the latest policy"
+                subMessage="Showing default policy content. You can try again to fetch updates."
+                onRetry={handleRetry}
+                className="mb-8"
+              />
+            ) : null}
             <div className="space-y-16 sm:space-y-20">
               {(displaySections ?? []).map((section, idx) => (
                 <PolicySectionComponent
@@ -194,41 +236,45 @@ export function PrivacyPolicyPage() {
             </section>
 
             <section className="mt-16" aria-label="Related links">
-              <h2 className="font-serif text-lg font-semibold text-foreground">
-                Related
-              </h2>
-              <nav className="mt-4 flex flex-wrap gap-4" aria-label="Legal and support links">
-                <Link
-                  to="/terms"
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                >
-                  Terms of Service
-                </Link>
-                <Link
-                  to="/cookie-policy"
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                >
-                  Cookie Policy
-                </Link>
-                <Link
-                  to="/cookie-policy"
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                >
-                  Cookie Policy
-                </Link>
-                <Link
-                  to="/settings"
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                >
-                  Cookie Preferences & Data Tools
-                </Link>
-                <Link
-                  to="/contact"
-                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-                >
-                  Contact Us
-                </Link>
-              </nav>
+              <Card
+                className="border-accent/20 transition-all duration-300 hover:shadow-card-hover"
+                aria-labelledby="related-links-heading"
+              >
+                <CardHeader className="pb-3">
+                  <h2
+                    id="related-links-heading"
+                    className="font-serif text-lg font-semibold text-foreground"
+                  >
+                    Related
+                  </h2>
+                </CardHeader>
+                <CardContent>
+                  <nav
+                    className="flex flex-wrap gap-4 sm:gap-6"
+                    aria-label="Legal and support links"
+                  >
+                    {(RELATED_LINKS ?? []).map((link) => {
+                      const Icon = link.icon
+                      return (
+                        <Link
+                          key={link.href}
+                          to={link.href}
+                          className={cn(
+                            'inline-flex items-center gap-2 text-sm font-medium text-accent',
+                            'hover:text-accent/80 transition-colors duration-200',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md',
+                            'min-h-[44px] min-w-[44px] items-center justify-center sm:min-h-0 sm:min-w-0 sm:justify-start'
+                          )}
+                          aria-label={link.ariaLabel}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                          {link.text}
+                        </Link>
+                      )
+                    })}
+                  </nav>
+                </CardContent>
+              </Card>
             </section>
           </>
         )}
