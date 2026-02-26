@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { FileText, ExternalLink, ChevronRight, Filter, AlertCircle, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { FileText, ExternalLink, ChevronRight, Filter, AlertCircle, RefreshCw, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
@@ -68,13 +69,13 @@ export function InquiriesTimelinePanel({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card role="status" aria-label="Loading inquiries">
         <CardHeader>
-          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-6 w-32" aria-hidden />
         </CardHeader>
         <CardContent className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            <Skeleton key={i} className="h-24 w-full rounded-lg" aria-hidden />
           ))}
         </CardContent>
       </Card>
@@ -143,14 +144,38 @@ export function InquiriesTimelinePanel({
       </CardHeader>
       <CardContent>
         {list.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <FileText className="h-12 w-12 text-muted-foreground" />
-            <h4 className="mt-4 font-serif text-lg font-semibold">
-              No inquiries yet
-            </h4>
-            <p className="mt-2 text-center text-sm text-muted-foreground max-w-sm">
-              Submit a stay inquiry from any destination page to see it here.
-            </p>
+          <div
+            className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 py-12 px-4 sm:py-16"
+            role="status"
+          >
+            {statusFilter !== 'all' &&
+            (Array.isArray(inquiries) ? inquiries : []).length > 0 ? (
+              <>
+                <Search className="h-12 w-12 text-muted-foreground" aria-hidden />
+                <h4 className="mt-4 font-serif text-lg font-semibold text-foreground">
+                  No inquiries match your filter
+                </h4>
+                <p className="mt-2 text-center text-sm text-muted-foreground max-w-sm">
+                  Try selecting &quot;All statuses&quot; to see all your inquiries.
+                </p>
+              </>
+            ) : (
+              <>
+                <FileText className="h-12 w-12 text-muted-foreground" aria-hidden />
+                <h4 className="mt-4 font-serif text-lg font-semibold text-foreground">
+                  No inquiries yet
+                </h4>
+                <p className="mt-2 text-center text-sm text-muted-foreground max-w-sm">
+                  Submit a stay inquiry from any destination page to see it here.
+                </p>
+                <Button
+                  asChild
+                  className="mt-6 bg-accent text-accent-foreground transition-all duration-200 hover:scale-[1.02] hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <Link to="/destinations">Explore destinations</Link>
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
