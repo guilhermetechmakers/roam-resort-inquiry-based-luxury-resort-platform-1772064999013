@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { MediaCard } from './media-card'
+import { ImageCropper } from '@/components/media'
 import type { GalleryItem } from '@/types/host-listing-create-edit'
 import {
   uploadListingImage,
   uploadToCloudinary,
   addImageByUrl,
 } from '@/api/host-listing-create-edit'
+import { uploadMedia } from '@/api/media'
 import { isCloudinaryConfigured } from '@/lib/cloudinary'
 import { ensureArray } from '@/lib/utils/array-utils'
 import { GALLERY_MIN, GALLERY_MAX } from '@/lib/validation/host-listing-schema'
@@ -42,6 +44,8 @@ export function GalleryUploader({
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
   const [urlInput, setUrlInput] = useState('')
   const [inputError, setInputError] = useState<string | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addItem = useCallback(
@@ -112,38 +116,69 @@ export function GalleryUploader({
     [reorder, items.length]
   )
 
-  const handleFileSelect = useCallback(
-    async (files: FileList | null) => {
-      if (!files?.length || disabled) return
-      const useCloudinary = isCloudinaryConfigured()
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        if (items.length >= GALLERY_MAX) break
-        setUploadProgress(`Uploading ${file.name}...`)
-        try {
-          let url: string
-          let publicId: string | undefined
-          if (useCloudinary) {
-            try {
-              const result = await uploadToCloudinary(file, listingId)
-              url = result.url
-              publicId = result.public_id
-            } catch {
-              const result = await uploadListingImage(file, listingId)
-              url = result.url
-            }
-          } else {
-            const result = await uploadListingImage(file, listingId)
-            url = result.url
-          }
-          addItem(url, '', 'Image', publicId)
-        } catch (err) {
-          setInputError((err as Error).message ?? 'Upload failed')
-        }
+  const handleCropComplete = useCallback(
+    async (blob: Blob) => {
+      if (!pendingFile || disabled) return
+      const file = new File([blob], pendingFile.name, { type: 'image/jpeg' })
+      setPendingFile(null)
+      setCropOpen(false)
+      if (items.length >= GALLERY_MAX) {
+        setInputError(`Maximum ${GALLERY_MAX} images allowed`)
+        return
       }
-      setUploadProgress(null)
+      setUploadProgress(`Uploading ${file.name}...`)
+      setInputError(null)
+      try {
+        let url: string
+        let publicId: string | undefined
+        const useCloudinary = isCloudinaryConfigured()
+        if (listingId && useCloudinary) {
+          const result = await uploadMedia({
+            file,
+            type: 'listing_gallery',
+            ownerType: 'listing',
+            ownerId: listingId,
+            altText: 'Image',
+          })
+          if (result.success && result.asset) {
+            url = result.asset.secure_url
+            publicId = result.asset.public_id
+          } else {
+            const fallback = await uploadToCloudinary(file, listingId)
+            url = fallback.url
+            publicId = fallback.public_id
+          }
+        } else if (useCloudinary) {
+          const result = await uploadToCloudinary(file, listingId)
+          url = result.url
+          publicId = result.public_id
+        } else {
+          const result = await uploadListingImage(file, listingId)
+          url = result.url
+        }
+        addItem(url, '', 'Image', publicId)
+      } catch (err) {
+        setInputError((err as Error).message ?? 'Upload failed')
+      } finally {
+        setUploadProgress(null)
+      }
     },
-    [addItem, disabled, items.length, listingId]
+    [addItem, disabled, items.length, listingId, pendingFile]
+  )
+
+  const handleFileSelect = useCallback(
+    (files: FileList | null) => {
+      if (!files?.length || disabled) return
+      const file = files[0]
+      if (items.length >= GALLERY_MAX) {
+        setInputError(`Maximum ${GALLERY_MAX} images allowed`)
+        return
+      }
+      setInputError(null)
+      setPendingFile(file)
+      setCropOpen(true)
+    },
+    [disabled, items.length]
   )
 
   const handleDrop = useCallback(
@@ -270,6 +305,19 @@ export function GalleryUploader({
               Add URL
             </Button>
           </div>
+        )}
+
+        {pendingFile && (
+          <ImageCropper
+            image={pendingFile}
+            open={cropOpen}
+            onOpenChange={(open) => {
+              if (!open) setPendingFile(null)
+              setCropOpen(open)
+            }}
+            onCropComplete={handleCropComplete}
+            aspectRatioPreset="gallery"
+          />
         )}
 
         {(inputError || errors.gallery || uploadProgress) && (
