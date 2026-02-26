@@ -4,6 +4,8 @@ import {
   fetchSearchSuggestions,
   fetchFeaturedEditorial,
   fetchRelatedDestinations,
+  fetchHighlightedDestinations,
+  fetchEditorials,
   type FetchDestinationsParams,
 } from '@/api/destinations'
 
@@ -56,5 +58,19 @@ export function useRelatedDestinations(excludeId: string | undefined, limit = 4)
     queryKey: ['destinations', 'related', excludeId, limit],
     queryFn: () => (excludeId ? fetchRelatedDestinations(excludeId, limit) : []),
     enabled: !!excludeId,
+  })
+}
+
+export function useHighlightedDestinations() {
+  return useQuery({
+    queryKey: ['destinations', 'highlighted'],
+    queryFn: fetchHighlightedDestinations,
+  })
+}
+
+export function useEditorials() {
+  return useQuery({
+    queryKey: ['editorials'],
+    queryFn: fetchEditorials,
   })
 }

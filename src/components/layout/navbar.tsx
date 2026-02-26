@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,11 +12,28 @@ const navLinks = [
   { to: '/contact', label: 'Contact' },
 ]
 
+const SCROLL_THRESHOLD = 24
+
 export function Navbar({ transparent = false }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(!transparent)
   const location = useLocation()
   const { isAuthenticated, signOut, hasRole } = useAuth()
-  const isScrolled = !transparent
+
+  useEffect(() => {
+    if (!transparent) {
+      setIsScrolled(true)
+      return
+    }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > SCROLL_THRESHOLD)
+    }
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [transparent])
+
+  const overHero = transparent && !isScrolled
 
   return (
     <header
@@ -29,8 +46,8 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
         <Link
           to="/"
           className={cn(
-            'font-serif text-xl font-semibold',
-            transparent ? 'text-primary-foreground hover:text-primary-foreground/90' : 'text-foreground'
+            'font-serif text-xl font-semibold transition-colors',
+            overHero ? 'text-primary-foreground hover:text-primary-foreground/90' : 'text-foreground'
           )}
         >
           Roam Resort
@@ -43,10 +60,10 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
               to={to}
               className={cn(
                 'text-sm font-medium transition-colors',
-                transparent
+                overHero
                   ? 'text-primary-foreground/90 hover:text-primary-foreground'
                   : location.pathname === to
-                    ? 'text-accent'
+                    ? 'text-accent border-b-2 border-accent'
                     : 'text-foreground hover:text-accent'
               )}
             >
@@ -57,14 +74,14 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
             <div
               className={cn(
                 'flex items-center gap-4',
-                transparent && 'text-primary-foreground'
+                overHero && 'text-primary-foreground'
               )}
             >
               <Link to="/profile">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+                  className={overHero ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
                 >
                   My Inquiries
                 </Button>
@@ -73,7 +90,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+                  className={overHero ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
                 >
                   Settings
                 </Button>
@@ -83,7 +100,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={transparent ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
+                    className={overHero ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
                   >
                     Host Dashboard
                   </Button>
@@ -94,7 +111,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className={transparent ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
+                    className={overHero ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
                   >
                     Admin
                   </Button>
@@ -104,20 +121,33 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => signOut()}
-                className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+                className={overHero ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
               >
                 Sign Out
               </Button>
             </div>
           ) : (
-            <Link to="/login">
-              <Button
-                size="sm"
-                className={transparent ? 'border-white/50 bg-white/10 text-primary-foreground hover:bg-white/20' : ''}
+            <div className="flex items-center gap-4">
+              <Link
+                to="/login?redirect=%2Fhost%2Fdashboard%2Flistings"
+                className={cn(
+                  'text-sm font-medium',
+                  overHero
+                    ? 'text-primary-foreground/90 hover:text-primary-foreground'
+                    : 'text-foreground hover:text-accent'
+                )}
               >
-                Request a Stay
-              </Button>
-            </Link>
+                Host Login
+              </Link>
+              <Link to="/login">
+                <Button
+                  size="sm"
+                  className={overHero ? 'border-white/50 bg-white/10 text-primary-foreground hover:bg-white/20' : 'bg-accent text-accent-foreground hover:bg-accent/90'}
+                >
+                  Request a Stay
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
 
@@ -125,7 +155,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
           type="button"
           className={cn(
             'md:hidden rounded-md p-2 hover:bg-secondary',
-            transparent && 'text-primary-foreground hover:bg-white/10'
+            overHero && 'text-primary-foreground hover:bg-white/10'
           )}
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
@@ -170,9 +200,18 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                 </button>
               </>
             ) : (
-              <Link to="/login" onClick={() => setOpen(false)}>
-                <Button className="w-full">Request a Stay</Button>
-              </Link>
+              <>
+                <Link
+                  to="/login?redirect=%2Fhost%2Fdashboard%2Flistings"
+                  onClick={() => setOpen(false)}
+                  className="py-2 text-sm font-medium"
+                >
+                  Host Login
+                </Link>
+                <Link to="/login" onClick={() => setOpen(false)}>
+                  <Button className="w-full">Request a Stay</Button>
+                </Link>
+              </>
             )}
           </div>
         </div>

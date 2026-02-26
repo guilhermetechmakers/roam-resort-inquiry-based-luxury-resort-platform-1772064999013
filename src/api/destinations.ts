@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
-import type { Destination, EditorialBlock, DestinationSortOption } from '@/types'
+import type { Destination, EditorialBlock, EditorialTeaser, DestinationCard, DestinationSortOption } from '@/types'
 import { mockListings } from '@/data/mock-listings'
-import { mockEditorialBlocks } from '@/data/mock-editorial'
+import { mockEditorialBlocks, mockEditorialTeasers } from '@/data/mock-editorial'
 
 export interface FetchDestinationsParams {
   region?: string
@@ -16,6 +16,30 @@ export interface FetchDestinationsParams {
 export interface FetchDestinationsResponse {
   data: Destination[]
   total: number
+}
+
+/** Maps Listing to DestinationCard for landing carousel */
+function listingToDestinationCard(listing: {
+  id: string
+  slug?: string
+  title?: string
+  subtitle?: string
+  hero_image_url?: string
+  gallery_urls?: string[]
+  editorial_content?: string
+}): DestinationCard {
+  const snippet =
+    listing.editorial_content?.split('\n')[0]?.replace(/^#+\s*/, '') ??
+    listing.subtitle ??
+    ''
+  return {
+    id: listing.id,
+    name: listing.title ?? 'Untitled',
+    slug: listing.slug ?? listing.id,
+    imageUrl: listing.hero_image_url ?? listing.gallery_urls?.[0] ?? '',
+    editorialSnippet: snippet,
+    isHighlighted: true,
+  }
 }
 
 /** Maps Listing to Destination for public catalog */
@@ -197,6 +221,33 @@ export async function fetchSearchSuggestions(
 export async function fetchFeaturedEditorial(): Promise<EditorialBlock | null> {
   const blocks = mockEditorialBlocks ?? []
   return blocks.length > 0 ? (blocks[0] ?? null) : null
+}
+
+/** Fetch highlighted destinations for landing carousel (first 4–6 live listings) */
+export async function fetchHighlightedDestinations(): Promise<DestinationCard[]> {
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id, slug, title, subtitle, hero_image_url, gallery_urls, editorial_content')
+      .eq('status', 'live')
+      .order('created_at', { ascending: false })
+      .limit(6)
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data.map((l) => listingToDestinationCard(l))
+    }
+  } catch {
+    // Fallback to mock
+  }
+
+  const list = (mockListings ?? []).filter((l) => l.status === 'live').slice(0, 6)
+  return list.map((l) => listingToDestinationCard(l))
+}
+
+/** Fetch editorial teasers for landing grid */
+export async function fetchEditorials(): Promise<EditorialTeaser[]> {
+  const teasers = mockEditorialTeasers ?? []
+  return Array.isArray(teasers) ? [...teasers] : []
 }
 
 /** Fetch a single destination by id or slug (for detail page) */

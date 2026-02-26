@@ -179,6 +179,32 @@ export interface EditorialBlock {
   priority?: number
 }
 
+/** Destination card for landing page carousel */
+export interface DestinationCard {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string
+  editorialSnippet: string
+  isHighlighted?: boolean
+}
+
+/** Editorial teaser for landing page grid */
+export interface EditorialTeaser {
+  id: string
+  title: string
+  excerpt: string
+  imageUrl: string
+  destinationSlug?: string
+}
+
+/** Nav item for site navigation */
+export interface NavItem {
+  label: string
+  href: string
+  active?: boolean
+}
+
 /** Sort options for destination listings */
 export type DestinationSortOption = 'popularity' | 'newest' | 'alphabetical'
 
