@@ -1,0 +1,82 @@
+import { FileDown, FileText, Printer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import type { Inquiry } from '@/types'
+
+export interface ExportPanelProps {
+  inquiry: Inquiry | null
+  onExportCsv: () => void
+  onExportPdf?: () => void
+  onPrint?: () => void
+  className?: string
+}
+
+function escapeCsv(value: unknown): string {
+  if (value == null) return ''
+  const s = String(value)
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`
+  }
+  return s
+}
+
+export function ExportPanel({
+  inquiry,
+  onExportCsv,
+  onExportPdf,
+  onPrint,
+  className,
+}: ExportPanelProps) {
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint()
+    } else {
+      window.print()
+    }
+  }
+
+  return (
+    <Card className={cn('transition-all duration-300', className)}>
+      <CardHeader>
+        <h3 className="font-serif text-lg font-semibold">Export & print</h3>
+        <p className="text-sm text-muted-foreground">
+          Download or print inquiry details
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2 border-accent/40 hover:bg-accent/10"
+          onClick={onExportCsv}
+          disabled={!inquiry}
+        >
+          <FileDown className="h-4 w-4" />
+          Export CSV
+        </Button>
+        {onExportPdf && (
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2"
+            onClick={onExportPdf}
+            disabled={!inquiry}
+          >
+            <FileText className="h-4 w-4" />
+            Export PDF
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-2"
+          onClick={handlePrint}
+          disabled={!inquiry}
+        >
+          <Printer className="h-4 w-4" />
+          Print
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+export { escapeCsv }

@@ -120,6 +120,324 @@ export async function fetchAdminInquiries(filters?: {
   }
 }
 
+/** Parse internal notes from inquiry (stored as JSON string) */
+function parseInternalNotes(inquiry: Inquiry): AdminInternalNote[] {
+  const raw = inquiry.internal_notes
+  if (!raw) return []
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    const arr = Array.isArray(parsed) ? parsed : []
+    return arr.map((n: { id?: string; authorName?: string; text?: string; createdAt?: string }, i: number) => ({
+      id: n.id ?? `note-${i}`,
+      inquiryId: inquiry.id,
+      note: n.text ?? n.note ?? '',
+      authorId: '',
+      authorName: n.authorName ?? 'Staff',
+      createdAt: n.createdAt ?? new Date().toISOString(),
+    }))
+  } catch {
+    return []
+  }
+}
+
+/** Build synthetic timeline from inquiry and notes */
+function buildTimelineEvents(inquiry: Inquiry, notes: AdminInternalNote[]): AdminTimelineEvent[] {
+  const events: AdminTimelineEvent[] = []
+  const created = inquiry.created_at ?? ''
+  if (created) {
+    events.push({
+      id: 'evt-created',
+      inquiryId: inquiry.id,
+      type: 'status',
+      description: 'Inquiry created',
+      createdAt: created,
+    })
+  }
+  const updated = inquiry.updated_at ?? ''
+  if (updated && updated !== created) {
+    events.push({
+      id: 'evt-updated',
+      inquiryId: inquiry.id,
+      type: 'status',
+      description: `Status: ${(inquiry.status ?? '').replace('_', ' ')}`,
+      createdAt: updated,
+    })
+  }
+  ;(notes ?? []).forEach((n, i) => {
+    events.push({
+      id: `evt-note-${n.id}`,
+      inquiryId: inquiry.id,
+      type: 'note',
+      description: n.note?.slice(0, 80) ?? 'Note added',
+      createdAt: n.createdAt ?? '',
+      authorName: n.authorName,
+    })
+  })
+  if (inquiry.payment_link) {
+    events.push({
+      id: 'evt-payment',
+      inquiryId: inquiry.id,
+      type: 'payment',
+      description: 'Payment link created',
+      createdAt: inquiry.updated_at ?? inquiry.created_at ?? '',
+    })
+  }
+  return events.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+}
+
+/** Shape Inquiry to AdminInquiryDetail */
+function shapeInquiryToDetail(i: Inquiry): AdminInquiryDetail {
+  const base = shapeInquiryToAdmin(i)
+  const listing = typeof i.listing === 'object' ? i.listing : null
+  const guest = typeof i.guest === 'object' ? i.guest : null
+  const notes = parseInternalNotes(i)
+  const timelineEvents = buildTimelineEvents(i, notes)
+  const attachments: { id: string; name: string; url: string }[] = []
+  const rawAttachments = i.attachments ?? []
+  if (Array.isArray(rawAttachments)) {
+    rawAttachments.forEach((a, idx) => {
+      if (typeof a === 'object' && a && 'file_url' in a) {
+        const att = a as { id?: string; name?: string; file_url?: string }
+        attachments.push({
+          id: att.id ?? `att-${idx}`,
+          name: att.name ?? 'Attachment',
+          url: att.file_url ?? '',
+        })
+      } else if (typeof a === 'string') {
+        attachments.push({ id: `att-${idx}`, name: 'Attachment', url: a })
+      }
+    })
+  }
+  const payments: AdminPayment[] = []
+  if (i.payment_link || i.total_amount) {
+    payments.push({
+      id: 'pay-1',
+      inquiryId: i.id,
+      stripeLinkUrl: i.payment_link,
+      amount: i.total_amount ?? 0,
+      currency: 'USD',
+      status: i.payment_state === 'paid' ? 'paid' : i.payment_link ? 'link_created' : 'pending',
+      createdAt: i.updated_at ?? i.created_at ?? '',
+    })
+  }
+  return {
+    ...base,
+    rawStatus: i.status ?? 'new',
+    guestEmail: guest?.email ?? '',
+    guestPhone: (guest as { phone?: string })?.phone ?? '',
+    guestMessage: i.message ?? '',
+    attachments,
+    internalNotes: notes,
+    timelineEvents,
+    payments,
+  }
+}
+
+/** Fetch single admin inquiry by ID */
+export async function fetchAdminInquiryDetail(inquiryId: string): Promise<AdminInquiryDetail | null> {
+  try {
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*, listing:listings(*), guest:users(*)')
+      .eq('id', inquiryId)
+      .single()
+
+    if (error || !data) return null
+    return shapeInquiryToDetail(data as Inquiry)
+  } catch {
+    return null
+  }
+}
+
+/** Update inquiry status */
+export async function updateAdminInquiryStatus(
+  inquiryId: string,
+  status: string
+): Promise<AdminInquiryDetail | null> {
+  try {
+    const { data, error } = await supabase
+      .from('inquiries')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', inquiryId)
+      .select('*, listing:listings(*), guest:users(*)')
+      .single()
+
+    if (error || !data) return null
+    return shapeInquiryToDetail(data as Inquiry)
+  } catch {
+    return null
+  }
+}
+
+/** Create internal note (stores as JSON in inquiry.internal_notes) */
+export async function createAdminInternalNote(
+  inquiryId: string,
+  text: string,
+  authorName: string
+): Promise<AdminInternalNote | null> {
+  try {
+    const { data: inquiry } = await supabase
+      .from('inquiries')
+      .select('internal_notes')
+      .eq('id', inquiryId)
+      .single()
+
+    const existing = inquiry as { internal_notes?: string } | null
+    const notes = parseInternalNotes({ ...existing, id: inquiryId } as Inquiry)
+    const newNote: AdminInternalNote = {
+      id: crypto.randomUUID(),
+      inquiryId,
+      note: text,
+      authorId: '',
+      authorName,
+      createdAt: new Date().toISOString(),
+    }
+    notes.push(newNote)
+    const payload = JSON.stringify(notes.map((n) => ({ id: n.id, authorName: n.authorName, text: n.note, createdAt: n.createdAt })))
+
+    const { error } = await supabase
+      .from('inquiries')
+      .update({ internal_notes: payload, updated_at: new Date().toISOString() })
+      .eq('id', inquiryId)
+
+    if (error) return null
+    return newNote
+  } catch {
+    return null
+  }
+}
+
+/** Update internal note */
+export async function updateAdminInternalNote(
+  inquiryId: string,
+  noteId: string,
+  text: string
+): Promise<boolean> {
+  try {
+    const { data: inquiry } = await supabase
+      .from('inquiries')
+      .select('internal_notes')
+      .eq('id', inquiryId)
+      .single()
+
+    const existing = inquiry as { internal_notes?: string } | null
+    const notes = parseInternalNotes({ ...existing, id: inquiryId } as Inquiry)
+    const idx = notes.findIndex((n) => n.id === noteId)
+    if (idx < 0) return false
+    notes[idx] = { ...notes[idx], note: text }
+    const payload = JSON.stringify(notes.map((n) => ({ id: n.id, authorName: n.authorName, text: n.note, createdAt: n.createdAt })))
+
+    const { error } = await supabase
+      .from('inquiries')
+      .update({ internal_notes: payload, updated_at: new Date().toISOString() })
+      .eq('id', inquiryId)
+
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/** Delete internal note */
+export async function deleteAdminInternalNote(
+  inquiryId: string,
+  noteId: string
+): Promise<boolean> {
+  try {
+    const { data: inquiry } = await supabase
+      .from('inquiries')
+      .select('internal_notes')
+      .eq('id', inquiryId)
+      .single()
+
+    const existing = inquiry as { internal_notes?: string } | null
+    const notes = parseInternalNotes({ ...existing, id: inquiryId } as Inquiry).filter(
+      (n) => n.id !== noteId
+    )
+    const payload = JSON.stringify(notes.map((n) => ({ id: n.id, authorName: n.authorName, text: n.note, createdAt: n.createdAt })))
+
+    const { error } = await supabase
+      .from('inquiries')
+      .update({ internal_notes: payload, updated_at: new Date().toISOString() })
+      .eq('id', inquiryId)
+
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/** Create Stripe payment link via Edge Function */
+export async function createStripePaymentLink(
+  inquiryId: string,
+  payload: StripeLinkPayload
+): Promise<{ paymentLinkUrl: string } | null> {
+  const url = `${SUPABASE_URL}/functions/v1/create-stripe-link`
+  const { supabase } = await import('@/lib/supabase')
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token ?? ''
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ inquiryId, ...payload }),
+  })
+  const json = (await res.json().catch(() => ({}))) as { paymentLinkUrl?: string; error?: string }
+  if (!res.ok || !json.paymentLinkUrl) return null
+
+  // Persist payment link URL to inquiry
+  await supabase
+    .from('inquiries')
+    .update({
+      payment_link: json.paymentLinkUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', inquiryId)
+
+  return { paymentLinkUrl: json.paymentLinkUrl }
+}
+
+/** Mark payment as received (updates inquiry payment_state) */
+export async function markPaymentReceived(inquiryId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('inquiries')
+      .update({ payment_state: 'paid', updated_at: new Date().toISOString() })
+      .eq('id', inquiryId)
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/** Export inquiry as CSV */
+export function exportInquiryCsv(detail: AdminInquiryDetail): string {
+  const rows = [
+    ['Reference', detail.reference ?? ''],
+    ['Guest Name', detail.guestName ?? ''],
+    ['Guest Email', detail.guestEmail ?? ''],
+    ['Guest Phone', detail.guestPhone ?? ''],
+    ['Destination', detail.destinationName ?? ''],
+    ['Check-in', detail.dates?.start ?? ''],
+    ['Check-out', detail.dates?.end ?? ''],
+    ['Guests', String(detail.guests ?? '')],
+    ['Status', detail.status ?? ''],
+    ['Amount', String(detail.amount ?? '')],
+    ['Message', detail.guestMessage ?? ''],
+    ['Created', detail.createdAt ?? ''],
+    ['Updated', detail.updatedAt ?? ''],
+  ]
+  return rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+}
+
+/** Export inquiry as PDF (client-side: opens print dialog) */
+export function printInquiryDetail(): void {
+  window.print()
+}
+
 /** Mock reconciliations (no Supabase table yet) */
 export async function fetchAdminReconciliations(
   _filters?: AdminExportFilters

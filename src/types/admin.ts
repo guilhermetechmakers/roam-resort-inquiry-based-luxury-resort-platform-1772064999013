@@ -57,7 +57,54 @@ export interface AdminInternalNote {
   inquiryId: string
   note: string
   authorId: string
+  authorName?: string
   createdAt: string
+}
+
+/** Admin inquiry detail - full concierge view */
+export interface AdminInquiryDetail extends AdminInquiry {
+  /** Raw status for API (new, contacted, etc.) */
+  rawStatus?: string
+  guestEmail?: string
+  guestPhone?: string
+  guestMessage?: string
+  attachments?: AdminAttachment[]
+  internalNotes?: AdminInternalNote[]
+  timelineEvents?: AdminTimelineEvent[]
+  payments?: AdminPayment[]
+}
+
+export interface AdminAttachment {
+  id: string
+  name: string
+  url: string
+}
+
+export type AdminTimelineEventType = 'email' | 'status' | 'note' | 'payment'
+
+export interface AdminTimelineEvent {
+  id: string
+  inquiryId: string
+  type: AdminTimelineEventType
+  description: string
+  createdAt: string
+  authorName?: string
+}
+
+export interface AdminPayment {
+  id: string
+  inquiryId: string
+  stripeLinkUrl?: string
+  amount: number
+  currency: string
+  status: 'pending' | 'link_created' | 'paid' | 'reconciled'
+  createdAt: string
+}
+
+export interface StripeLinkPayload {
+  amount: number
+  items?: Array<{ name: string; quantity: number; unitPrice: number; description?: string }>
+  notes?: string
 }
 
 export interface AdminDashboardMetrics {
@@ -77,3 +124,57 @@ export interface AdminExportFilters {
 }
 
 export type AdminExportType = 'inquiries' | 'reconciliations'
+
+/** Admin Inquiry Detail page types */
+export type InquiryStatusValue =
+  | 'new'
+  | 'contacted'
+  | 'deposit_paid'
+  | 'confirmed'
+  | 'cancelled'
+
+export interface AdminInquiryDetailAttachment {
+  id: string
+  name: string
+  url: string
+}
+
+export interface AdminInquiryDetailNote {
+  id: string
+  inquiryId: string
+  authorName: string
+  text: string
+  createdAt: string
+}
+
+export interface AdminTimelineEvent {
+  id: string
+  inquiryId: string
+  type: 'email' | 'status' | 'note' | 'payment'
+  description: string
+  createdAt: string
+  authorName?: string
+}
+
+export interface AdminInquiryPayment {
+  id: string
+  inquiryId: string
+  stripeLinkUrl?: string
+  amount: number
+  currency: string
+  status: 'pending' | 'link_created' | 'paid' | 'reconciled'
+  createdAt: string
+}
+
+export interface StripeLinkItem {
+  name: string
+  quantity: number
+  unitPrice: number
+  description?: string
+}
+
+export interface CreateStripeLinkPayload {
+  amount: number
+  items: StripeLinkItem[]
+  notes?: string
+}
