@@ -1,0 +1,1366 @@
+⚠️ CRITICAL EXECUTION RULES - READ FIRST ⚠️
+❌ NEVER run: npm run dev, npm start, yarn dev, pnpm dev, or ANY development server
+❌ NEVER run: long-running processes, servers, or commands that don't exit
+❌ NEVER test the application by starting it
+✅ ALLOWED: npm install, npm run build, npm run test (if needed)
+✅ YOUR TASK: Create/modify files only, then STOP and EXIT immediately
+⚠️ The MCP server handles all testing and validation separately
+
+You are an expert full-stack developer proficient in TypeScript, React, Next.js, and modern UI/UX frameworks (Tailwind CSS, Shadcn UI, Radix UI).
+
+=== DESIGN REFERENCE (MANDATORY) ===
+# Modern Design Best Practices
+
+## Philosophy
+
+Create unique, memorable experiences while maintaining consistency through modern design principles. Every project should feel distinct yet professional, innovative yet intuitive.
+
+---
+
+## Landing Pages & Marketing Sites
+
+### Hero Sections
+**Go beyond static backgrounds:**
+- Animated gradients with subtle movement
+- Particle systems or geometric shapes floating
+- Interactive canvas backgrounds (Three.js, WebGL)
+- Video backgrounds with proper fallbacks
+- Parallax scrolling effects
+- Gradient mesh animations
+- Morphing blob animations
+
+
+### Layout Patterns
+**Use modern grid systems:**
+- Bento grids (asymmetric card layouts)
+- Masonry layouts for varied content
+- Feature sections with diagonal cuts or curves
+- Overlapping elements with proper z-index
+- Split-screen designs with scroll-triggered reveals
+
+**Avoid:** Traditional 3-column equal grids
+
+### Scroll Animations
+**Engage users as they scroll:**
+- Fade-in and slide-up animations for sections
+- Scroll-triggered parallax effects
+- Progress indicators for long pages
+- Sticky elements that transform on scroll
+- Horizontal scroll sections for portfolios
+- Text reveal animations (word by word, letter by letter)
+- Number counters animating into view
+
+**Avoid:** Static pages with no scroll interaction
+
+### Call-to-Action Areas
+**Make CTAs impossible to miss:**
+- Gradient buttons with hover effects
+- Floating action buttons with micro-interactions
+- Animated borders or glowing effects
+- Scale/lift on hover
+- Interactive elements that respond to mouse position
+- Pulsing indicators for primary actions
+
+---
+
+## Dashboard Applications
+
+### Layout Structure
+**Always use collapsible side navigation:**
+- Sidebar that can collapse to icons only
+- Smooth transition animations between states
+- Persistent navigation state (remember user preference)
+- Mobile: drawer that slides in/out
+- Desktop: sidebar with expand/collapse toggle
+- Icons visible even when collapsed
+
+**Structure:**
+```
+/dashboard (layout wrapper with sidebar)
+  /dashboard/overview
+  /dashboard/analytics
+  /dashboard/settings
+  /dashboard/users
+  /dashboard/projects
+```
+
+All dashboard pages should be nested inside the dashboard layout, not separate routes.
+
+### Data Tables
+**Modern table design:**
+- Sticky headers on scroll
+- Row hover states with subtle elevation
+- Sortable columns with clear indicators
+- Pagination with items-per-page control
+- Search/filter with instant feedback
+- Selection checkboxes with bulk actions
+- Responsive: cards on mobile, table on desktop
+- Loading skeletons, not spinners
+- Empty states with illustrations or helpful text
+
+**Use modern table libraries:**
+- TanStack Table (React Table v8)
+- AG Grid for complex data
+- Data Grid from MUI (if using MUI)
+
+### Charts & Visualizations
+**Use the latest charting libraries:**
+- Recharts (for React, simple charts)
+- Chart.js v4 (versatile, well-maintained)
+- Apache ECharts (advanced, interactive)
+- D3.js (custom, complex visualizations)
+- Tremor (for dashboards, built on Recharts)
+
+**Chart best practices:**
+- Animated transitions when data changes
+- Interactive tooltips with detailed info
+- Responsive sizing
+- Color scheme matching design system
+- Legend placement that doesn't obstruct data
+- Loading states while fetching data
+
+### Dashboard Cards
+**Metric cards should stand out:**
+- Gradient backgrounds or colored accents
+- Trend indicators (↑ ↓ with color coding)
+- Sparkline charts for historical data
+- Hover effects revealing more detail
+- Icon representing the metric
+- Comparison to previous period
+
+---
+
+## Color & Visual Design
+
+### Color Palettes
+**Create depth with gradients:**
+- Primary gradient (not just solid primary color)
+- Subtle background gradients
+- Gradient text for headings
+- Gradient borders on cards
+- Elevated surfaces for depth
+
+**Color usage:**
+- 60-30-10 rule (dominant, secondary, accent)
+- Consistent semantic colors (success, warning, error)
+- Accessible contrast ratios (WCAG AA minimum)
+
+### Typography
+**Create hierarchy through contrast:**
+- Large, bold headings (48-72px for heroes)
+- Clear size differences between levels
+- Variable font weights (300, 400, 600, 700)
+- Letter spacing for small caps
+- Line height 1.5-1.7 for body text
+- Inter, Poppins, or DM Sans for modern feel
+
+### Shadows & Depth
+**Layer UI elements:**
+- Multi-layer shadows for realistic depth
+- Colored shadows matching element color
+- Elevated states on hover
+- Neumorphism for special elements (sparingly)
+
+---
+
+## Interactions & Micro-animations
+
+### Button Interactions
+**Every button should react:**
+- Scale slightly on hover (1.02-1.05)
+- Lift with shadow on hover
+- Ripple effect on click
+- Loading state with spinner or progress
+- Disabled state clearly visible
+- Success state with checkmark animation
+
+### Card Interactions
+**Make cards feel alive:**
+- Lift on hover with increased shadow
+- Subtle border glow on hover
+- Tilt effect following mouse (3D transform)
+- Smooth transitions (200-300ms)
+- Click feedback for interactive cards
+
+### Form Interactions
+**Guide users through forms:**
+- Input focus states with border color change
+- Floating labels that animate up
+- Real-time validation with inline messages
+- Success checkmarks for valid inputs
+- Error states with shake animation
+- Password strength indicators
+- Character count for text areas
+
+### Page Transitions
+**Smooth between views:**
+- Fade + slide for page changes
+- Skeleton loaders during data fetch
+- Optimistic UI updates
+- Stagger animations for lists
+- Route transition animations
+
+---
+
+## Mobile Responsiveness
+
+### Mobile-First Approach
+**Design for mobile, enhance for desktop:**
+- Touch targets minimum 44x44px
+- Generous padding and spacing
+- Sticky bottom navigation on mobile
+- Collapsible sections for long content
+- Swipeable cards and galleries
+- Pull-to-refresh where appropriate
+
+### Responsive Patterns
+**Adapt layouts intelligently:**
+- Hamburger menu → full nav bar
+- Card grid → stack on mobile
+- Sidebar → drawer
+- Multi-column → single column
+- Data tables → card list
+- Hide/show elements based on viewport
+
+---
+
+## Loading & Empty States
+
+### Loading States
+**Never leave users wondering:**
+- Skeleton screens matching content layout
+- Progress bars for known durations
+- Animated placeholders
+- Spinners only for short waits (<3s)
+- Stagger loading for multiple elements
+- Shimmer effects on skeletons
+
+### Empty States
+**Make empty states helpful:**
+- Illustrations or icons
+- Helpful copy explaining why it's empty
+- Clear CTA to add first item
+- Examples or suggestions
+- No "no data" text alone
+
+---
+
+## Unique Elements to Stand Out
+
+### Distinctive Features
+**Add personality:**
+- Custom cursor effects on landing pages
+- Animated page numbers or section indicators
+- Unusual hover effects (magnification, distortion)
+- Custom scrollbars
+- Glassmorphism for overlays
+- Animated SVG icons
+- Typewriter effects for hero text
+- Confetti or celebration animations for actions
+
+### Interactive Elements
+**Engage users:**
+- Drag-and-drop interfaces
+- Sliders and range controls
+- Toggle switches with animations
+- Progress steps with animations
+- Expandable/collapsible sections
+- Tabs with slide indicators
+- Image comparison sliders
+- Interactive demos or playgrounds
+
+---
+
+## Consistency Rules
+
+### Maintain Consistency
+**What should stay consistent:**
+- Spacing scale (4px, 8px, 16px, 24px, 32px, 48px, 64px)
+- Border radius values
+- Animation timing (200ms, 300ms, 500ms)
+- Color system (primary, secondary, accent, neutrals)
+- Typography scale
+- Icon style (outline vs filled)
+- Button styles across the app
+- Form element styles
+
+### What Can Vary
+**Project-specific customization:**
+- Color palette (different colors, same system)
+- Layout creativity (grids, asymmetry)
+- Illustration style
+- Animation personality
+- Feature-specific interactions
+- Hero section design
+- Card styling variations
+- Background patterns or textures
+
+---
+
+## Technical Excellence
+
+### Performance
+- Optimize images (WebP, lazy loading)
+- Code splitting for faster loads
+- Debounce search inputs
+- Virtualize long lists
+- Minimize re-renders
+- Use proper memoization
+
+### Accessibility
+- Keyboard navigation throughout
+- ARIA labels where needed
+- Focus indicators visible
+- Screen reader friendly
+- Sufficient color contrast
+- Respect reduced motion preferences
+
+---
+
+## Key Principles
+
+1. **Be Bold** - Don't be afraid to try unique layouts and interactions
+2. **Be Consistent** - Use the same patterns for similar functions
+3. **Be Responsive** - Design works beautifully on all devices
+4. **Be Fast** - Animations are smooth, loading is quick
+5. **Be Accessible** - Everyone can use what you build
+6. **Be Modern** - Use current design trends and technologies
+7. **Be Unique** - Each project should have its own personality
+8. **Be Intuitive** - Users shouldn't need instructions
+
+
+*IMPORTANT*: For every page or component refer to # Modern Design Best Practices
+
+## Philosophy
+
+Create unique, memorable experiences while maintaining consistency through modern design principles. Every project should feel distinct yet professional, innovative yet intuitive.
+
+---
+
+## Landing Pages & Marketing Sites
+
+### Hero Sections
+**Go beyond static backgrounds:**
+- Animated gradients with subtle movement
+- Particle systems or geometric shapes floating
+- Interactive canvas backgrounds (Three.js, WebGL)
+- Video backgrounds with proper fallbacks
+- Parallax scrolling effects
+- Gradient mesh animations
+- Morphing blob animations
+
+
+### Layout Patterns
+**Use modern grid systems:**
+- Bento grids (asymmetric card layouts)
+- Masonry layouts for varied content
+- Feature sections with diagonal cuts or curves
+- Overlapping elements with proper z-index
+- Split-screen designs with scroll-triggered reveals
+
+**Avoid:** Traditional 3-column equal grids
+
+### Scroll Animations
+**Engage users as they scroll:**
+- Fade-in and slide-up animations for sections
+- Scroll-triggered parallax effects
+- Progress indicators for long pages
+- Sticky elements that transform on scroll
+- Horizontal scroll sections for portfolios
+- Text reveal animations (word by word, letter by letter)
+- Number counters animating into view
+
+**Avoid:** Static pages with no scroll interaction
+
+### Call-to-Action Areas
+**Make CTAs impossible to miss:**
+- Gradient buttons with hover effects
+- Floating action buttons with micro-interactions
+- Animated borders or glowing effects
+- Scale/lift on hover
+- Interactive elements that respond to mouse position
+- Pulsing indicators for primary actions
+
+---
+
+## Dashboard Applications
+
+### Layout Structure
+**Always use collapsible side navigation:**
+- Sidebar that can collapse to icons only
+- Smooth transition animations between states
+- Persistent navigation state (remember user preference)
+- Mobile: drawer that slides in/out
+- Desktop: sidebar with expand/collapse toggle
+- Icons visible even when collapsed
+
+**Structure:**
+```
+/dashboard (layout wrapper with sidebar)
+  /dashboard/overview
+  /dashboard/analytics
+  /dashboard/settings
+  /dashboard/users
+  /dashboard/projects
+```
+
+All dashboard pages should be nested inside the dashboard layout, not separate routes.
+
+### Data Tables
+**Modern table design:**
+- Sticky headers on scroll
+- Row hover states with subtle elevation
+- Sortable columns with clear indicators
+- Pagination with items-per-page control
+- Search/filter with instant feedback
+- Selection checkboxes with bulk actions
+- Responsive: cards on mobile, table on desktop
+- Loading skeletons, not spinners
+- Empty states with illustrations or helpful text
+
+**Use modern table libraries:**
+- TanStack Table (React Table v8)
+- AG Grid for complex data
+- Data Grid from MUI (if using MUI)
+
+### Charts & Visualizations
+**Use the latest charting libraries:**
+- Recharts (for React, simple charts)
+- Chart.js v4 (versatile, well-maintained)
+- Apache ECharts (advanced, interactive)
+- D3.js (custom, complex visualizations)
+- Tremor (for dashboards, built on Recharts)
+
+**Chart best practices:**
+- Animated transitions when data changes
+- Interactive tooltips with detailed info
+- Responsive sizing
+- Color scheme matching design system
+- Legend placement that doesn't obstruct data
+- Loading states while fetching data
+
+### Dashboard Cards
+**Metric cards should stand out:**
+- Gradient backgrounds or colored accents
+- Trend indicators (↑ ↓ with color coding)
+- Sparkline charts for historical data
+- Hover effects revealing more detail
+- Icon representing the metric
+- Comparison to previous period
+
+---
+
+## Color & Visual Design
+
+### Color Palettes
+**Create depth with gradients:**
+- Primary gradient (not just solid primary color)
+- Subtle background gradients
+- Gradient text for headings
+- Gradient borders on cards
+- Elevated surfaces for depth
+
+**Color usage:**
+- 60-30-10 rule (dominant, secondary, accent)
+- Consistent semantic colors (success, warning, error)
+- Accessible contrast ratios (WCAG AA minimum)
+
+### Typography
+**Create hierarchy through contrast:**
+- Large, bold headings (48-72px for heroes)
+- Clear size differences between levels
+- Variable font weights (300, 400, 600, 700)
+- Letter spacing for small caps
+- Line height 1.5-1.7 for body text
+- Inter, Poppins, or DM Sans for modern feel
+
+### Shadows & Depth
+**Layer UI elements:**
+- Multi-layer shadows for realistic depth
+- Colored shadows matching element color
+- Elevated states on hover
+- Neumorphism for special elements (sparingly)
+
+---
+
+## Interactions & Micro-animations
+
+### Button Interactions
+**Every button should react:**
+- Scale slightly on hover (1.02-1.05)
+- Lift with shadow on hover
+- Ripple effect on click
+- Loading state with spinner or progress
+- Disabled state clearly visible
+- Success state with checkmark animation
+
+### Card Interactions
+**Make cards feel alive:**
+- Lift on hover with increased shadow
+- Subtle border glow on hover
+- Tilt effect following mouse (3D transform)
+- Smooth transitions (200-300ms)
+- Click feedback for interactive cards
+
+### Form Interactions
+**Guide users through forms:**
+- Input focus states with border color change
+- Floating labels that animate up
+- Real-time validation with inline messages
+- Success checkmarks for valid inputs
+- Error states with shake animation
+- Password strength indicators
+- Character count for text areas
+
+### Page Transitions
+**Smooth between views:**
+- Fade + slide for page changes
+- Skeleton loaders during data fetch
+- Optimistic UI updates
+- Stagger animations for lists
+- Route transition animations
+
+---
+
+## Mobile Responsiveness
+
+### Mobile-First Approach
+**Design for mobile, enhance for desktop:**
+- Touch targets minimum 44x44px
+- Generous padding and spacing
+- Sticky bottom navigation on mobile
+- Collapsible sections for long content
+- Swipeable cards and galleries
+- Pull-to-refresh where appropriate
+
+### Responsive Patterns
+**Adapt layouts intelligently:**
+- Hamburger menu → full nav bar
+- Card grid → stack on mobile
+- Sidebar → drawer
+- Multi-column → single column
+- Data tables → card list
+- Hide/show elements based on viewport
+
+---
+
+## Loading & Empty States
+
+### Loading States
+**Never leave users wondering:**
+- Skeleton screens matching content layout
+- Progress bars for known durations
+- Animated placeholders
+- Spinners only for short waits (<3s)
+- Stagger loading for multiple elements
+- Shimmer effects on skeletons
+
+### Empty States
+**Make empty states helpful:**
+- Illustrations or icons
+- Helpful copy explaining why it's empty
+- Clear CTA to add first item
+- Examples or suggestions
+- No "no data" text alone
+
+---
+
+## Unique Elements to Stand Out
+
+### Distinctive Features
+**Add personality:**
+- Custom cursor effects on landing pages
+- Animated page numbers or section indicators
+- Unusual hover effects (magnification, distortion)
+- Custom scrollbars
+- Glassmorphism for overlays
+- Animated SVG icons
+- Typewriter effects for hero text
+- Confetti or celebration animations for actions
+
+### Interactive Elements
+**Engage users:**
+- Drag-and-drop interfaces
+- Sliders and range controls
+- Toggle switches with animations
+- Progress steps with animations
+- Expandable/collapsible sections
+- Tabs with slide indicators
+- Image comparison sliders
+- Interactive demos or playgrounds
+
+---
+
+## Consistency Rules
+
+### Maintain Consistency
+**What should stay consistent:**
+- Spacing scale (4px, 8px, 16px, 24px, 32px, 48px, 64px)
+- Border radius values
+- Animation timing (200ms, 300ms, 500ms)
+- Color system (primary, secondary, accent, neutrals)
+- Typography scale
+- Icon style (outline vs filled)
+- Button styles across the app
+- Form element styles
+
+### What Can Vary
+**Project-specific customization:**
+- Color palette (different colors, same system)
+- Layout creativity (grids, asymmetry)
+- Illustration style
+- Animation personality
+- Feature-specific interactions
+- Hero section design
+- Card styling variations
+- Background patterns or textures
+
+---
+
+## Technical Excellence
+
+### Performance
+- Optimize images (WebP, lazy loading)
+- Code splitting for faster loads
+- Debounce search inputs
+- Virtualize long lists
+- Minimize re-renders
+- Use proper memoization
+
+### Accessibility
+- Keyboard navigation throughout
+- ARIA labels where needed
+- Focus indicators visible
+- Screen reader friendly
+- Sufficient color contrast
+- Respect reduced motion preferences
+
+---
+
+## Key Principles
+
+1. **Be Bold** - Don't be afraid to try unique layouts and interactions
+2. **Be Consistent** - Use the same patterns for similar functions
+3. **Be Responsive** - Design works beautifully on all devices
+4. **Be Fast** - Animations are smooth, loading is quick
+5. **Be Accessible** - Everyone can use what you build
+6. **Be Modern** - Use current design trends and technologies
+7. **Be Unique** - Each project should have its own personality
+8. **Be Intuitive** - Users shouldn't need instructions
+ for bestpractices and # Inquiry Confirmation
+
+## Overview
+Develop a polished Inquiry Confirmation page that appears after a guest submits an inquiry. This page presents a concise summary of the inquiry, communicates the expected concierge response time, outlines next steps (including how payment will be handled), and provides navigational CTAs to view other inquiries or return to exploration. The page should integrate smoothly with the existing Inquiry Submission & Management system, reflecting the lifecycle statuses (New, Contacted, Deposit Paid, Confirmed, etc.) and aligning with the Roam Resort brand’s premium, editorial UI. All data handling must be robust to null/undefined values and guarded against common runtime errors.
+
+## Page Description (Full Detail)
+What this page is:
+- A post-submission Confirmation view for an inquiry, focusing on conveying a successful submission, a succinct inquiry summary, the concierge’s expected response time, and concrete next steps including how payment will be handled.
+
+Goals:
+- Reinforce confidence and clarity after submission.
+- Confirm essential details (inquiry reference, stay details, guest count, message snippet).
+- Set expectations for concierge response time and the payment flow (manual Stripe Connect payment when requested by concierge).
+- Provide quick navigation to “View My Inquiries” (profile) and “Return to Destinations.”
+- Trigger or reflect a backend event to store the inquiry with metadata and to track status through its lifecycle.
+
+Connected features:
+- Inquiry Submission & Management: Guest-facing submission, admin/host-facing management, metadata, attachments, and lifecycle tracking.
+- Email confirmation: System should flag or indicate that an email confirmation was sent with a reference to the in-platform inquiry.
+
+UI elements and how they need to look:
+- Confirmation header: Large, editorial headline with the inquiry reference number.
+- Inquiry Summary Card: Key details - dates, destination, guests, room/type if applicable, and a short message snippet.
+- Next Steps Section: 
+  - "Expected Concierge Response Time" with a clearly stated SLA (e.g., within 24–48 hours) and any caveats.
+  - "Payment Flow" subsection describing payment expectations, manual steps, and how and when Stripe Connect will be used (if applicable).
+  - Contact support options and links (email, help center).
+- Email Confirmation Notice: A small section or badge indicating that a confirmation email has been sent; provide a link to re-send (optional) if supported.
+- CTAs:
+  - Primary: View My Inquiries (links to guest profile’s inquiries tab)
+  - Secondary: Return to Destinations (navigates back to destinations page)
+- Attachments/Metadata: If present, show a compact summary of any file attachments that were included with the inquiry (icon + filename, size) or a note if attachments exist; otherwise omit.
+- Visual guidance: Clean, generous spacing with editorial blocks; use muted but warm backgrounds; ensure emphasis on the reference number and next steps.
+
+Integration details:
+- Data must reflect the latest persisted inquiry data from the submission API (ideally via a responsive fetch to the inquiry detail endpoint if needed to populate after submission).
+- Ensure that any user-triggered navigation from this page respects authentication and proper routing guards.
+- Ensure the page handles absence of certain data gracefully (e.g., no attachments, no message snippet, unknown SLA) by providing safe defaults.
+
+## Components to Build
+- InquiryConfirmationPage
+  - Props/state: inquiryId, userContext (guest), loadedData (optional), flags for attachment presence
+  - Sub-components:
+    - ConfirmationHeader
+      - Displays: "Inquiry Confirmed" + reference number
+    - InquirySummaryCard
+      - Displays: destination, dates, guests, snippet
+      - Guard for missing fields
+    - NextStepsPanel
+      - Displays: Concierge response SLA, payment flow details, support links
+    - EmailConfirmationBadge
+      - Displays status about email confirmation; optional link to re-send
+    - ActionsBar
+      - ViewMyInquiriesButton
+      - ReturnToDestinationsButton
+  - Data handling: Use data ?? [] guarded rendering; always validate array/objects before mapping or rendering lists
+- AttachmentRow (optional)
+  - Displays: file icon, name, size; only if attachments exist
+- LoadingSkeletons (optional)
+  - For improved UX while data loads
+
+## Implementation Requirements
+
+### Frontend
+- Routing & Page
+  - Route: /inquiries/confirmation/:inquiryId (or similar) with parameterized ID
+  - Redirects and guards if user not authenticated
+- UI Components
+  - Card components with soft shadows, rounded corners (8–12px), light borders
+  - Typography: Follow design system with Playfair Display (Headlines) and Inter/Lato for UI/body
+  - Buttons: Bronze-gold fill (#A97C50) with subtle shadow; hover states brighten/darken
+  - Typography treatments: Section labels uppercase, with ample spacing
+- State Management
+  - useState<T[]>([]) pattern for any array state (e.g., attachments)
+  - useEffect calls to fetch inquiry data using given inquiryId
+  - Guard all array/map calls: (attachments ?? []).map(...) or Array.isArray(attachments) ? attachments.map(...) : []
+- Data Handling & Safety
+  - Initialize all arrays with defaults and provide fallback strings for missing fields
+  - Use optional chaining when accessing nested data
+  - Ensure no runtime errors if data is null/undefined
+- Accessibility
+  - Semantic HTML, ARIA labels for interactive elements
+  - Keyboard navigable CTAs
+  - Color contrast compliance with the provided palette
+- Performance
+  - Minimal re-renders; memoization where appropriate; lazy-load any optional sections if data is heavy
+
+### Backend
+- APIs
+  - GET /inquiries/:inquiryId to fetch detail (reference, summary fields, status, attachments, eta)
+  - POST /inquiries to submit a new inquiry (already existing in flow)
+  - PATCH /inquiries/:inquiryId to update status or notes (for admin/host)
+- Database Tables (Core schema)
+  - inquiries
+    - id (UUID)
+    - user_id (FK to users)
+    - destination_id (FK to destinations)
+    - start_date, end_date
+    - guests
+    - message (text)
+    - reference (string)
+    - status (enum: New, Contacted, DepositPaid, Confirmed, Closed)
+    - attachments (JSONB) -> array of { id, filename, mimeType, url, size }
+    - created_at, updated_at
+    - payment_required (boolean)
+    - payment_state (enum: Pending, Completed, Failed, NotRequired)
+  - inquiries_metadata (optional for extensibility)
+- Validation
+  - Ensure required fields on submission; safe defaults on retrieval
+  - Ensure attachments are sanitized and do not contain harmful content
+- Security
+  - Ensure endpoints validate user authentication and authorization to view specific inquiries
+  - Admin endpoints restricted to Concierge role
+- Email/Notifications
+  - Trigger email confirmation on submission (existing flow)
+  - Optional: push notification to guest with reference
+
+### Integration
+- Data flow:
+  - After submission, frontend fetches inquiry detail using inquiryId to render confirmation
+  - If necessary, fetch along with attachments; guard null results
+  - Ensure consistency between submission payload and detail view
+- State synchronization:
+  - If the inquiry status changes in the admin panel, consider a real-time or polling approach for the confirmation page to reflect updated status (optional)
+
+## User Experience Flow
+1. Guest submits an inquiry via the Stay Inquiry form
+2. System saves inquiry with metadata, attachments, and a generated reference
+3. User is navigated to /inquiries/confirmation/:inquiryId
+4. Page loads: shows Confirmation Header with reference, Inquiry Summary Card (destination, dates, guests, snippet), Next Steps (response time, payment flow), Email Confirmation badge, and CTAs
+5. User can click:
+   - View My Inquiries -> navigates to guest profile inquiries tab
+   - Return to Destinations -> navigates to destinations landing
+6. If email confirmation was sent, the badge confirms; otherwise, a subtle prompt may offer to re-send
+7. Admin/Concierge side updates status as needed; frontend should reflect status if data updates (optional real-time)
+
+## Technical Specifications
+
+Data Models: 
+- inquiries
+  - id: UUID
+  - user_id: UUID
+  - destination_id: UUID
+  - start_date: date
+  - end_date: date
+  - guests: integer
+  - message: text
+  - reference: string
+  - status: enum ('New','Contacted','DepositPaid','Confirmed','Closed')
+  - attachments: JSONB (array of { id, filename, mimeType, url, size })
+  - created_at: timestamp
+  - updated_at: timestamp
+  - payment_required: boolean
+  - payment_state: enum ('Pending','Completed','Failed','NotRequired')
+- destinations (existing)
+  - id, name, location, etc.
+- users (existing)
+  - id, email, name, etc.
+
+API Endpoints:
+- GET /inquiries/:inquiryId
+  - Response: { id, reference, destination: {id,name}, start_date, end_date, guests, messageSnippet, status, attachments: [{filename,url,mimeType,size, id}], payment_required, payment_state, created_at, updated_at, email_confirmed }
+- PATCH /inquiries/:inquiryId
+  - Body: { status?: string, internalNotes?: string }
+- GET /inquiries?userId=... (optional, for in-page consistency)
+- POST /inquiries (existing)
+
+Security:
+- Authenticate guest user for GET/inquiries/:inquiryId
+- Admin/Concierge endpoints protected by role (admin/concierge)
+- JWT or session-based auth as per project standard
+
+Validation:
+- Ensure inquiryId param is a valid UUID
+- Validate response shapes: Array.isArray(attachments) ? attachments : []
+- Use data ?? [] patterns on all array results
+- Use destructuring with defaults for API responses: const { attachments = [], reference = '', destination = {}, message = '', status = 'New' } = response ?? {}
+
+Optional: real-time updates via WebSocket or long-polling for status changes (if the platform supports)
+
+## Acceptance Criteria
+- [ ] Inquiry Confirmation page renders with a valid reference, destination, dates, guest count, and message snippet; all fields gracefully degrade if data is missing
+- [ ] No runtime errors when any field is null/undefined; all arrays guarded: (attachments ?? []).map(...)
+- [ ] Buttons function correctly: View My Inquiries navigates to guest profile; Return to Destinations navigates home or destinations page
+- [ ] Email confirmation badge displays correctly when email_confirmed is true
+- [ ] Payment flow description clearly communicates manual Stripe Connect steps and when they occur
+- [ ] Data fetching uses safe defaults: const inquiry = response?.data ?? {}; const attachments = Array.isArray(inquiry.attachments) ? inquiry.attachments : []
+- [ ] Admin/concierge flow remains compatible with lifecycle statuses and supports updating status and internal notes (for future extension)
+
+UI/UX Guidelines
+Apply the project's design system:
+- Preserve the luxury editorial aesthetic
+- Maintain readability, generous spacing, and clear hierarchy
+- Use the specified color palette and typography
+- Ensure accessible components with ARIA labels and keyboard navigation
+- Implement hover states, focus rings, and subtle micro-interactions as described
+
+Visual Style
+
+Color Palette:
+- Primary: #23212A
+- Secondary: #ECE1D4
+- Accent: #A97C50
+- Text: #F8F6F3 (headings), #3A3732 (body on light backgrounds)
+- Details: Gradients from #B49587 to #23212A, #D1B7A1
+- Usage guidance: Bronze-gold (#A97C50) for CTAs; muted tones for backgrounds; avoid pure black
+
+Typography & Layout:
+- Headlines: Playfair Display (or similar) for headlines
+- Body/UI: Inter or Lato
+- Hierarchy: Bold/semibold headlines and CTAs; regular body text
+- Alignment: Centered hero/CTA zones; left-aligned content sections
+- Spacing: 40–80px vertical spacing between sections; 24–32px inner padding in cards
+
+Key Design Elements
+- Cards: 8–12px radius; light borders; soft drop shadows; hover scale and bronze border accent
+- Navigation: Top navbar; transitions on scroll; mobile hamburger with slide-out
+- Data Visualization: Minimal charts (if used) with bronze-gold and sand tones
+- Interactive Elements: Bronze-gold buttons with white/navy text; soft focus rings; smooth modals and tooltips
+
+Design Philosophy
+- Modern luxury editorial: calm, warm, premium
+- Clarity and high-touch experience
+- Visual storytelling with editorial typography and large imagery
+- Serene, intuitive UX that fosters trust and exploration
+
+Mandatory Coding Standards — Runtime Safety
+
+CRITICAL: Follow these rules in ALL generated code to prevent runtime crashes.
+
+1. Supabase query results: Always use nullish coalescing — data ?? [].
+2. Array methods: Guard all calls:
+   - (items ?? []).map(...)
+   - Array.isArray(items) ? items.map(...) : []
+3. React useState for arrays/objects: Initialize with correct type:
+   - useState<T[]>([])
+4. API response shapes: Validate:
+   - const list = Array.isArray(response?.data) ? response.data : []
+5. Optional chaining: Use obj?.property?.nested
+6. Destructuring with defaults: const { items = [], count = 0 } = response ?? {}
+
+Project Context Notes
+- TARGET PAGE: Inquiry Confirmation
+- This page is part of Roam Resort’s Inquiry-Based Luxury Resort Platform (V1)
+- User roles: Guest, Host, Concierge (Admin)
+- Core flows include guest inquiry submission, concierge management, and manual payment via Stripe Connect
+- No external API integrations required for this page beyond internal backend endpoints
+
+Deliverables
+- Fully functional Inquiry Confirmation page as a React component (or framework-equivalent per project stack)
+- Safe data handling with guards against null/undefined values
+- Clean separation of concerns: page, subcomponents, and API interaction layer
+- Documentation within code (comments) explaining data guards and defaults
+- Tests (unit/integration) that verify:
+  - Safe rendering when data fields are missing
+  - Proper guarding of array operations
+  - Proper routing guards for authenticated access
+  - Correct rendering of CTA actions and indicators (reference, status, email confirmation)
+
+Notes for AI Development Tool
+- Prioritize robust data handling and defensive programming
+- Use the data ?? [] pattern for all array-like data
+- Ensure all array manipulations are guarded with Array.isArray checks or (arr ?? []).map(...)
+- Use proper default states: useState<InquiryAttachment[]>([]) or useState<any[]>([]) as appropriate
+- Validate all inputs from API responses before rendering
+- Provide clear comments on each component detailing data dependencies and guards
+- Include accessibility considerations in the component structure (aria-labels, semantic HTML)
+
+This prompt equips an AI development tool to build a complete, safe, and visually consistent Inquiry Confirmation page that integrates with the existing Inquiry Submission & Management system while upholding the Roam Resort brand and runtime safety requirements. for style.
+
+CRITICAL DESIGN REQUIREMENTS:
+- You MUST follow ALL design principles and patterns specified in the Design Reference above
+- Do NOT deviate from the design specifications without explicit user permission
+- Implement ALL visual design elements (colors, typography, spacing, shadows, animations) as specified
+- Follow the layout patterns and component designs exactly as documented
+- Ensure all interactions and micro-animations match the reference specifications
+
+CRITICAL TECHNICAL REQUIREMENTS:
+- React 18.3.1, React Router 6.30.1
+- Tailwind CSS v3 with tailwind.config.js and custom keyframes
+- @tailwindcss/typography plugin for rich text content
+- Tailwind CSS animations (NOT Motion library or framer-motion)
+- Sonner for toasts
+- Recharts for data visualization
+- Native fetch() with API utilities in src/lib/api.ts
+- Design system with CSS custom properties
+- Use RGB color values for theming
+- When Supabase is configured: use Edge Functions for LLM and server-only logic; never expose API keys in the client
+
+=== TASK ===
+# Inquiry Confirmation
+
+## Overview
+Develop a polished Inquiry Confirmation page that appears after a guest submits an inquiry. This page presents a concise summary of the inquiry, communicates the expected concierge response time, outlines next steps (including how payment will be handled), and provides navigational CTAs to view other inquiries or return to exploration. The page should integrate smoothly with the existing Inquiry Submission & Management system, reflecting the lifecycle statuses (New, Contacted, Deposit Paid, Confirmed, etc.) and aligning with the Roam Resort brand’s premium, editorial UI. All data handling must be robust to null/undefined values and guarded against common runtime errors.
+
+## Page Description (Full Detail)
+What this page is:
+- A post-submission Confirmation view for an inquiry, focusing on conveying a successful submission, a succinct inquiry summary, the concierge’s expected response time, and concrete next steps including how payment will be handled.
+
+Goals:
+- Reinforce confidence and clarity after submission.
+- Confirm essential details (inquiry reference, stay details, guest count, message snippet).
+- Set expectations for concierge response time and the payment flow (manual Stripe Connect payment when requested by concierge).
+- Provide quick navigation to “View My Inquiries” (profile) and “Return to Destinations.”
+- Trigger or reflect a backend event to store the inquiry with metadata and to track status through its lifecycle.
+
+Connected features:
+- Inquiry Submission & Management: Guest-facing submission, admin/host-facing management, metadata, attachments, and lifecycle tracking.
+- Email confirmation: System should flag or indicate that an email confirmation was sent with a reference to the in-platform inquiry.
+
+UI elements and how they need to look:
+- Confirmation header: Large, editorial headline with the inquiry reference number.
+- Inquiry Summary Card: Key details - dates, destination, guests, room/type if applicable, and a short message snippet.
+- Next Steps Section: 
+  - "Expected Concierge Response Time" with a clearly stated SLA (e.g., within 24–48 hours) and any caveats.
+  - "Payment Flow" subsection describing payment expectations, manual steps, and how and when Stripe Connect will be used (if applicable).
+  - Contact support options and links (email, help center).
+- Email Confirmation Notice: A small section or badge indicating that a confirmation email has been sent; provide a link to re-send (optional) if supported.
+- CTAs:
+  - Primary: View My Inquiries (links to guest profile’s inquiries tab)
+  - Secondary: Return to Destinations (navigates back to destinations page)
+- Attachments/Metadata: If present, show a compact summary of any file attachments that were included with the inquiry (icon + filename, size) or a note if attachments exist; otherwise omit.
+- Visual guidance: Clean, generous spacing with editorial blocks; use muted but warm backgrounds; ensure emphasis on the reference number and next steps.
+
+Integration details:
+- Data must reflect the latest persisted inquiry data from the submission API (ideally via a responsive fetch to the inquiry detail endpoint if needed to populate after submission).
+- Ensure that any user-triggered navigation from this page respects authentication and proper routing guards.
+- Ensure the page handles absence of certain data gracefully (e.g., no attachments, no message snippet, unknown SLA) by providing safe defaults.
+
+## Components to Build
+- InquiryConfirmationPage
+  - Props/state: inquiryId, userContext (guest), loadedData (optional), flags for attachment presence
+  - Sub-components:
+    - ConfirmationHeader
+      - Displays: "Inquiry Confirmed" + reference number
+    - InquirySummaryCard
+      - Displays: destination, dates, guests, snippet
+      - Guard for missing fields
+    - NextStepsPanel
+      - Displays: Concierge response SLA, payment flow details, support links
+    - EmailConfirmationBadge
+      - Displays status about email confirmation; optional link to re-send
+    - ActionsBar
+      - ViewMyInquiriesButton
+      - ReturnToDestinationsButton
+  - Data handling: Use data ?? [] guarded rendering; always validate array/objects before mapping or rendering lists
+- AttachmentRow (optional)
+  - Displays: file icon, name, size; only if attachments exist
+- LoadingSkeletons (optional)
+  - For improved UX while data loads
+
+## Implementation Requirements
+
+### Frontend
+- Routing & Page
+  - Route: /inquiries/confirmation/:inquiryId (or similar) with parameterized ID
+  - Redirects and guards if user not authenticated
+- UI Components
+  - Card components with soft shadows, rounded corners (8–12px), light borders
+  - Typography: Follow design system with Playfair Display (Headlines) and Inter/Lato for UI/body
+  - Buttons: Bronze-gold fill (#A97C50) with subtle shadow; hover states brighten/darken
+  - Typography treatments: Section labels uppercase, with ample spacing
+- State Management
+  - useState<T[]>([]) pattern for any array state (e.g., attachments)
+  - useEffect calls to fetch inquiry data using given inquiryId
+  - Guard all array/map calls: (attachments ?? []).map(...) or Array.isArray(attachments) ? attachments.map(...) : []
+- Data Handling & Safety
+  - Initialize all arrays with defaults and provide fallback strings for missing fields
+  - Use optional chaining when accessing nested data
+  - Ensure no runtime errors if data is null/undefined
+- Accessibility
+  - Semantic HTML, ARIA labels for interactive elements
+  - Keyboard navigable CTAs
+  - Color contrast compliance with the provided palette
+- Performance
+  - Minimal re-renders; memoization where appropriate; lazy-load any optional sections if data is heavy
+
+### Backend
+- APIs
+  - GET /inquiries/:inquiryId to fetch detail (reference, summary fields, status, attachments, eta)
+  - POST /inquiries to submit a new inquiry (already existing in flow)
+  - PATCH /inquiries/:inquiryId to update status or notes (for admin/host)
+- Database Tables (Core schema)
+  - inquiries
+    - id (UUID)
+    - user_id (FK to users)
+    - destination_id (FK to destinations)
+    - start_date, end_date
+    - guests
+    - message (text)
+    - reference (string)
+    - status (enum: New, Contacted, DepositPaid, Confirmed, Closed)
+    - attachments (JSONB) -> array of { id, filename, mimeType, url, size }
+    - created_at, updated_at
+    - payment_required (boolean)
+    - payment_state (enum: Pending, Completed, Failed, NotRequired)
+  - inquiries_metadata (optional for extensibility)
+- Validation
+  - Ensure required fields on submission; safe defaults on retrieval
+  - Ensure attachments are sanitized and do not contain harmful content
+- Security
+  - Ensure endpoints validate user authentication and authorization to view specific inquiries
+  - Admin endpoints restricted to Concierge role
+- Email/Notifications
+  - Trigger email confirmation on submission (existing flow)
+  - Optional: push notification to guest with reference
+
+### Integration
+- Data flow:
+  - After submission, frontend fetches inquiry detail using inquiryId to render confirmation
+  - If necessary, fetch along with attachments; guard null results
+  - Ensure consistency between submission payload and detail view
+- State synchronization:
+  - If the inquiry status changes in the admin panel, consider a real-time or polling approach for the confirmation page to reflect updated status (optional)
+
+## User Experience Flow
+1. Guest submits an inquiry via the Stay Inquiry form
+2. System saves inquiry with metadata, attachments, and a generated reference
+3. User is navigated to /inquiries/confirmation/:inquiryId
+4. Page loads: shows Confirmation Header with reference, Inquiry Summary Card (destination, dates, guests, snippet), Next Steps (response time, payment flow), Email Confirmation badge, and CTAs
+5. User can click:
+   - View My Inquiries -> navigates to guest profile inquiries tab
+   - Return to Destinations -> navigates to destinations landing
+6. If email confirmation was sent, the badge confirms; otherwise, a subtle prompt may offer to re-send
+7. Admin/Concierge side updates status as needed; frontend should reflect status if data updates (optional real-time)
+
+## Technical Specifications
+
+Data Models: 
+- inquiries
+  - id: UUID
+  - user_id: UUID
+  - destination_id: UUID
+  - start_date: date
+  - end_date: date
+  - guests: integer
+  - message: text
+  - reference: string
+  - status: enum ('New','Contacted','DepositPaid','Confirmed','Closed')
+  - attachments: JSONB (array of { id, filename, mimeType, url, size })
+  - created_at: timestamp
+  - updated_at: timestamp
+  - payment_required: boolean
+  - payment_state: enum ('Pending','Completed','Failed','NotRequired')
+- destinations (existing)
+  - id, name, location, etc.
+- users (existing)
+  - id, email, name, etc.
+
+API Endpoints:
+- GET /inquiries/:inquiryId
+  - Response: { id, reference, destination: {id,name}, start_date, end_date, guests, messageSnippet, status, attachments: [{filename,url,mimeType,size, id}], payment_required, payment_state, created_at, updated_at, email_confirmed }
+- PATCH /inquiries/:inquiryId
+  - Body: { status?: string, internalNotes?: string }
+- GET /inquiries?userId=... (optional, for in-page consistency)
+- POST /inquiries (existing)
+
+Security:
+- Authenticate guest user for GET/inquiries/:inquiryId
+- Admin/Concierge endpoints protected by role (admin/concierge)
+- JWT or session-based auth as per project standard
+
+Validation:
+- Ensure inquiryId param is a valid UUID
+- Validate response shapes: Array.isArray(attachments) ? attachments : []
+- Use data ?? [] patterns on all array results
+- Use destructuring with defaults for API responses: const { attachments = [], reference = '', destination = {}, message = '', status = 'New' } = response ?? {}
+
+Optional: real-time updates via WebSocket or long-polling for status changes (if the platform supports)
+
+## Acceptance Criteria
+- [ ] Inquiry Confirmation page renders with a valid reference, destination, dates, guest count, and message snippet; all fields gracefully degrade if data is missing
+- [ ] No runtime errors when any field is null/undefined; all arrays guarded: (attachments ?? []).map(...)
+- [ ] Buttons function correctly: View My Inquiries navigates to guest profile; Return to Destinations navigates home or destinations page
+- [ ] Email confirmation badge displays correctly when email_confirmed is true
+- [ ] Payment flow description clearly communicates manual Stripe Connect steps and when they occur
+- [ ] Data fetching uses safe defaults: const inquiry = response?.data ?? {}; const attachments = Array.isArray(inquiry.attachments) ? inquiry.attachments : []
+- [ ] Admin/concierge flow remains compatible with lifecycle statuses and supports updating status and internal notes (for future extension)
+
+UI/UX Guidelines
+Apply the project's design system:
+- Preserve the luxury editorial aesthetic
+- Maintain readability, generous spacing, and clear hierarchy
+- Use the specified color palette and typography
+- Ensure accessible components with ARIA labels and keyboard navigation
+- Implement hover states, focus rings, and subtle micro-interactions as described
+
+Visual Style
+
+Color Palette:
+- Primary: #23212A
+- Secondary: #ECE1D4
+- Accent: #A97C50
+- Text: #F8F6F3 (headings), #3A3732 (body on light backgrounds)
+- Details: Gradients from #B49587 to #23212A, #D1B7A1
+- Usage guidance: Bronze-gold (#A97C50) for CTAs; muted tones for backgrounds; avoid pure black
+
+Typography & Layout:
+- Headlines: Playfair Display (or similar) for headlines
+- Body/UI: Inter or Lato
+- Hierarchy: Bold/semibold headlines and CTAs; regular body text
+- Alignment: Centered hero/CTA zones; left-aligned content sections
+- Spacing: 40–80px vertical spacing between sections; 24–32px inner padding in cards
+
+Key Design Elements
+- Cards: 8–12px radius; light borders; soft drop shadows; hover scale and bronze border accent
+- Navigation: Top navbar; transitions on scroll; mobile hamburger with slide-out
+- Data Visualization: Minimal charts (if used) with bronze-gold and sand tones
+- Interactive Elements: Bronze-gold buttons with white/navy text; soft focus rings; smooth modals and tooltips
+
+Design Philosophy
+- Modern luxury editorial: calm, warm, premium
+- Clarity and high-touch experience
+- Visual storytelling with editorial typography and large imagery
+- Serene, intuitive UX that fosters trust and exploration
+
+Mandatory Coding Standards — Runtime Safety
+
+CRITICAL: Follow these rules in ALL generated code to prevent runtime crashes.
+
+1. Supabase query results: Always use nullish coalescing — data ?? [].
+2. Array methods: Guard all calls:
+   - (items ?? []).map(...)
+   - Array.isArray(items) ? items.map(...) : []
+3. React useState for arrays/objects: Initialize with correct type:
+   - useState<T[]>([])
+4. API response shapes: Validate:
+   - const list = Array.isArray(response?.data) ? response.data : []
+5. Optional chaining: Use obj?.property?.nested
+6. Destructuring with defaults: const { items = [], count = 0 } = response ?? {}
+
+Project Context Notes
+- TARGET PAGE: Inquiry Confirmation
+- This page is part of Roam Resort’s Inquiry-Based Luxury Resort Platform (V1)
+- User roles: Guest, Host, Concierge (Admin)
+- Core flows include guest inquiry submission, concierge management, and manual payment via Stripe Connect
+- No external API integrations required for this page beyond internal backend endpoints
+
+Deliverables
+- Fully functional Inquiry Confirmation page as a React component (or framework-equivalent per project stack)
+- Safe data handling with guards against null/undefined values
+- Clean separation of concerns: page, subcomponents, and API interaction layer
+- Documentation within code (comments) explaining data guards and defaults
+- Tests (unit/integration) that verify:
+  - Safe rendering when data fields are missing
+  - Proper guarding of array operations
+  - Proper routing guards for authenticated access
+  - Correct rendering of CTA actions and indicators (reference, status, email confirmation)
+
+Notes for AI Development Tool
+- Prioritize robust data handling and defensive programming
+- Use the data ?? [] pattern for all array-like data
+- Ensure all array manipulations are guarded with Array.isArray checks or (arr ?? []).map(...)
+- Use proper default states: useState<InquiryAttachment[]>([]) or useState<any[]>([]) as appropriate
+- Validate all inputs from API responses before rendering
+- Provide clear comments on each component detailing data dependencies and guards
+- Include accessibility considerations in the component structure (aria-labels, semantic HTML)
+
+This prompt equips an AI development tool to build a complete, safe, and visually consistent Inquiry Confirmation page that integrates with the existing Inquiry Submission & Management system while upholding the Roam Resort brand and runtime safety requirements.
+
+=== SUCCESS CRITERIA ===
+# Success Criteria Checklist
+
+## Code Quality
+
+### TypeScript
+- [ ] No TypeScript errors (`tsc --noEmit` passes)
+- [ ] All functions and components have proper type definitions
+- [ ] No `any` types used (use `unknown` if type is truly unknown)
+- [ ] Props interfaces defined for all components
+- [ ] API responses have type definitions
+
+### Code Standards
+- [ ] All imports use path aliases (@/ prefix)
+- [ ] Components follow the established naming convention
+- [ ] Files are organized in correct directories
+- [ ] No unused imports or variables
+- [ ] Consistent code formatting
+
+## Component Implementation
+
+### UI Components
+- [ ] Use shadcn/ui components (Button, Card, Input, etc.) instead of building from scratch
+- [ ] All interactive elements have hover states
+- [ ] Components use the `cn()` utility for class merging
+- [ ] Proper TypeScript props interfaces defined
+- [ ] Components are responsive (mobile, tablet, desktop)
+
+### Animations
+- [ ] Motion library used for all animations (NOT framer-motion)
+- [ ] Page transitions implemented with fade/slide
+- [ ] Interactive elements have whileHover/whileTap animations
+- [ ] List items use stagger animations where appropriate
+- [ ] Animations respect `prefers-reduced-motion`
+
+### Icons
+- [ ] Lucide React icons used consistently
+- [ ] Icons have consistent sizing (h-4 w-4, h-5 w-5, h-6 w-6)
+- [ ] Icon colors match design system (text-primary, text-muted-foreground)
+
+## Data Management
+
+### React Query
+- [ ] All data fetching uses React Query hooks
+- [ ] Query keys follow the established pattern
+- [ ] Mutations invalidate related queries
+- [ ] Loading and error states handled
+- [ ] Optimistic updates implemented where appropriate
+
+### Forms
+- [ ] Forms use react-hook-form
+- [ ] Validation uses Zod schemas
+- [ ] Error messages display properly
+- [ ] Form submission shows loading state
+- [ ] Success/error feedback via toast notifications
+
+### API Layer
+- [ ] API functions in src/api/ directory
+- [ ] Axios used for HTTP requests
+- [ ] Proper error handling with try/catch
+- [ ] Auth tokens handled by interceptors
+- [ ] Type-safe API function signatures
+
+## User Experience
+
+### Notifications
+- [ ] Sonner toasts used for all notifications
+- [ ] Success actions show success toast
+- [ ] Errors show descriptive error messages
+- [ ] Loading states show toast.loading()
+
+### Loading States
+- [ ] Skeleton loaders shown during data fetch
+- [ ] Buttons show loading state during submission
+- [ ] Disabled state applied during async operations
+
+### Error Handling
+- [ ] Network errors caught and displayed
+- [ ] User-friendly error messages (no stack traces)
+- [ ] Fallback UI for error states
+- [ ] No unhandled promise rejections
+
+## Navigation
+
+### Route Accessibility
+- [ ] All pages have routes defined in router configuration
+- [ ] Every page is accessible through navigation (menu, sidebar, or direct URL)
+- [ ] Main pages (Dashboard, Home, Settings, etc.) accessible from primary navigation
+- [ ] Secondary pages accessible through contextual navigation or direct links
+- [ ] Deep-linked pages have breadcrumbs or back navigation
+- [ ] 404/Not Found page implemented for invalid routes
+- [ ] Protected routes have proper authentication checks
+- [ ] Navigation state persists across page refreshes where appropriate
+
+### Navigation UX
+- [ ] Active route highlighted in navigation menu
+- [ ] Clear visual hierarchy in navigation structure
+- [ ] Mobile navigation is accessible and usable
+- [ ] Navigation items have hover/focus states
+- [ ] Nested routes show parent-child relationships
+- [ ] User can always return to main areas (Dashboard/Home)
+
+## Styling
+
+### Tailwind CSS
+- [ ] Tailwind v3 classes used
+- [ ] HSL color variables from design system
+- [ ] Custom CSS properties used where defined
+- [ ] Responsive breakpoints: mobile-first approach
+- [ ] Dark mode support via CSS variables
+
+### Design System
+- [ ] Colors use theme variables (primary, secondary, accent)
+- [ ] Spacing uses Tailwind scale (p-4, gap-6, etc.)
+- [ ] Border radius uses theme values (rounded-lg)
+- [ ] Shadows use theme values (shadow-card)
+- [ ] Typography follows Inter font system
+
+## Accessibility
+
+- [ ] Semantic HTML elements used
+- [ ] Buttons have descriptive labels
+- [ ] Forms have proper labels
+- [ ] Focus states visible on interactive elements
+- [ ] Color contrast meets WCAG standards
+
+## Performance
+
+- [ ] No console.log statements in production code
+- [ ] No console errors in browser
+- [ ] Images optimized (WebP, lazy loading)
+- [ ] Large lists use virtualization if needed
+- [ ] React Query cache configured appropriately
+
+## Testing Readiness
+
+- [ ] Components structured for easy testing
+- [ ] Business logic separated from presentation
+- [ ] Mock-friendly API layer
+- [ ] No hardcoded values that should be configurable
+- [ ] Environment variables properly configured
+
+## Final Checks
+
+- [ ] Code builds without errors (`npm run build`)
+- [ ] Development server runs without errors (`npm run dev`)
+- [ ] No TypeScript errors in editor
+- [ ] Browser console is clean (no errors or warnings)
+- [ ] All functionality works as expected
+- [ ] Code follows existing project patterns
+- [ ] Changes are consistent with the rest of the codebase
+
+
+
+IMPORTANT: ALL styling and design decisions must follow the Design Reference section above EXACTLY. Do not make arbitrary design choices.
+
+Analyze the existing project structure and implement the task following the patterns already established. Ensure all success criteria are met.
