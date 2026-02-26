@@ -28,6 +28,17 @@ import { cn } from '@/lib/utils'
 import type { User } from '@/types'
 import type { PreferredContactMethod } from '@/types/contact-inquiry'
 
+const SUBJECT_TO_CATEGORY: Record<string, 'general' | 'concierge' | 'billing' | 'technical'> = {
+  'General Question': 'general',
+  'Concierge Request': 'concierge',
+  'Payment Inquiry': 'billing',
+  'Technical Support': 'technical',
+  'Booking & Availability': 'general',
+  'Cancellation or Changes': 'general',
+  'Feedback': 'general',
+  'Other': 'general',
+}
+
 const contactFormSchema = z
   .object({
     name: z
@@ -46,6 +57,8 @@ const contactFormSchema = z
     guests: z.coerce.number().min(0).max(20).nullable().optional(),
     inquiryReference: z.string().max(50).nullable().optional(),
     preferredContactMethod: z.enum(['email', 'phone']).nullable().optional(),
+    newsletterOptIn: z.boolean().optional(),
+    honeypot: z.string().max(0).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.subject === 'Concierge Request') {
@@ -123,6 +136,8 @@ export function ContactForm({
       guests: null,
       inquiryReference: '',
       preferredContactMethod: 'email',
+      newsletterOptIn: false,
+      honeypot: '',
     },
   })
 
@@ -154,6 +169,7 @@ export function ContactForm({
         email: data.email,
         subject: data.subject,
         message: data.message,
+        category: SUBJECT_TO_CATEGORY[data.subject] ?? 'general',
         destinationId: (destinationId ?? data.destinationId) ?? undefined,
         startDate: data.startDate?.trim() || undefined,
         endDate: data.endDate?.trim() || undefined,
@@ -162,6 +178,8 @@ export function ContactForm({
         isConcierge,
         preferredContactMethod: (data.preferredContactMethod as PreferredContactMethod) ?? 'email',
         userId: user?.id ?? undefined,
+        newsletterOptIn: data.newsletterOptIn ?? false,
+        honeypot: data.honeypot ?? '',
       })
       setSubmissionResult({
         id: result.id ?? '',
@@ -358,6 +376,32 @@ export function ContactForm({
               className="mt-2"
               {...form.register('inquiryReference')}
             />
+          </div>
+
+          <div
+            className="absolute -left-[9999px] opacity-0 pointer-events-none"
+            aria-hidden="true"
+          >
+            <Label htmlFor="contact-website">Website</Label>
+            <Input
+              id="contact-website"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              {...form.register('honeypot')}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="contact-newsletter"
+              className="rounded border-border"
+              {...form.register('newsletterOptIn')}
+            />
+            <Label htmlFor="contact-newsletter" className="font-normal cursor-pointer">
+              I&apos;d like to receive occasional updates and offers from Roam Resort
+            </Label>
           </div>
 
           <div>

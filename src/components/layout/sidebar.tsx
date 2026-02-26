@@ -22,6 +22,7 @@ import {
   Settings,
   ClipboardList,
   ShieldCheck,
+  Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -125,6 +126,8 @@ export const adminSidebarLinks: SidebarLink[] = [
   { to: '/admin/concierge', label: 'Overview', icon: <LayoutDashboard className="h-5 w-5" />, activePaths: ['/admin'] },
   { to: '/admin/inquiries', label: 'Stay Inquiries', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/contact-inquiries', label: 'Contact Inquiries', icon: <FileText className="h-5 w-5" /> },
+  { to: '/admin/email-templates', label: 'Email Templates', icon: <Mail className="h-5 w-5" /> },
+  { to: '/admin/email-jobs', label: 'Email & Suppression', icon: <Mail className="h-5 w-5" /> },
   { to: '/admin/exports', label: 'CSV Export / Reports', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/privacy-requests', label: 'Privacy Requests', icon: <ShieldCheck className="h-5 w-5" /> },
   { to: '/admin/audit-logs', label: 'Audit Logs', icon: <ClipboardList className="h-5 w-5" /> },

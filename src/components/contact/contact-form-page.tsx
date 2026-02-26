@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import { DestinationSelector } from '@/components/contact/destination-selector'
 import { submitContactInquiry } from '@/api/contact-inquiries'
 import { useAuth } from '@/contexts/auth-context'
@@ -25,6 +26,17 @@ import {
   isConciergeSubject,
 } from '@/lib/validation/contact-inquiry-validation'
 import { cn } from '@/lib/utils'
+
+const SUBJECT_TO_CATEGORY: Record<string, 'general' | 'concierge' | 'billing' | 'technical'> = {
+  'General Question': 'general',
+  'Concierge Request': 'concierge',
+  'Payment Inquiry': 'billing',
+  'Technical Support': 'technical',
+  'Booking & Availability': 'general',
+  'Cancellation or Changes': 'general',
+  'Feedback': 'general',
+  'Other': 'general',
+}
 
 const contactFormSchema = z
   .object({
@@ -41,6 +53,8 @@ const contactFormSchema = z
     guests: z.coerce.number().min(0).max(99).optional(),
     inquiryReference: z.string().max(50).optional(),
     preferredContactMethod: z.string().optional(),
+    newsletterOptIn: z.boolean().optional(),
+    honeypot: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -90,6 +104,8 @@ export function ContactFormPage({
       guests: 0,
       inquiryReference: '',
       preferredContactMethod: 'email',
+      newsletterOptIn: false,
+      honeypot: '',
     },
   })
 
@@ -125,6 +141,7 @@ export function ContactFormPage({
         email: data.email.trim(),
         subject: data.subject,
         message: data.message.trim(),
+        category: SUBJECT_TO_CATEGORY[data.subject] ?? 'general',
         destinationId: data.destinationId?.trim() || undefined,
         startDate: data.startDate?.trim() || undefined,
         endDate: data.endDate?.trim() || undefined,
@@ -133,6 +150,8 @@ export function ContactFormPage({
         isConcierge: wantsConcierge,
         preferredContactMethod: data.preferredContactMethod || undefined,
         userId: effectiveUser?.id || undefined,
+        newsletterOptIn: data.newsletterOptIn ?? false,
+        honeypot: data.honeypot ?? '',
       }
 
       const result = await submitContactInquiry(payload)
@@ -150,6 +169,8 @@ export function ContactFormPage({
         guests: 0,
         inquiryReference: '',
         preferredContactMethod: 'email',
+        newsletterOptIn: false,
+        honeypot: '',
       })
       toast.success('Message sent. Our concierge team will respond within 24 hours.')
     } catch (err) {
@@ -382,6 +403,28 @@ export function ContactFormPage({
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Honeypot - hidden from users, bots fill it */}
+            <div className="absolute -left-[9999px] opacity-0" aria-hidden="true">
+              <Label htmlFor="contact-website">Website</Label>
+              <Input
+                id="contact-website"
+                tabIndex={-1}
+                autoComplete="off"
+                {...form.register('honeypot')}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch
+                id="contact-newsletter"
+                checked={form.watch('newsletterOptIn') ?? false}
+                onCheckedChange={(v) => form.setValue('newsletterOptIn', v)}
+              />
+              <Label htmlFor="contact-newsletter" className="text-sm font-normal cursor-pointer">
+                Send me occasional updates and offers from Roam Resort
+              </Label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

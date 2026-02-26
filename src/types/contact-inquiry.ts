@@ -47,11 +47,14 @@ export interface ContactInquiry {
 
 export type PreferredContactMethod = 'email' | 'phone'
 
+export type ContactCategory = 'general' | 'concierge' | 'billing' | 'technical'
+
 export interface ContactInquiryCreatePayload {
   name: string
   email: string
   subject: string
   message: string
+  category?: ContactCategory
   destinationId?: string
   startDate?: string
   endDate?: string
@@ -60,6 +63,8 @@ export interface ContactInquiryCreatePayload {
   isConcierge?: boolean
   preferredContactMethod?: string
   userId?: string
+  newsletterOptIn?: boolean
+  honeypot?: string
 }
 
 export interface ContactInquiryCreateResponse {

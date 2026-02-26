@@ -31,6 +31,7 @@ export async function submitContactInquiry(
       email: payload.email,
       subject: payload.subject,
       message: payload.message,
+      category: payload.category ?? null,
       destination_id: payload.destinationId ?? null,
       start_date: payload.startDate ?? null,
       end_date: payload.endDate ?? null,
@@ -39,6 +40,8 @@ export async function submitContactInquiry(
       is_concierge: payload.isConcierge ?? false,
       preferred_contact_method: payload.preferredContactMethod ?? null,
       user_id: payload.userId ?? null,
+      newsletter_opt_in: payload.newsletterOptIn ?? false,
+      honeypot: payload.honeypot ?? '',
     }),
   })
 

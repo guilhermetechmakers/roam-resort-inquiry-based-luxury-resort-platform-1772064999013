@@ -34,6 +34,8 @@ import { AdminExportsPage } from '@/pages/admin-exports'
 import { AdminAuditLogsPage } from '@/pages/admin-audit-logs'
 import { AdminPrivacyRequestsPage } from '@/pages/admin-privacy-requests'
 import { AdminContactInquiriesPage } from '@/pages/admin-contact-inquiries'
+import { AdminEmailTemplatesPage } from '@/pages/admin-email-templates'
+import { AdminEmailJobsPage } from '@/pages/admin-email-jobs'
 import { ContactConfirmationPage } from '@/pages/contact-confirmation'
 import { ContactPage } from '@/pages/contact'
 import { CheckoutPage } from '@/pages/checkout'
@@ -43,6 +45,7 @@ import { SettingsPage } from '@/pages/settings'
 import { TermsOfServicePage } from '@/pages/terms-of-service'
 import { PrivacyPolicyPage } from '@/pages/privacy-policy'
 import { CookiePolicyPage } from '@/pages/cookie-policy'
+import { UnsubscribePage } from '@/pages/unsubscribe'
 import { AboutHelpPage } from '@/pages/about-help'
 import { NotFoundPage } from '@/pages/not-found'
 import { ErrorPage } from '@/pages/error-page'
@@ -357,6 +360,30 @@ export default function App() {
               }
             />
             <Route
+              path="/admin/email-templates"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="concierge">
+                    <AdminEmailTemplatesPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/email-jobs"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="concierge">
+                    <AdminEmailJobsPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/suppression"
+              element={<Navigate to="/admin/email-jobs" replace />}
+            />
+            <Route
               path="/contact"
               element={
                 <AppLayout>
@@ -435,6 +462,14 @@ export default function App() {
               element={
                 <AppLayout transparentNav>
                   <CookiePolicyPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/unsubscribe"
+              element={
+                <AppLayout>
+                  <UnsubscribePage />
                 </AppLayout>
               }
             />

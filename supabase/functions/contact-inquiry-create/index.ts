@@ -23,11 +23,23 @@ const SUBJECTS = [
   'Other',
 ]
 
+const SUBJECT_TO_CATEGORY: Record<string, string> = {
+  'General Question': 'general',
+  'Concierge Request': 'concierge',
+  'Payment Inquiry': 'billing',
+  'Technical Support': 'technical',
+  'Booking & Availability': 'general',
+  'Cancellation or Changes': 'general',
+  'Feedback': 'general',
+  'Other': 'general',
+}
+
 interface ContactBody {
   name?: string
   email?: string
   subject?: string
   message?: string
+  category?: string
   destination_id?: string | null
   start_date?: string | null
   end_date?: string | null
@@ -36,6 +48,8 @@ interface ContactBody {
   is_concierge?: boolean
   preferred_contact_method?: string | null
   user_id?: string | null
+  newsletter_opt_in?: boolean
+  honeypot?: string
 }
 
 function sanitize(str: string, maxLen: number): string {
@@ -78,6 +92,20 @@ Deno.serve(async (req) => {
         ? body.preferred_contact_method
         : null
     const userId = body.user_id ?? null
+    const newsletterOptIn = !!body.newsletter_opt_in
+    const honeypot = body.honeypot ?? ''
+
+    if (honeypot && honeypot.length > 0) {
+      return new Response(
+        JSON.stringify({ ok: true, id: '', status: 'new', reference: 'RR-SPAM', submissionUrl: '/contact' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const category =
+      body.category && ['general', 'concierge', 'billing', 'technical'].includes(body.category)
+        ? body.category
+        : SUBJECT_TO_CATEGORY[subject] ?? 'general'
 
     if (!name || name.length < 1) {
       return new Response(
@@ -177,6 +205,7 @@ Deno.serve(async (req) => {
         email,
         subject,
         message,
+        category,
         destination_id: destinationId,
         start_date: startDate,
         end_date: endDate,
@@ -184,6 +213,7 @@ Deno.serve(async (req) => {
         inquiry_reference: reference,
         is_concierge: isConcierge,
         preferred_contact_method: preferredContactMethod,
+        newsletter_opt_in: newsletterOptIn,
         status: 'new',
       })
       .select('id, created_at')
@@ -201,22 +231,30 @@ Deno.serve(async (req) => {
     const createdAt = inserted?.created_at ?? new Date().toISOString()
 
     try {
-      const functionsUrl = `${supabaseUrl}/functions/v1/send-inquiry-email`
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? supabaseKey
-      await fetch(functionsUrl, {
+      const emailSendUrl = `${supabaseUrl}/functions/v1/email-send`
+      await fetch(emailSendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${serviceKey}`,
         },
         body: JSON.stringify({
-          type: 'confirmation',
-          inquiryId,
-          reference,
-          guestEmail: email,
-          guestName: name,
+          templateName: 'support_acknowledgment',
+          to: email,
+          payload: { guestName: name, reference, category },
+          locale: 'en',
         }),
       })
+      const processUrl = `${supabaseUrl}/functions/v1/email-process-queue`
+      await fetch(processUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({}),
+      }).catch(() => {})
     } catch (emailErr) {
       console.error('contact-inquiry-create email error:', emailErr)
     }
