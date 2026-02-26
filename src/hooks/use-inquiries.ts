@@ -89,17 +89,13 @@ async function fetchMyInquiries(userId: string): Promise<Inquiry[]> {
 }
 
 async function fetchAdminInquiries(): Promise<Inquiry[]> {
-  try {
-    const { data, error } = await supabase
-      .from('inquiries')
-      .select('*, listing:listings(*), guest:profiles(*)')
-      .order('created_at', { ascending: false })
+  const { data, error } = await supabase
+    .from('inquiries')
+    .select('*, listing:listings(*), guest:profiles(*)')
+    .order('created_at', { ascending: false })
 
-    if (!error && data?.length) return data as Inquiry[]
-  } catch {
-    // Fallback
-  }
-  return []
+  if (error) throw error
+  return Array.isArray(data) ? (data as Inquiry[]) : []
 }
 
 export type { CreateInquiryPayload }

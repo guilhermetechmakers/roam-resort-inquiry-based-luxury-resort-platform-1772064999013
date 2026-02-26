@@ -10,3 +10,4 @@ export { SocialAuthPlaceholders } from '@/components/auth/social-auth-placeholde
 export { StatusAlert } from '@/components/auth/status-alert'
 export { RedirectHandler } from '@/components/auth/redirect-handler'
 export { ProtectedRoute } from '@/components/auth/protected-route'
+export { AuthGate } from '@/components/auth/auth-gate'

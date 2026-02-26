@@ -192,11 +192,16 @@ export function AuthForm({
           id="signup-role"
           className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isLoading}
+          aria-describedby="signup-role-hint"
           {...signupForm.register('role')}
         >
           <option value="guest">Guest (requesting stays)</option>
           <option value="host">Host (listing properties)</option>
+          <option value="concierge">Concierge (staff / admin)</option>
         </select>
+        <p id="signup-role-hint" className="mt-1 text-xs text-muted-foreground">
+          Concierge accounts may require admin approval.
+        </p>
       </div>
       <div>
         <Label htmlFor="signup-password">Password</Label>

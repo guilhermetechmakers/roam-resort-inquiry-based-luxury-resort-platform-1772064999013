@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
+import { GlobalLoadingIndicator } from '@/components/ux'
 import { AuthProvider } from '@/contexts/auth-context'
 import { ProtectedRoute } from '@/components/auth'
 import { Navbar } from '@/components/layout/navbar'
@@ -85,6 +86,7 @@ function CheckoutLayout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <GlobalLoadingIndicator />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

@@ -8,12 +8,14 @@ import {
   AdminInquiryDetailDrawer,
   CsvExportModal,
 } from '@/components/admin-concierge'
+import { ErrorBanner } from '@/components/auth'
 import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
+import { toUserMessage } from '@/lib/errors'
 import type { Inquiry } from '@/types'
 
 export function AdminInquiryListPage() {
   const { hasRole, isLoading: authLoading } = useAuth()
-  const { data: inquiries, isLoading } = useAdminInquiries()
+  const { data: inquiries, isLoading, isError, error, refetch } = useAdminInquiries()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('newest')
@@ -45,7 +47,7 @@ export function AdminInquiryListPage() {
   }, [list, search, statusFilter, sortBy])
 
   const handleBulkExport = () => {
-    const selected = filtered.filter((i) => selectedIds.has(i.id))
+    const selected = (filtered ?? []).filter((i) => selectedIds.has(i.id))
     const shaped = selected.map((i) => shapeInquiryToAdmin(i))
     const csv = generateInquiriesCsv(shaped)
     downloadCsv(csv, `inquiries-selected-${new Date().toISOString().slice(0, 10)}.csv`)
@@ -77,6 +79,14 @@ export function AdminInquiryListPage() {
             Manage all stay inquiries, apply filters, and export to CSV.
           </p>
 
+          {isError && (
+            <ErrorBanner
+              message={toUserMessage(error, 'Failed to load inquiries')}
+              onRetry={() => refetch()}
+              className="mb-6"
+            />
+          )}
+
           <div className="mt-8 space-y-6">
             <AdminInquiryListToolbar
               search={search}
@@ -88,11 +98,11 @@ export function AdminInquiryListPage() {
               onExportCsv={() => setCsvModalOpen(true)}
               selectedCount={selectedIds.size}
               onBulkExport={selectedIds.size > 0 ? handleBulkExport : undefined}
-              disabled={filtered.length === 0}
+              disabled={(filtered ?? []).length === 0}
             />
 
             <AdminInquiryListTable
-              inquiries={filtered}
+              inquiries={filtered ?? []}
               isLoading={isLoading}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
@@ -106,7 +116,7 @@ export function AdminInquiryListPage() {
       <CsvExportModal
         open={csvModalOpen}
         onOpenChange={setCsvModalOpen}
-        inquiries={filtered}
+        inquiries={filtered ?? []}
         appliedFilters={{ status: statusFilter === 'all' ? undefined : statusFilter }}
       />
 

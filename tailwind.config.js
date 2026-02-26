@@ -66,6 +66,10 @@ export default {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'loading-bar': {
+          '0%, 100%': { transform: 'translateX(-100%)' },
+          '50%': { transform: 'translateX(400%)' },
+        },
         'gradient-shift': {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
@@ -91,6 +95,7 @@ export default {
         'zoom-in-95': 'zoom-in-95 0.2s ease-out forwards',
         'zoom-out-95': 'zoom-out-95 0.2s ease-out forwards',
         shimmer: 'shimmer 1.5s ease-in-out infinite',
+        'loading-bar': 'loading-bar 1.5s ease-in-out infinite',
         'gradient-shift': 'gradient-shift 8s ease infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',

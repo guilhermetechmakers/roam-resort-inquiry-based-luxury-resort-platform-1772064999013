@@ -16,7 +16,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   signIn: (email: string, password: string) => Promise<User>
-  signUp: (email: string, password: string, fullName?: string, role?: 'guest' | 'host') => Promise<{ user: User; needsEmailVerification?: boolean }>
+  signUp: (email: string, password: string, fullName?: string, role?: 'guest' | 'host' | 'concierge') => Promise<{ user: User; needsEmailVerification?: boolean }>
   signOut: () => Promise<void>
   hasRole: (role: UserRole) => boolean
   requestPasswordReset: (email: string) => Promise<void>
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signUp = React.useCallback(
-    async (email: string, password: string, fullName?: string, role?: 'guest' | 'host') => {
+    async (email: string, password: string, fullName?: string, role?: 'guest' | 'host' | 'concierge') => {
       auditLog('signup_attempt', { email })
       const { data, error } = await supabase.auth.signUp({
         email,

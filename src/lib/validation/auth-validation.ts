@@ -71,7 +71,7 @@ export const signupSchema = z
           'Password needs uppercase, lowercase, number, and special character',
       }),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    role: z.enum(['guest', 'host']).optional().default('guest'),
+    role: z.enum(['guest', 'host', 'concierge']).optional().default('guest'),
     website: z.string().max(0).optional(), // honeypot - must be empty
   })
   .refine((data) => data.password === data.confirmPassword, {

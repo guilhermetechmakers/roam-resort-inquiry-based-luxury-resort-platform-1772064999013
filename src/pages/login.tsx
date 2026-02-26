@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/auth-context'
 import { getRoleRedirectPath } from '@/lib/guards'
+import { toUserMessage } from '@/lib/errors'
 import {
   AuthTabs,
   RedirectHandler,
@@ -66,16 +67,11 @@ export function LoginPage() {
           : getRoleRedirectPath(loggedInUser.role)
       navigate(path, { replace: true })
     } catch (err) {
-      const msg = (err as Error).message ?? 'Login failed'
-      const isRateLimited = msg.toLowerCase().includes('rate') || msg.includes('429') || (err as { status?: number })?.status === 429
+      const userMsg = toUserMessage(err, 'Login failed')
+      const isRateLimited = userMsg.toLowerCase().includes('too many attempts')
       setError({
-        message: msg,
-        subMessage:
-          isRateLimited
-            ? 'Too many attempts. Please wait a few minutes and try again.'
-            : msg.includes('Email not confirmed') || msg.includes('email')
-              ? 'Please verify your email before signing in.'
-              : undefined,
+        message: userMsg,
+        subMessage: isRateLimited ? 'Please wait a few minutes before trying again.' : undefined,
       })
     } finally {
       setLoading(false)
@@ -93,13 +89,13 @@ export function LoginPage() {
       })
       toast.success('Account created. Check your email to verify.')
     } catch (err) {
-      const msg = (err as Error).message ?? 'Signup failed'
-      const isRateLimited = msg.toLowerCase().includes('rate') || msg.includes('429') || (err as { status?: number })?.status === 429
+      const userMsg = toUserMessage(err, 'Signup failed')
+      const isRateLimited = userMsg.toLowerCase().includes('too many attempts')
       setError({
-        message: msg,
+        message: userMsg,
         subMessage: isRateLimited
-          ? 'Too many attempts. Please wait a few minutes and try again.'
-          : msg.includes('already registered')
+          ? 'Please wait a few minutes before trying again.'
+          : userMsg.toLowerCase().includes('already exists')
             ? 'Try signing in instead.'
             : undefined,
       })

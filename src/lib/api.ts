@@ -1,9 +1,13 @@
+import { isApiErrorPayload, toUserMessage } from '@/lib/errors'
+
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
 
+/** Standardized API error - matches { error: { code, message, details?, status } } */
 export interface ApiError {
   message: string
   code?: string
   details?: unknown
+  status?: number
 }
 
 async function getAuthHeaders(): Promise<HeadersInit> {
@@ -18,24 +22,55 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   return headers
 }
 
+function buildApiError(res: Response, data: unknown): ApiError {
+  const status = res.status
+  let message = res.statusText
+  let code: string | undefined
+  let details: unknown
+
+  if (isApiErrorPayload(data)) {
+    message = data.error.message
+    code = data.error.code
+    details = data.error.details
+  } else if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>
+    message = (obj.message as string) ?? (obj.error as Record<string, unknown>)?.message as string ?? message
+    code = (obj.code as string) ?? (obj.error as Record<string, unknown>)?.code as string
+    details = obj.details ?? obj.error
+  }
+
+  return {
+    message: toUserMessage({ message, code, details, status }),
+    code,
+    details,
+    status,
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
   const headers = await getAuthHeaders()
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
-  const res = await fetch(url, {
-    ...options,
-    headers: { ...headers, ...options.headers },
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
+  let res: Response
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: { ...headers, ...options.headers },
+    })
+  } catch (fetchErr) {
     const err: ApiError = {
-      message: (data as { message?: string })?.message ?? res.statusText,
-      code: (data as { code?: string })?.code,
-      details: data,
+      message: toUserMessage(fetchErr, 'Network error. Please check your connection.'),
+      code: 'NETWORK_ERROR',
+      status: 0,
     }
     throw err
+  }
+
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw buildApiError(res, data)
   }
   return data as T
 }
@@ -56,12 +91,7 @@ async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const err: ApiError = {
-      message: (data as { message?: string })?.message ?? res.statusText,
-      code: (data as { code?: string })?.code,
-      details: data,
-    }
-    throw err
+    throw buildApiError(res, data)
   }
   return data as T
 }

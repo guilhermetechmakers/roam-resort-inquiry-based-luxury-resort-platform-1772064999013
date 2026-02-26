@@ -1,5 +1,5 @@
-import { AlertCircle, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { AlertCircle } from 'lucide-react'
+import { RetryButton } from '@/components/ux'
 import { cn } from '@/lib/utils'
 
 export interface ErrorBannerProps {
@@ -31,15 +31,11 @@ export function ErrorBanner({
           <p className="mt-1 text-sm opacity-90">{subMessage}</p>
         )}
         {onRetry && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 border-destructive/50 text-destructive hover:bg-destructive/10"
-            onClick={onRetry}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try again
-          </Button>
+          <RetryButton
+            onRetry={onRetry}
+            label="Try again"
+            className="mt-3"
+          />
         )}
       </div>
     </div>

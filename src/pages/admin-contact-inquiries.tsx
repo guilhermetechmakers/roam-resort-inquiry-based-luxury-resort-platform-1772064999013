@@ -8,6 +8,8 @@ import {
   AdminContactInquiryToolbar,
   AdminContactInquiryCsvModal,
 } from '@/components/admin-contact'
+import { ErrorBanner } from '@/components/auth'
+import { toUserMessage } from '@/lib/errors'
 import {
   generateContactInquiriesCsv,
   downloadCsv,
@@ -16,7 +18,7 @@ import type { ContactInquiry } from '@/types/contact-inquiry'
 
 export function AdminContactInquiriesPage() {
   const { hasRole, isLoading: authLoading } = useAuth()
-  const { data: inquiries, isLoading } = useContactInquiries()
+  const { data: inquiries, isLoading, isError, error, refetch } = useContactInquiries()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -76,6 +78,14 @@ export function AdminContactInquiriesPage() {
       <Sidebar links={adminSidebarLinks} title="Concierge" />
       <main className="flex-1 overflow-auto">
         <div className="p-8">
+          {isError && (
+            <ErrorBanner
+              message={toUserMessage(error, 'Failed to load contact inquiries')}
+              onRetry={() => refetch()}
+              className="mb-6"
+            />
+          )}
+
           <h1 className="font-serif text-3xl font-bold">Contact Inquiries</h1>
           <p className="mt-2 text-muted-foreground">
             Manage general support and concierge requests. Filter, view details, and export to CSV.

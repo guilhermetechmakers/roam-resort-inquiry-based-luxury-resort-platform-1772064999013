@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { toUserMessage } from '@/lib/errors'
 import {
   AuthGateModal,
   DestinationHeaderCard,
@@ -166,7 +167,7 @@ export function InquiryFormPage() {
           },
           {
             onSuccess: () => toast.success('Draft saved'),
-            onError: () => toast.error('Draft save failed'),
+            onError: (err) => toast.error(toUserMessage(err, 'Draft save failed')),
           }
         )
       } else {
@@ -221,7 +222,7 @@ export function InquiryFormPage() {
         toast.success('Inquiry submitted successfully!')
         navigate(`/inquiry/confirmation/${inquiry.reference}`)
       } catch (err) {
-        toast.error((err as Error).message ?? 'Failed to submit inquiry')
+        toast.error(toUserMessage(err, 'Failed to submit inquiry'))
       }
     },
     [user, listingId, listing, createInquiry, toContactPrefs, navigate]

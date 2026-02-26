@@ -12,9 +12,10 @@ import { AttachmentUploader, type AttachmentFile } from './attachment-uploader'
 import { useDraftAutoSave } from '@/hooks/use-draft-autosave'
 import { ROOM_PREF_OPTIONS } from '@/lib/validation/inquiry-validation'
 import { isPastDate, isValidDateRange } from '@/lib/validation/inquiry-validation'
+import { ValidationSummary } from '@/components/ux'
 import { cn } from '@/lib/utils'
 
-const NOTES_MAX = 2000
+const NOTES_MAX = 1000
 
 const inquirySchema = z
   .object({
@@ -103,8 +104,10 @@ export function InquiryForm({
     enabled: !!onSaveDraft,
   })
 
-  const errors = form.formState.errors
-  const errorEntries = Object.entries(errors).filter(([, v]) => v?.message)
+  const errors = form.formState.errors ?? {}
+  const errorEntries = Object.entries(errors)
+    .filter(([, v]) => v?.message)
+    .map(([key, v]) => ({ field: key, message: String(v?.message ?? '') }))
   const hasErrors = errorEntries.length > 0
 
   const handleSubmit = form.handleSubmit(async (data) => {
@@ -119,19 +122,11 @@ export function InquiryForm({
       aria-describedby={hasErrors ? 'form-errors' : undefined}
     >
       {hasErrors && (
-        <div
+        <ValidationSummary
           id="form-errors"
-          role="alert"
-          aria-live="polite"
-          className="rounded-lg border border-destructive/50 bg-destructive/10 p-4"
-        >
-          <p className="font-medium text-destructive">Please fix the following:</p>
-          <ul className="mt-2 list-inside list-disc text-sm text-destructive">
-            {errorEntries.map(([key, err]) => (
-              <li key={key}>{String(err?.message)}</li>
-            ))}
-          </ul>
-        </div>
+          errors={errorEntries}
+          title="Please fix the following:"
+        />
       )}
 
       <div className="rounded-lg border border-border bg-secondary/20 p-4">
