@@ -63,17 +63,18 @@ export function PaymentPanel({
     })
   }
 
-  const handleCreate = async () => {
-    const numAmount = parseFloat(amount) || 0
-    const validItems = (items ?? []).filter(
-      (i) => i.name.trim() && (i.quantity ?? 0) > 0 && (i.unitPrice ?? 0) >= 0
-    )
-    const totalFromItems = validItems.reduce(
-      (sum, i) => sum + (i.quantity ?? 0) * (i.unitPrice ?? 0),
-      0
-    )
-    const finalAmount = numAmount > 0 ? numAmount : totalFromItems
+  const validItems = (items ?? []).filter(
+    (i) => i.name.trim() && (i.quantity ?? 0) > 0 && (i.unitPrice ?? 0) >= 0
+  )
+  const totalFromItems = validItems.reduce(
+    (sum, i) => sum + (i.quantity ?? 0) * (i.unitPrice ?? 0),
+    0
+  )
+  const numAmount = parseFloat(amount) || 0
+  const finalAmount = numAmount > 0 ? numAmount : totalFromItems
+  const canCreate = finalAmount > 0
 
+  const handleCreate = async () => {
     if (finalAmount <= 0) return
 
     setIsCreating(true)
@@ -243,7 +244,7 @@ export function PaymentPanel({
           <Button
             className="w-full bg-accent hover:bg-accent/90"
             onClick={handleCreate}
-            disabled={isCreating || (parseFloat(amount) || 0) <= 0}
+            disabled={isCreating || !canCreate}
           >
             {isCreating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

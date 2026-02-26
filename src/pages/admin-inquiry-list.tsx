@@ -1,64 +1,110 @@
-import { useState, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
 import { useAuth } from '@/contexts/auth-context'
-import { useAdminInquiries } from '@/hooks/use-inquiries'
+import {
+  useAdminInquiriesPaginated,
+  useAdminDestinations,
+  useAdminHosts,
+  useBulkUpdateInquiryStatus,
+} from '@/hooks/use-admin-inquiries'
 import {
   AdminInquiryListToolbar,
   AdminInquiryListTable,
   AdminInquiryDetailDrawer,
   CsvExportModal,
+  BulkStatusUpdateModal,
 } from '@/components/admin-concierge'
 import { ErrorBanner } from '@/components/auth'
-import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
+import {
+  shapeInquiryToAdmin,
+  generateInquiriesCsv,
+  downloadCsv,
+  fetchAdminInquiries,
+} from '@/api/admin'
 import { toUserMessage } from '@/lib/errors'
+import { toast } from 'sonner'
 import type { Inquiry } from '@/types'
+import type { AdminInquiryFilters } from '@/api/admin'
 
 export function AdminInquiryListPage() {
   const { hasRole, isLoading: authLoading } = useAuth()
-  const { data: inquiries, isLoading, isError, error, refetch } = useAdminInquiries()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<string>('newest')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [destinationId, setDestinationId] = useState('')
+  const [hostId, setHostId] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [csvModalOpen, setCsvModalOpen] = useState(false)
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false)
   const [drawerInquiry, setDrawerInquiry] = useState<Inquiry | null>(null)
 
-  const list = Array.isArray(inquiries) ? inquiries : []
-  const filtered = useMemo(() => {
-    let result = list.filter((i) => {
-      const matchSearch =
-        !search ||
-        (i.reference ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (typeof i.listing === 'object' &&
-          i.listing?.title?.toLowerCase().includes(search.toLowerCase()))
-      const matchStatus = statusFilter === 'all' || i.status === statusFilter
-      return matchSearch && matchStatus
-    })
-    result = [...result].sort((a, b) => {
-      if (sortBy === 'newest')
-        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
-      if (sortBy === 'oldest')
-        return new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime()
-      if (sortBy === 'reference') return (a.reference ?? '').localeCompare(b.reference ?? '')
-      if (sortBy === 'status') return (a.status ?? '').localeCompare(b.status ?? '')
-      return 0
-    })
-    return result
-  }, [list, search, statusFilter, sortBy])
+  const filters: AdminInquiryFilters = {
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    destination_id: destinationId || undefined,
+    host_id: hostId || undefined,
+    guest_email: guestEmail.trim() || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    search: search.trim() || undefined,
+    page,
+    pageSize,
+  }
 
-  const handleBulkExport = () => {
-    const selected = (filtered ?? []).filter((i) => selectedIds.has(i.id))
+  const { data, isLoading, isError, error, refetch } = useAdminInquiriesPaginated(filters)
+  const { data: listings = [] } = useAdminDestinations()
+  const { data: hosts = [] } = useAdminHosts()
+  const bulkStatusMutation = useBulkUpdateInquiryStatus()
+
+  const inquiries = data?.data ?? []
+  const total = data?.total ?? 0
+
+  const fetchAllFiltered = useCallback(async () => {
+    const result = await fetchAdminInquiries({
+      ...filters,
+      page: 1,
+      pageSize: 1000,
+    })
+    return result?.data ?? []
+  }, [
+    search,
+    statusFilter,
+    dateFrom,
+    dateTo,
+    destinationId,
+    hostId,
+    guestEmail,
+  ])
+
+  const handleBulkExport = useCallback(() => {
+    const selected = (inquiries ?? []).filter((i) => selectedIds.has(i.id))
     const shaped = selected.map((i) => shapeInquiryToAdmin(i))
     const csv = generateInquiriesCsv(shaped)
     downloadCsv(csv, `inquiries-selected-${new Date().toISOString().slice(0, 10)}.csv`)
+    toast.success(`Exported ${selected.length} inquiries`)
     setSelectedIds(new Set())
-  }
+  }, [inquiries, selectedIds])
 
-  const handleExportSingle = (inquiry: Inquiry) => {
+  const handleExportSingle = useCallback((inquiry: Inquiry) => {
     const shaped = shapeInquiryToAdmin(inquiry)
     const csv = generateInquiriesCsv([shaped])
     downloadCsv(csv, `inquiry-${inquiry.reference ?? inquiry.id}-${new Date().toISOString().slice(0, 10)}.csv`)
-  }
+    toast.success('CSV exported')
+  }, [])
+
+  const handleBulkStatusConfirm = useCallback(
+    async (status: string) => {
+      const ids = Array.from(selectedIds)
+      const result = await bulkStatusMutation.mutateAsync({ ids, status })
+      toast.success(`Updated ${result.updated} inquiries`)
+      setSelectedIds(new Set())
+      refetch()
+    },
+    [selectedIds, bulkStatusMutation, refetch]
+  )
 
   if (authLoading) return null
   if (!hasRole('concierge')) {
@@ -93,16 +139,32 @@ export function AdminInquiryListPage() {
               onSearchChange={setSearch}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
-              sortBy={sortBy}
-              onSortByChange={setSortBy}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              onDateFromChange={setDateFrom}
+              onDateToChange={setDateTo}
+              destinationId={destinationId}
+              onDestinationChange={setDestinationId}
+              hostId={hostId}
+              onHostChange={setHostId}
+              guestEmail={guestEmail}
+              onGuestEmailChange={setGuestEmail}
+              listings={listings}
+              hosts={hosts}
               onExportCsv={() => setCsvModalOpen(true)}
               selectedCount={selectedIds.size}
               onBulkExport={selectedIds.size > 0 ? handleBulkExport : undefined}
-              disabled={(filtered ?? []).length === 0}
+              onBulkStatus={selectedIds.size > 0 ? () => setBulkStatusOpen(true) : undefined}
+              disabled={(inquiries ?? []).length === 0}
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
             />
 
             <AdminInquiryListTable
-              inquiries={filtered ?? []}
+              inquiries={inquiries ?? []}
               isLoading={isLoading}
               selectedIds={selectedIds}
               onSelectionChange={setSelectedIds}
@@ -116,8 +178,23 @@ export function AdminInquiryListPage() {
       <CsvExportModal
         open={csvModalOpen}
         onOpenChange={setCsvModalOpen}
-        inquiries={filtered ?? []}
-        appliedFilters={{ status: statusFilter === 'all' ? undefined : statusFilter }}
+        inquiries={inquiries ?? []}
+        fetchAllFiltered={fetchAllFiltered}
+        appliedFilters={{
+          status: statusFilter === 'all' ? undefined : statusFilter,
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined,
+        }}
+      />
+
+      <BulkStatusUpdateModal
+        open={bulkStatusOpen}
+        onOpenChange={setBulkStatusOpen}
+        selectedCount={selectedIds.size}
+        selectedIds={selectedIds}
+        onConfirm={handleBulkStatusConfirm}
+        isPending={bulkStatusMutation.isPending}
+        onClearSelection={() => setSelectedIds(new Set())}
       />
 
       <AdminInquiryDetailDrawer

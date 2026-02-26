@@ -77,16 +77,28 @@ export function shapeInquiryToAdmin(i: Inquiry): AdminInquiry {
   }
 }
 
-/** Fetch admin inquiries with optional filters */
-export async function fetchAdminInquiries(filters?: {
+export interface AdminInquiryFilters {
   status?: string
+  destination_id?: string
+  /** @deprecated Use destination_id */
   destination?: string
+  host_id?: string
+  guest_email?: string
   dateFrom?: string
   dateTo?: string
+  start_date?: string
+  end_date?: string
   search?: string
+  q?: string
   page?: number
   pageSize?: number
-}): Promise<{ data: AdminInquiry[]; total: number }> {
+}
+
+/** Fetch admin inquiries with optional filters and pagination. Returns raw Inquiry[] for list display. */
+export async function fetchAdminInquiries(filters?: AdminInquiryFilters): Promise<{
+  data: Inquiry[]
+  total: number
+}> {
   try {
     let query = supabase
       .from('inquiries')
@@ -96,24 +108,59 @@ export async function fetchAdminInquiries(filters?: {
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
     }
-    if (filters?.destination) {
-      query = query.eq('listing_id', filters.destination)
+    const destId = filters?.destination_id ?? filters?.destination
+    if (destId) {
+      query = query.eq('listing_id', destId)
     }
-    if (filters?.dateFrom) {
-      query = query.gte('created_at', filters.dateFrom)
+    if (filters?.host_id) {
+      const { data: listingIds } = await supabase
+        .from('listings')
+        .select('id')
+        .eq('host_id', filters.host_id)
+      const ids = Array.isArray(listingIds) ? listingIds.map((l) => l.id) : []
+      if (ids.length > 0) {
+        query = query.in('listing_id', ids)
+      } else {
+        return { data: [], total: 0 }
+      }
     }
-    if (filters?.dateTo) {
-      query = query.lte('created_at', filters.dateTo)
+    if (filters?.guest_email?.trim()) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('email', `%${filters.guest_email.trim()}%`)
+      const guestIds = Array.isArray(profiles) ? profiles.map((p) => p.id) : []
+      if (guestIds.length > 0) {
+        query = query.in('guest_id', guestIds)
+      } else {
+        return { data: [], total: 0 }
+      }
     }
-    if (filters?.search) {
-      const term = filters.search.trim()
-      if (term) {
+    const dateFrom = filters?.dateFrom ?? filters?.start_date
+    const dateTo = filters?.dateTo ?? filters?.end_date
+    if (dateFrom) {
+      query = query.gte('created_at', dateFrom)
+    }
+    if (dateTo) {
+      query = query.lte('created_at', `${dateTo}T23:59:59.999Z`)
+    }
+    const searchTerm = (filters?.search ?? filters?.q)?.trim()
+    if (searchTerm) {
+      const term = searchTerm
+      const { data: listings } = await supabase
+        .from('listings')
+        .select('id')
+        .or(`title.ilike.%${term}%,slug.ilike.%${term}%`)
+      const listingIds = Array.isArray(listings) ? listings.map((l) => l.id) : []
+      if (listingIds.length > 0) {
+        query = query.or(`reference.ilike.%${term}%,listing_id.in.(${listingIds.join(',')})`)
+      } else {
         query = query.ilike('reference', `%${term}%`)
       }
     }
 
-    const page = filters?.page ?? 1
-    const pageSize = filters?.pageSize ?? 20
+    const page = Math.max(1, filters?.page ?? 1)
+    const pageSize = Math.min(1000, Math.max(10, filters?.pageSize ?? 20))
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
     query = query.range(from, to)
@@ -122,11 +169,36 @@ export async function fetchAdminInquiries(filters?: {
 
     if (error) return { data: [], total: 0 }
     const list = Array.isArray(data) ? data : []
-    const shaped = list.map((row) => shapeInquiryToAdmin(row as Inquiry))
-    return { data: shaped, total: count ?? shaped.length }
+    return { data: list as Inquiry[], total: count ?? list.length }
   } catch {
     return { data: [], total: 0 }
   }
+}
+
+/** Fetch listings for destination filter dropdown */
+export async function fetchListingsForFilter(): Promise<Array<{ id: string; title: string }>> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id, title')
+    .order('title')
+  if (error) return []
+  return Array.isArray(data) ? data : []
+}
+
+/** Fetch hosts for host filter dropdown (profiles with host role) */
+export async function fetchHostsForFilter(): Promise<Array<{ id: string; full_name: string; email: string }>> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('role', 'host')
+    .order('full_name')
+  if (error) return []
+  const list = Array.isArray(data) ? data : []
+  return list.map((p: { id: string; full_name?: string; email?: string }) => ({
+    id: p.id,
+    full_name: p.full_name ?? p.email ?? 'Host',
+    email: p.email ?? '',
+  }))
 }
 
 /** Parse internal notes from inquiry (stored as JSON string) */
@@ -255,6 +327,48 @@ export async function fetchAdminInquiryDetail(inquiryId: string): Promise<AdminI
   } catch {
     return null
   }
+}
+
+const ALLOWED_STATUSES = [
+  'new',
+  'contacted',
+  'in_review',
+  'deposit_paid',
+  'confirmed',
+  'closed',
+  'cancelled',
+] as const
+
+function isValidStatus(s: string): boolean {
+  return ALLOWED_STATUSES.includes(s as (typeof ALLOWED_STATUSES)[number])
+}
+
+/** Bulk update inquiry statuses */
+export async function bulkUpdateInquiryStatus(
+  ids: string[],
+  status: string
+): Promise<{ updated: number; failed: string[] }> {
+  if (!isValidStatus(status)) {
+    throw new Error('Invalid status value')
+  }
+  const validIds = (ids ?? []).filter((id) => typeof id === 'string' && id.length > 0)
+  if (validIds.length === 0) {
+    return { updated: 0, failed: [] }
+  }
+  const { data, error } = await supabase
+    .from('inquiries')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .in('id', validIds)
+    .select('id')
+
+  if (error) throw new Error(error.message ?? 'Failed to bulk update')
+  const updated = Array.isArray(data) ? data.length : 0
+  const updatedIds = new Set((data ?? []).map((r: { id: string }) => r.id))
+  const failed = validIds.filter((id) => !updatedIds.has(id))
+  return { updated, failed }
 }
 
 /** Update inquiry status */
@@ -454,20 +568,43 @@ export async function fetchAdminReconciliations(
   return { data: [], total: 0 }
 }
 
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
+const OVERDUE_HOURS = 48
+
 /** Compute dashboard metrics from inquiries */
 export function computeDashboardMetrics(inquiries: Inquiry[]): AdminDashboardMetrics {
   const list = inquiries ?? []
+  const now = Date.now()
+  const oneWeekAgo = now - ONE_WEEK_MS
+  const overdueThreshold = now - OVERDUE_HOURS * 60 * 60 * 1000
+
+  const totalInquiries = list.length
   const newInquiries = list.filter((i) => i.status === 'new').length
+  const newThisWeek = list.filter((i) => {
+    const created = new Date(i.created_at ?? 0).getTime()
+    return created >= oneWeekAgo
+  }).length
+  const overdue = list.filter((i) => {
+    if (i.status === 'closed' || i.status === 'cancelled' || i.status === 'confirmed') return false
+    const created = new Date(i.created_at ?? 0).getTime()
+    return created < overdueThreshold && i.status === 'new'
+  }).length
+  const unresolved = list.filter(
+    (i) => i.status !== 'closed' && i.status !== 'cancelled'
+  ).length
   const pendingPayments = list.filter(
     (i) => i.payment_state === 'pending' || !i.payment_state
   ).length
   const confirmed = list.filter((i) => i.status === 'confirmed').length
   const revenue = list.reduce((sum, i) => sum + (i.total_amount ?? 0), 0)
-  // Placeholder: avg response time (would need activity/response timestamps)
   const avgResponseTimeHours = 24
 
   return {
+    totalInquiries,
     newInquiries,
+    newThisWeek,
+    overdue,
+    unresolved,
     pendingPayments,
     confirmed,
     revenue,

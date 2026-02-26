@@ -1,5 +1,5 @@
 /** User roles for Roam Resort */
-export type UserRole = 'guest' | 'host' | 'concierge'
+export type UserRole = 'guest' | 'host' | 'concierge' | 'admin'
 
 /** Auth response shape from login/signup */
 export interface AuthUser {

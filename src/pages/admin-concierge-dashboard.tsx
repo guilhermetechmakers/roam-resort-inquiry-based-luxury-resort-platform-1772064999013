@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, FileText, StickyNote, Wallet, Download } from 'lucide-react'
+import { Search, FileText, Wallet, Download, ClipboardList } from 'lucide-react'
 import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
 import { useAuth } from '@/contexts/auth-context'
 import { useAdminInquiries } from '@/hooks/use-inquiries'
@@ -89,21 +89,28 @@ export function AdminConciergeDashboardPage() {
             aria-label="Overview metrics"
           >
             <MetricCard
-              title="New Inquiries"
-              value={metrics.newInquiries}
+              title="Total Inquiries"
+              value={metrics.totalInquiries}
+              icon={FileText}
+              isLoading={isLoading}
+            />
+            <MetricCard
+              title="New This Week"
+              value={metrics.newThisWeek}
               icon={FileText}
               isLoading={isLoading}
               variant="accent"
             />
             <MetricCard
-              title="Pending Payments"
-              value={metrics.pendingPayments}
-              icon={Wallet}
+              title="Overdue"
+              value={metrics.overdue}
+              icon={FileText}
               isLoading={isLoading}
+              variant={metrics.overdue > 0 ? 'accent' : 'default'}
             />
             <MetricCard
-              title="Confirmed"
-              value={metrics.confirmed}
+              title="Unresolved"
+              value={metrics.unresolved}
               icon={FileText}
               isLoading={isLoading}
             />
@@ -113,13 +120,6 @@ export function AdminConciergeDashboardPage() {
               icon={Wallet}
               isLoading={isLoading}
               variant="accent"
-            />
-            <MetricCard
-              title="Avg Response Time"
-              value={`${metrics.avgResponseTimeHours}h`}
-              subtitle="Target: &lt;24h"
-              icon={FileText}
-              isLoading={isLoading}
             />
           </section>
 
@@ -135,16 +135,16 @@ export function AdminConciergeDashboardPage() {
             <ShortcutsPanel
               items={[
                 {
-                  label: 'Export CSV',
+                  label: 'Manage Inquiries',
+                  icon: ClipboardList,
+                  href: '/admin/inquiries',
+                  ariaLabel: 'View and manage all stay inquiries',
+                },
+                {
+                  label: 'Export Reports',
                   icon: Download,
                   onClick: () => setCsvModalOpen(true),
                   ariaLabel: 'Export inquiries or reconciliation data to CSV',
-                },
-                {
-                  label: 'Create Manual Note',
-                  icon: StickyNote,
-                  href: '/admin/inquiries',
-                  ariaLabel: 'Go to inquiries to add notes',
                 },
                 {
                   label: 'Reconcile Payments',

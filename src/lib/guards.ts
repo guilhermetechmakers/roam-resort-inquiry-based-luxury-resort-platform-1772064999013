@@ -9,8 +9,8 @@ export function isAuthenticated(user: User | null): boolean {
 /** Check if user has a specific role (or higher) */
 export function hasRole(user: User | null, role: UserRole): boolean {
   if (!user) return false
-  if (role === 'concierge') return user.role === 'concierge'
-  if (role === 'host') return user.role === 'host' || user.role === 'concierge'
+  if (role === 'concierge') return user.role === 'concierge' || user.role === 'admin'
+  if (role === 'host') return user.role === 'host' || user.role === 'concierge' || user.role === 'admin'
   return true // guest or any
 }
 
@@ -18,6 +18,7 @@ export function hasRole(user: User | null, role: UserRole): boolean {
 export function getRoleRedirectPath(role: UserRole): string {
   switch (role) {
     case 'concierge':
+    case 'admin':
       return '/admin'
     case 'host':
       return '/host'

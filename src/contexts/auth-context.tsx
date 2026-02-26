@@ -161,8 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasRole = React.useCallback(
     (role: UserRole) => {
       if (!state.user) return false
-      if (role === 'concierge') return state.user.role === 'concierge'
-      if (role === 'host') return state.user.role === 'host' || state.user.role === 'concierge'
+      if (role === 'concierge') return state.user.role === 'concierge' || state.user.role === 'admin'
+      if (role === 'host') return state.user.role === 'host' || state.user.role === 'concierge' || state.user.role === 'admin'
       return true
     },
     [state.user]

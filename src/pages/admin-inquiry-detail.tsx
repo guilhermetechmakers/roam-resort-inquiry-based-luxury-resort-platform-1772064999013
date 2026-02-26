@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ import {
   fetchInquiryActivityLog,
   createStripePaymentLink,
   markPaymentReceived,
+  markInquiryPaymentReceived,
 } from '@/api/admin-inquiry-detail'
 import { createInternalNoteActivity, createActivity } from '@/api/activities'
 import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
@@ -51,11 +52,31 @@ export function AdminInquiryDetailPage() {
     enabled: !!inquiryId && !inquiryLoading,
   })
 
-  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
+  const { data: paymentsFromTable = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ['admin-inquiry-payments', inquiryId],
     queryFn: () => fetchInquiryPayments(inquiryId ?? ''),
     enabled: !!inquiryId,
   })
+
+  /** Synthesize payments from inquiry when inquiry_payments is empty but inquiry has payment_link */
+  const payments = useMemo(() => {
+    const fromTable = paymentsFromTable ?? []
+    if (fromTable.length > 0) return fromTable
+    if (inquiry?.payment_link) {
+      return [
+        {
+          id: 'inquiry-payment',
+          inquiryId: inquiryId ?? '',
+          stripeLinkUrl: inquiry.payment_link,
+          amount: inquiry.total_amount ?? 0,
+          currency: 'USD',
+          status: (inquiry.payment_state === 'paid' ? 'paid' : 'link_created') as 'pending' | 'link_created' | 'paid' | 'reconciled',
+          createdAt: inquiry.updated_at ?? inquiry.created_at ?? '',
+        },
+      ]
+    }
+    return []
+  }, [paymentsFromTable, inquiry?.payment_link, inquiry?.total_amount, inquiry?.payment_state, inquiry?.updated_at, inquiry?.created_at, inquiryId])
 
   const { data: activityLog = [] } = useQuery({
     queryKey: ['admin-inquiry-activity', inquiryId],
@@ -187,7 +208,12 @@ export function AdminInquiryDetailPage() {
 
   const handleMarkPaymentReceived = useCallback(
     async (paymentId: string) => {
-      await markPaymentReceived(inquiryId ?? '', paymentId)
+      if (paymentId === 'inquiry-payment') {
+        await markInquiryPaymentReceived(inquiryId ?? '')
+        queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
+      } else {
+        await markPaymentReceived(inquiryId ?? '', paymentId)
+      }
       queryClient.invalidateQueries({ queryKey: ['admin-inquiry-payments', inquiryId] })
       toast.success('Payment marked as received')
     },

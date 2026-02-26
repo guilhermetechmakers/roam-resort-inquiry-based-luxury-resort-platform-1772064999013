@@ -33,6 +33,8 @@ export interface CsvExportModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   inquiries: Inquiry[]
+  /** When provided, fetches all filtered inquiries for export (for paginated lists) */
+  fetchAllFiltered?: () => Promise<Inquiry[]>
   appliedFilters?: {
     status?: string
     destination?: string
@@ -46,6 +48,7 @@ export function CsvExportModal({
   open,
   onOpenChange,
   inquiries,
+  fetchAllFiltered,
   appliedFilters = {},
   onSuccess,
 }: CsvExportModalProps) {
@@ -58,8 +61,10 @@ export function CsvExportModal({
     setIsExporting(true)
     try {
       if (exportType === 'inquiries') {
-        const list = Array.isArray(inquiries) ? inquiries : []
-        const shaped = list.map((i) => shapeInquiryToAdmin(i))
+        const list = fetchAllFiltered
+          ? await fetchAllFiltered()
+          : (Array.isArray(inquiries) ? inquiries : [])
+        const shaped = (list ?? []).map((i) => shapeInquiryToAdmin(i))
         const csv = generateInquiriesCsv(shaped)
         const filename = `inquiries-export-${new Date().toISOString().slice(0, 10)}.csv`
         downloadCsv(csv, filename)

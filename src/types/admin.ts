@@ -108,7 +108,11 @@ export interface StripeLinkPayload {
 }
 
 export interface AdminDashboardMetrics {
+  totalInquiries: number
   newInquiries: number
+  newThisWeek: number
+  overdue: number
+  unresolved: number
   pendingPayments: number
   confirmed: number
   revenue: number

@@ -323,7 +323,7 @@ export async function createStripePaymentLink(
   }
 }
 
-/** Mark payment as received */
+/** Mark payment as received (inquiry_payments table) */
 export async function markPaymentReceived(
   inquiryId: string,
   paymentId: string
@@ -335,6 +335,19 @@ export async function markPaymentReceived(
     .eq('inquiry_id', inquiryId)
 
   if (error) throw new Error(error.message ?? 'Failed to update payment')
+}
+
+/** Mark payment as received when payment is stored on inquiry (payment_link) - no inquiry_payments row */
+export async function markInquiryPaymentReceived(inquiryId: string): Promise<void> {
+  const { error } = await supabase
+    .from('inquiries')
+    .update({
+      payment_state: 'paid',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', inquiryId)
+
+  if (error) throw new Error(error.message ?? 'Failed to update payment state')
 }
 
 /** Fetch activity log for an inquiry */

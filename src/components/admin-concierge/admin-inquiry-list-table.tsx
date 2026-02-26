@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatDate } from '@/lib/utils'
+import { formatDateShort } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import type { Inquiry } from '@/types'
 
@@ -105,16 +105,16 @@ export function AdminInquiryListTable({
               Reference
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-              Listing
+              Guest
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-              Dates
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-              Guests
+              Destination
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Status
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+              Created At
             </th>
             <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
               Actions
@@ -124,7 +124,10 @@ export function AdminInquiryListTable({
         <tbody>
           {list.map((inquiry) => {
             const listing = typeof inquiry.listing === 'object' ? inquiry.listing : null
+            const guest = typeof inquiry.guest === 'object' ? inquiry.guest : null
             const title = listing?.title ?? 'Destination'
+            const guestName = guest?.full_name ?? guest?.email ?? 'Guest'
+            const guestEmail = guest?.email ?? ''
             return (
               <tr
                 key={inquiry.id}
@@ -140,17 +143,20 @@ export function AdminInquiryListTable({
                 <td className="px-4 py-3">
                   <Link
                     to={`/admin/inquiries/${inquiry.id}`}
-                    className="font-mono text-sm text-accent hover:underline"
+                    className="font-mono text-sm text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {inquiry.reference ?? inquiry.id}
                   </Link>
                 </td>
-                <td className="px-4 py-3 font-medium">{title}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {inquiry.check_in && formatDate(inquiry.check_in)} –{' '}
-                  {inquiry.check_out && formatDate(inquiry.check_out)}
+                <td className="px-4 py-3">
+                  <div className="font-medium">{guestName}</div>
+                  {guestEmail && (
+                    <div className="text-xs text-muted-foreground truncate max-w-[180px]">
+                      {guestEmail}
+                    </div>
+                  )}
                 </td>
-                <td className="px-4 py-3">{inquiry.guests_count ?? '—'}</td>
+                <td className="px-4 py-3 font-medium">{title}</td>
                 <td className="px-4 py-3">
                   <span
                     className={cn(
@@ -160,6 +166,9 @@ export function AdminInquiryListTable({
                   >
                     {(inquiry.status ?? '').replace('_', ' ')}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">
+                  {formatDateShort(inquiry.created_at ?? '')}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
@@ -212,19 +221,21 @@ export function AdminInquiryListTable({
       <div className="mt-4 block space-y-2 lg:hidden">
         {list.map((inquiry) => {
           const listing = typeof inquiry.listing === 'object' ? inquiry.listing : null
+          const guest = typeof inquiry.guest === 'object' ? inquiry.guest : null
           const title = listing?.title ?? 'Destination'
+          const guestName = guest?.full_name ?? guest?.email ?? 'Guest'
           return (
             <Link key={inquiry.id} to={`/admin/inquiries/${inquiry.id}`}>
-              <Card className="transition-colors hover:bg-secondary/50">
+              <Card className="transition-all duration-200 hover:shadow-card-hover hover:border-accent/30">
                 <CardContent className="flex items-center justify-between gap-4 py-4">
                   <div className="min-w-0 flex-1">
-                    <span className="font-mono text-sm text-muted-foreground">
-                      {inquiry.reference}
+                    <span className="font-mono text-sm text-accent">
+                      {inquiry.reference ?? inquiry.id}
                     </span>
                     <p className="font-medium truncate">{title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {inquiry.check_in && formatDate(inquiry.check_in)} –{' '}
-                      {inquiry.check_out && formatDate(inquiry.check_out)}
+                    <p className="text-sm text-muted-foreground truncate">{guestName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateShort(inquiry.created_at ?? '')}
                     </p>
                   </div>
                   <span
