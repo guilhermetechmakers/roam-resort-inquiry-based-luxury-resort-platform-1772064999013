@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import {
   fetchPublishedDestinations,
+  fetchSearchSuggestions,
   fetchFeaturedEditorial,
   fetchRelatedDestinations,
   type FetchDestinationsParams,
@@ -31,6 +32,15 @@ export function useInfiniteDestinations(
       return loaded < (lastPage.total ?? 0) ? allPages.length + 1 : undefined
     },
     initialPageParam: 1,
+  })
+}
+
+export function useSearchSuggestions(query: string, enabled = true) {
+  return useQuery({
+    queryKey: ['destinations', 'suggestions', query],
+    queryFn: () => fetchSearchSuggestions(query, 8),
+    enabled: enabled && (query ?? '').trim().length >= 2,
+    staleTime: 30 * 1000,
   })
 }
 

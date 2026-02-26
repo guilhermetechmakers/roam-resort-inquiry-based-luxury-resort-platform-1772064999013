@@ -33,12 +33,16 @@ export function DestinationCard({ destination, className }: DestinationCardProps
   const style = destination.style ?? ''
   const hasTags = Boolean(region || style)
 
+  const tags = destination.tags ?? []
+  const tagsArr = Array.isArray(tags) ? tags : []
+
   return (
     <Card
       className={cn(
         'group overflow-hidden border-border transition-all duration-300',
-        'hover:shadow-card-hover hover:border-accent/40 hover:scale-[1.02]',
+        'hover:shadow-card-hover hover:border-accent/50 hover:scale-[1.02]',
         'focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2',
+        'hover:shadow-[0_8px_24px_rgba(169,124,80,0.12)]',
         className
       )}
     >
@@ -59,6 +63,18 @@ export function DestinationCard({ destination, className }: DestinationCardProps
               <span className="mt-1 block text-sm text-primary-foreground/90">
                 {[region, style].filter(Boolean).join(' · ')}
               </span>
+            )}
+            {tagsArr.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tagsArr.slice(0, 3).map((t) => (
+                  <span
+                    key={t}
+                    className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs font-medium"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>

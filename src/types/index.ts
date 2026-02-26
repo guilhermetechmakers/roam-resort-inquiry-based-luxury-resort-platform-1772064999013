@@ -49,6 +49,7 @@ export interface Listing {
   subtitle?: string
   region?: string
   style?: string
+  tags?: string[]
   status: ListingStatus
   hero_image_url?: string
   gallery_urls: string[]
@@ -138,6 +139,8 @@ export interface Destination {
   tagline?: string
   region?: string
   style?: string
+  /** Keywords/tacit tags for filtering */
+  tags?: string[]
   imageUrl?: string
   excerpt?: string
   publishedAt?: string

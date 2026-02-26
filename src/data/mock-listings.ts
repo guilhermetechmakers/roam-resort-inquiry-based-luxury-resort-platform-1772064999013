@@ -25,6 +25,7 @@ export const mockListings: Listing[] = [
     subtitle: 'Aegean serenity with endless views',
     region: 'Santorini',
     style: 'Coastal',
+    tags: ['Beach', 'Luxury', 'Romantic'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=1200',
     gallery_urls: [
@@ -64,6 +65,7 @@ Our concierge team curates every detail of your stay. From private yacht excursi
     subtitle: 'Mountain grandeur in the Swiss Alps',
     region: 'Switzerland',
     style: 'Alpine',
+    tags: ['Mountain', 'Luxury', 'Wellness'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200',
     gallery_urls: [
@@ -100,6 +102,7 @@ Ski-in access in winter; hiking and wildflower meadows in summer. Our chef prepa
     subtitle: 'Untamed luxury on the savanna',
     region: 'Kenya',
     style: 'Safari',
+    tags: ['Adventure', 'Luxury'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
     gallery_urls: [
@@ -136,6 +139,7 @@ Daily game drives with expert guides. Sundowners in the bush. Stargazing from yo
     subtitle: 'Lemon groves and sea breezes on the Amalfi Coast',
     region: 'Italy',
     style: 'Coastal',
+    tags: ['Beach', 'Romantic', 'Luxury'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200',
     gallery_urls: [
@@ -164,6 +168,7 @@ Daily game drives with expert guides. Sundowners in the bush. Stargazing from yo
     subtitle: 'Alpine elegance in the heart of Chamonix',
     region: 'France',
     style: 'Alpine',
+    tags: ['Mountain', 'Luxury'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200',
     gallery_urls: [
@@ -219,6 +224,7 @@ Daily game drives with expert guides. Sundowners in the bush. Stargazing from yo
     subtitle: 'Berber luxury beneath the stars',
     region: 'Morocco',
     style: 'Cultural',
+    tags: ['Luxury', 'Secluded'],
     status: 'live',
     hero_image_url: 'https://images.unsplash.com/photo-1489749798305-4fea3ae63d43?w=1200',
     gallery_urls: [

@@ -1,11 +1,17 @@
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { DestinationFilters } from './filter-bar'
+
+export interface ResultsHintFilters {
+  region?: string
+  style?: string
+  tags?: string[]
+  query?: string
+}
 
 export interface ResultsHintProps {
   total: number
-  filters: DestinationFilters
+  filters: ResultsHintFilters
   onReset?: () => void
   className?: string
 }
@@ -16,10 +22,12 @@ export function ResultsHint({
   onReset,
   className,
 }: ResultsHintProps) {
+  const tagsArr = Array.isArray(filters.tags) ? filters.tags : []
   const hasActiveFilters =
     (filters.region ?? '').trim() !== '' ||
     (filters.style ?? '').trim() !== '' ||
-    (filters.query ?? '').trim() !== ''
+    (filters.query ?? '').trim() !== '' ||
+    tagsArr.length > 0
 
   const label =
     total === 0
@@ -39,7 +47,7 @@ export function ResultsHint({
       {hasActiveFilters && (
         <>
           <span aria-hidden>·</span>
-          <span>Filtered by region, style, or keyword</span>
+          <span>Filtered by region, style, tags, or keyword</span>
           {onReset && (
             <Button
               variant="ghost"

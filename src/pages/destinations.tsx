@@ -1,48 +1,95 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useDebounce } from '@/hooks/use-debounce'
 import {
-  FilterBar,
+  DestinationSearchBar,
+  DestinationFiltersPanel,
   ResultsHint,
   DestinationCardGrid,
   EditorialSidebarBlock,
   DestinationLoadingSkeleton,
   DestinationEmptyState,
   LoadMore,
-  type DestinationFilters,
+  type DestinationFiltersState,
 } from '@/components/destinations'
 import { Button } from '@/components/ui/button'
 import { useInfiniteDestinations, useFeaturedEditorial } from '@/hooks/use-destinations'
 
-const DEFAULT_FILTERS: DestinationFilters = {
+const DEFAULT_FILTERS: DestinationFiltersState = {
   region: '',
   style: '',
+  tags: [],
   query: '',
   sort: 'newest',
 }
 
-export function DestinationsPage() {
-  const [searchParams] = useSearchParams()
-  const qFromUrl = searchParams.get('q')?.trim() ?? ''
+function parseFiltersFromUrl(searchParams: URLSearchParams): Partial<DestinationFiltersState> {
+  const q = searchParams.get('q')?.trim() ?? ''
+  const region = searchParams.get('region')?.trim() ?? ''
+  const style = searchParams.get('style')?.trim() ?? ''
+  const tagsParam = searchParams.get('tags')?.trim()
+  const tags = tagsParam ? tagsParam.split(',').map((t) => t.trim()).filter(Boolean) : []
+  const sort = (searchParams.get('sort') as DestinationFiltersState['sort']) ?? 'newest'
+  return { query: q, region, style, tags, sort }
+}
 
-  const [filters, setFilters] = useState<DestinationFilters>(() => ({
+function buildSearchParams(
+  filters: DestinationFiltersState,
+  page: number
+): URLSearchParams {
+  const params = new URLSearchParams()
+  if ((filters.query ?? '').trim()) params.set('q', filters.query!.trim())
+  if ((filters.region ?? '').trim()) params.set('region', filters.region!.trim())
+  if ((filters.style ?? '').trim()) params.set('style', filters.style!.trim())
+  if ((filters.tags ?? []).length > 0) {
+    params.set('tags', (filters.tags ?? []).join(','))
+  }
+  if (filters.sort && filters.sort !== 'newest') params.set('sort', filters.sort)
+  if (page > 1) params.set('page', String(page))
+  return params
+}
+
+export function DestinationsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlFilters = useMemo(() => parseFiltersFromUrl(searchParams), [searchParams])
+
+  const [filters, setFilters] = useState<DestinationFiltersState>(() => ({
     ...DEFAULT_FILTERS,
-    query: qFromUrl,
+    ...urlFilters,
   }))
 
   useEffect(() => {
-    if (qFromUrl && filters.query !== qFromUrl) {
-      setFilters((prev) => ({ ...prev, query: qFromUrl }))
-    }
-  }, [qFromUrl])
+    setFilters((prev) => ({ ...prev, ...urlFilters }))
+  }, [urlFilters])
+
+  const updateUrl = useCallback(
+    (nextFilters: DestinationFiltersState, page = 1) => {
+      const next = buildSearchParams(nextFilters, page)
+      const str = next.toString()
+      setSearchParams(str ? `?${str}` : '', { replace: true })
+    },
+    [setSearchParams]
+  )
+
+  const debouncedQuery = useDebounce(filters.query ?? '', 280)
+
+  const handleFiltersChange = useCallback(
+    (next: DestinationFiltersState) => {
+      setFilters(next)
+      updateUrl(next, 1)
+    },
+    [updateUrl]
+  )
 
   const filtersForApi = useMemo(
     () => ({
       region: filters.region?.trim() || undefined,
       style: filters.style?.trim() || undefined,
-      query: filters.query?.trim() || undefined,
+      query: debouncedQuery?.trim() || undefined,
+      tags: (filters.tags ?? []).length > 0 ? (filters.tags ?? []) : undefined,
       sort: filters.sort ?? 'newest',
     }),
-    [filters]
+    [filters.region, filters.style, filters.tags, filters.sort, debouncedQuery]
   )
 
   const {
@@ -59,7 +106,7 @@ export function DestinationsPage() {
 
   const destinations = useMemo(() => {
     const pages = data?.pages ?? []
-    const list = pages.flatMap((p) => Array.isArray(p?.data) ? p.data : [])
+    const list = pages.flatMap((p) => (Array.isArray(p?.data) ? p.data : []))
     return list
   }, [data?.pages])
 
@@ -68,11 +115,14 @@ export function DestinationsPage() {
   const hasActiveFilters =
     (filters.region ?? '').trim() !== '' ||
     (filters.style ?? '').trim() !== '' ||
-    (filters.query ?? '').trim() !== ''
+    (filters.query ?? '').trim() !== '' ||
+    ((filters.tags ?? []).length > 0)
 
-  const handleResetFilters = () => {
-    setFilters(DEFAULT_FILTERS)
-  }
+  const handleResetFilters = useCallback(() => {
+    const reset = { ...DEFAULT_FILTERS }
+    setFilters(reset)
+    updateUrl(reset, 1)
+  }, [updateUrl])
 
   return (
     <div className="min-h-screen">
@@ -89,14 +139,29 @@ export function DestinationsPage() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Filter bar */}
-        <div className="mb-8">
-          <FilterBar filters={filters} onFiltersChange={setFilters} />
+        {/* Search + Filters */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="flex-1 min-w-0 max-w-xl">
+              <DestinationSearchBar
+                value={filters.query ?? ''}
+                onChange={(v) => handleFiltersChange({ ...filters, query: v })}
+                placeholder="Search destinations..."
+                region={filters.region}
+                style={filters.style}
+              />
+            </div>
+            <DestinationFiltersPanel
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              onReset={handleResetFilters}
+              className="lg:flex-1"
+            />
+          </div>
           <ResultsHint
             total={totalCount}
             filters={filters}
             onReset={hasActiveFilters ? handleResetFilters : undefined}
-            className="mt-4"
           />
         </div>
 
