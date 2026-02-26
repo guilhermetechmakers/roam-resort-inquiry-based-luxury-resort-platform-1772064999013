@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sidebar, hostSidebarLinks } from '@/components/layout/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/contexts/auth-context'
 import { useListingById } from '@/hooks/use-listings'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { MultiTabNavigator, type HostListingTabId } from './multi-tab-navigator'
 import { BasicInfoTab } from './basic-info-tab'
@@ -29,8 +30,11 @@ import {
   createHostListing,
   updateHostListing,
 } from '@/api/host-listing-create-edit'
+import { autosaveListing } from '@/api/host-listings'
 import type { Listing } from '@/types'
 import { ensureArray } from '@/lib/utils/array-utils'
+
+const AUTOSAVE_DEBOUNCE_MS = 60_000
 
 function slugFromTitle(title: string): string {
   return (title ?? '')
@@ -59,6 +63,10 @@ export function HostListingCreateEditPage() {
   const [formData, setFormData] = useState<HostListingFormData>(INITIAL_DATA)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const queryClient = useQueryClient()
 
   const updateForm = useCallback((updates: Partial<HostListingFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }))
@@ -112,6 +120,68 @@ export function HostListingCreateEditPage() {
       }))
     }
   }, [formData.title, formData.tagline])
+
+  // Debounced autosave for existing draft listings
+  useEffect(() => {
+    const listingId = formData.id
+    if (!listingId || isNew || isSubmitting) return
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current)
+      autosaveTimerRef.current = null
+    }
+
+    autosaveTimerRef.current = setTimeout(async () => {
+      autosaveTimerRef.current = null
+      setAutosaveStatus('saving')
+      try {
+        const slug = formData.slug || slugFromTitle(formData.title) || `listing-${Date.now()}`
+        const payload = {
+          title: formData.title || 'Untitled',
+          subtitle: formData.tagline,
+          region: formData.locationCity,
+          style: formData.category || formData.locationCity,
+          slug,
+          editorial_content: formData.editorialContent,
+          gallery_urls: ensureArray<GalleryItem>(formData.gallery).map((g) => g.imageUrl).filter(Boolean),
+          experienceDetails: {
+            guestCapacity: formData.experience?.capacity ?? 4,
+            amenities: formData.experience?.amenities ?? [],
+            sampleItineraries: formData.experience?.activities ?? [],
+          },
+          status: 'draft' as const,
+        }
+        const { savedAt } = await autosaveListing(listingId, payload)
+        setLastSavedAt(savedAt)
+        setAutosaveStatus('saved')
+        queryClient.invalidateQueries({ queryKey: ['listing', 'id', listingId] })
+        setTimeout(() => setAutosaveStatus('idle'), 3000)
+      } catch {
+        setAutosaveStatus('error')
+        setTimeout(() => setAutosaveStatus('idle'), 5000)
+      }
+    }, AUTOSAVE_DEBOUNCE_MS)
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+    }
+  }, [
+    formData.id,
+    formData.title,
+    formData.tagline,
+    formData.category,
+    formData.locationCity,
+    formData.locationCountry,
+    formData.slug,
+    formData.editorialContent,
+    formData.gallery,
+    formData.experience,
+    isNew,
+    isSubmitting,
+    queryClient,
+  ])
 
   const validation = useMemo(
     () =>
@@ -268,14 +338,48 @@ export function HostListingCreateEditPage() {
             Back to Listings
           </Link>
 
-          <h1 className="font-serif text-3xl font-bold">
-            {isNew ? 'Create Listing' : 'Edit Listing'}
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            {isNew
-              ? 'Add a new destination to your portfolio.'
-              : `Editing ${formData.title || 'listing'}`}
-          </p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="font-serif text-3xl font-bold">
+                {isNew ? 'Create Listing' : 'Edit Listing'}
+              </h1>
+              <p className="mt-2 text-muted-foreground">
+                {isNew
+                  ? 'Add a new destination to your portfolio.'
+                  : `Editing ${formData.title || 'listing'}`}
+              </p>
+            </div>
+            {!isNew && formData.id && (
+              <div
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+                role="status"
+                aria-live="polite"
+              >
+                {autosaveStatus === 'saving' && (
+                  <span className="animate-pulse">Saving draft…</span>
+                )}
+                {autosaveStatus === 'saved' && (
+                  <>
+                    <Check className="h-4 w-4 text-green-600" aria-hidden />
+                    <span>
+                      Draft autosaved
+                      {lastSavedAt
+                        ? ` at ${new Date(lastSavedAt).toLocaleTimeString()}`
+                        : ''}
+                    </span>
+                  </>
+                )}
+                {autosaveStatus === 'error' && (
+                  <span className="text-destructive">Autosave failed</span>
+                )}
+                {autosaveStatus === 'idle' && lastSavedAt && (
+                  <span>
+                    Last saved {new Date(lastSavedAt).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="mt-8 space-y-8">
             <MultiTabNavigator
@@ -332,6 +436,7 @@ export function HostListingCreateEditPage() {
                 onSlugChange={(s) => updateForm({ slug: s })}
                 errors={validation.fieldErrors}
                 titleHint={formData.title}
+                listingId={formData.id}
               />
             )}
 

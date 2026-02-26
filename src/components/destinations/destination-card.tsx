@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { cloudinaryThumbUrl, isCloudinaryUrl } from '@/lib/cloudinary'
 import type { Destination } from '@/types'
 
 const PLACEHOLDER_IMAGE =
@@ -12,6 +13,11 @@ function getDetailUrl(destination: Destination): string {
   return `/destinations/${slug}`
 }
 
+function getOptimizedImageUrl(url: string): string {
+  if (!url) return PLACEHOLDER_IMAGE
+  return isCloudinaryUrl(url) ? cloudinaryThumbUrl(url) : url
+}
+
 export interface DestinationCardProps {
   destination: Destination
   className?: string
@@ -19,7 +25,8 @@ export interface DestinationCardProps {
 
 export function DestinationCard({ destination, className }: DestinationCardProps) {
   const href = getDetailUrl(destination)
-  const imageUrl = destination.imageUrl ?? PLACEHOLDER_IMAGE
+  const rawUrl = destination.imageUrl ?? PLACEHOLDER_IMAGE
+  const imageUrl = getOptimizedImageUrl(rawUrl)
   const title = destination.title ?? 'Untitled Destination'
   const tagline = destination.tagline ?? destination.excerpt ?? ''
   const region = destination.region ?? ''

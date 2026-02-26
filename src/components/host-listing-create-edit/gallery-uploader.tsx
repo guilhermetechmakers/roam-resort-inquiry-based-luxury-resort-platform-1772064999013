@@ -7,7 +7,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { MediaCard } from './media-card'
 import type { GalleryItem } from '@/types/host-listing-create-edit'
-import { uploadListingImage, addImageByUrl } from '@/api/host-listing-create-edit'
+import {
+  uploadListingImage,
+  uploadToCloudinary,
+  addImageByUrl,
+} from '@/api/host-listing-create-edit'
+import { isCloudinaryConfigured } from '@/lib/cloudinary'
 import { ensureArray } from '@/lib/utils/array-utils'
 import { GALLERY_MIN, GALLERY_MAX } from '@/lib/validation/host-listing-schema'
 
@@ -40,7 +45,7 @@ export function GalleryUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const addItem = useCallback(
-    (imageUrl: string, caption = '', altText = '') => {
+    (imageUrl: string, caption = '', altText = '', publicId?: string) => {
       if (items.length >= GALLERY_MAX) {
         setInputError(`Maximum ${GALLERY_MAX} images allowed`)
         return
@@ -49,6 +54,7 @@ export function GalleryUploader({
       const newItem: GalleryItem = {
         id: generateId(),
         imageUrl,
+        publicId,
         caption,
         altText: altText || 'Image',
         sortOrder: items.length,
@@ -109,13 +115,28 @@ export function GalleryUploader({
   const handleFileSelect = useCallback(
     async (files: FileList | null) => {
       if (!files?.length || disabled) return
+      const useCloudinary = isCloudinaryConfigured()
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (items.length >= GALLERY_MAX) break
         setUploadProgress(`Uploading ${file.name}...`)
         try {
-          const { url } = await uploadListingImage(file, listingId)
-          addItem(url)
+          let url: string
+          let publicId: string | undefined
+          if (useCloudinary) {
+            try {
+              const result = await uploadToCloudinary(file, listingId)
+              url = result.url
+              publicId = result.public_id
+            } catch {
+              const result = await uploadListingImage(file, listingId)
+              url = result.url
+            }
+          } else {
+            const result = await uploadListingImage(file, listingId)
+            url = result.url
+          }
+          addItem(url, '', 'Image', publicId)
         } catch (err) {
           setInputError((err as Error).message ?? 'Upload failed')
         }

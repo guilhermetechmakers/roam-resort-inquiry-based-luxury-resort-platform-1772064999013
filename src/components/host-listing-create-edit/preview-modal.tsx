@@ -103,17 +103,30 @@ export function PreviewModal({
               </div>
             )}
 
-            {data.slug && listingId && (
-              <Link
-                to={`/destinations/${data.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-accent hover:underline"
-              >
-                View live page
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            )}
+            <div className="flex flex-wrap gap-4">
+              {listingId && (
+                <Link
+                  to={`/host/listings/${listingId}/preview`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-accent hover:underline"
+                >
+                  Open full preview in new tab
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              )}
+              {data.slug && listingId && data.isPublished && (
+                <Link
+                  to={`/destinations/${data.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-accent hover:underline"
+                >
+                  View live page
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -7,6 +7,8 @@ export interface GalleryItem {
   id: string
   listingId?: string
   imageUrl: string
+  /** Cloudinary public_id for transformations (optional) */
+  publicId?: string
   caption: string
   altText: string
   sortOrder: number

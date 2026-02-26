@@ -187,3 +187,40 @@ export function addImageByUrl(url: string): { url: string } {
   }
   return { url: trimmed }
 }
+
+/** Upload to Cloudinary via Edge Function. Returns { url, public_id }. */
+export async function uploadToCloudinary(
+  file: File,
+  listingId?: string
+): Promise<{ url: string; public_id?: string }> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+
+  if (!supabaseUrl || !token) {
+    throw new Error('Authentication required for upload')
+  }
+
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('folder', listingId ? `roam-listings/${listingId}` : 'roam-listings')
+
+  const res = await fetch(`${supabaseUrl}/functions/v1/cloudinary-upload`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: anonKey,
+    },
+    body: formData,
+  })
+
+  const json = (await res.json().catch(() => ({}))) as { error?: string; url?: string; public_id?: string }
+  if (!res.ok) {
+    throw new Error(json.error ?? 'Cloudinary upload failed')
+  }
+  return {
+    url: json.url ?? '',
+    public_id: json.public_id,
+  }
+}

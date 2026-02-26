@@ -25,6 +25,7 @@ import {
 import { HostDashboardListingsPage } from '@/pages/host-dashboard-listings'
 import { HostListingDetailPage } from '@/pages/host-listing-detail'
 import { HostListingEditPage } from '@/pages/host-listing-edit'
+import { HostListingPreviewPage } from '@/pages/host-listing-preview'
 import { AdminConciergeDashboardPage } from '@/pages/admin-concierge-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
 import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
@@ -251,6 +252,16 @@ export default function App() {
                     <HostListingEditPage />
                   </ProtectedRoute>
                 </DashboardLayout>
+              }
+            />
+            <Route
+              path="/host/listings/:listingId/preview"
+              element={
+                <AppLayout>
+                  <ProtectedRoute role="host">
+                    <HostListingPreviewPage />
+                  </ProtectedRoute>
+                </AppLayout>
               }
             />
             <Route

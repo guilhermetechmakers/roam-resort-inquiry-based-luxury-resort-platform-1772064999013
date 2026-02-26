@@ -129,3 +129,49 @@ export async function updateListing(
 export async function publishListing(id: string): Promise<Listing> {
   return updateListing(id, { status: 'live' })
 }
+
+/** Check if slug is available (unique). Returns true if available. */
+export async function checkSlugUniqueness(
+  slug: string,
+  excludeListingId?: string
+): Promise<{ available: boolean; message?: string }> {
+  const s = (slug ?? '').trim().toLowerCase()
+  if (!s || !/^[a-z0-9-]+$/.test(s)) {
+    return { available: false, message: 'Slug must be URL-safe (lowercase, letters, numbers, hyphens)' }
+  }
+
+  try {
+    let q = supabase
+      .from('listings')
+      .select('id')
+      .eq('slug', s)
+      .limit(1)
+
+    if (excludeListingId) {
+      q = q.neq('id', excludeListingId)
+    }
+
+    const { data, error } = await q
+
+    if (error) return { available: true }
+    const list = Array.isArray(data) ? data : []
+    return { available: list.length === 0 }
+  } catch {
+    return { available: true }
+  }
+}
+
+/** Autosave draft listing. Persists current state without publishing. */
+export async function autosaveListing(
+  id: string,
+  payload: UpdateListingPayload
+): Promise<{ listing: Listing; savedAt: string }> {
+  const updated = await updateListing(id, {
+    ...payload,
+    status: 'draft',
+  })
+  return {
+    listing: updated,
+    savedAt: updated.updated_at ?? new Date().toISOString(),
+  }
+}

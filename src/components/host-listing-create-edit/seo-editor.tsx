@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -11,6 +12,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { ListingMetadata } from '@/types/host-listing-create-edit'
 import { META_TITLE_MAX, META_DESC_MAX } from '@/lib/validation/host-listing-schema'
+import { checkSlugUniqueness } from '@/api/host-listings'
 
 const ROBOTS_OPTIONS = [
   { value: 'index, follow', label: 'Index, follow' },
@@ -26,6 +28,7 @@ export interface SEOEditorProps {
   onSlugChange: (slug: string) => void
   errors?: Record<string, string>
   titleHint?: string
+  listingId?: string
   className?: string
 }
 
@@ -37,6 +40,8 @@ function slugify(text: string): string {
     .replace(/[^a-z0-9-]/g, '')
 }
 
+const SLUG_CHECK_DEBOUNCE_MS = 500
+
 export function SEOEditor({
   seo,
   slug,
@@ -44,8 +49,47 @@ export function SEOEditor({
   onSlugChange,
   errors = {},
   titleHint = '',
+  listingId,
   className,
 }: SEOEditorProps) {
+  const [slugAvailability, setSlugAvailability] = useState<{
+    checking: boolean
+    available: boolean | null
+    message?: string
+  }>({ checking: false, available: null })
+  const slugCheckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const s = (slug ?? '').trim().toLowerCase()
+    if (!s || !/^[a-z0-9-]+$/.test(s)) {
+      setSlugAvailability({ checking: false, available: null })
+      return
+    }
+
+    if (slugCheckTimerRef.current) {
+      clearTimeout(slugCheckTimerRef.current)
+    }
+
+    slugCheckTimerRef.current = setTimeout(async () => {
+      slugCheckTimerRef.current = null
+      setSlugAvailability((prev) => ({ ...prev, checking: true }))
+      try {
+        const result = await checkSlugUniqueness(s, listingId)
+        setSlugAvailability({
+          checking: false,
+          available: result.available,
+          message: result.message,
+        })
+      } catch {
+        setSlugAvailability({ checking: false, available: null })
+      }
+    }, SLUG_CHECK_DEBOUNCE_MS)
+
+    return () => {
+      if (slugCheckTimerRef.current) clearTimeout(slugCheckTimerRef.current)
+    }
+  }, [slug, listingId])
+
   const handleSlugFromTitle = () => {
     const base = titleHint || seo.metaTitle || ''
     if (base) onSlugChange(slugify(base))
@@ -85,6 +129,17 @@ export function SEOEditor({
             <p className="mt-1 text-sm text-destructive" role="alert">
               {errors.slug}
             </p>
+          )}
+          {slugAvailability.checking && (
+            <p className="mt-1 text-sm text-muted-foreground">Checking slug availability…</p>
+          )}
+          {!slugAvailability.checking && slugAvailability.available === false && (
+            <p className="mt-1 text-sm text-destructive" role="alert">
+              {slugAvailability.message ?? 'This slug is already in use'}
+            </p>
+          )}
+          {!slugAvailability.checking && slugAvailability.available === true && (slug ?? '').trim() && (
+            <p className="mt-1 text-sm text-green-600">Slug is available</p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
             Lowercase, numbers, hyphens only. Used in /destinations/[slug]
