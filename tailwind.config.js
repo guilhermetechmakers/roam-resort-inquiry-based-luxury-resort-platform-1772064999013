@@ -37,6 +37,7 @@ export default {
         destructive: 'rgb(var(--destructive) / <alpha-value>)',
         success: 'rgb(var(--success) / <alpha-value>)',
         info: 'rgb(var(--info) / <alpha-value>)',
+        warning: 'rgb(var(--warning) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

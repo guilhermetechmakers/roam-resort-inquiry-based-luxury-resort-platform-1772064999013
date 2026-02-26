@@ -18,6 +18,8 @@ import {
   BulkAddNoteModal,
 } from '@/components/admin-concierge'
 import { ErrorBanner } from '@/components/auth'
+import { Card, CardContent } from '@/components/ui/card'
+import { RetryButton } from '@/components/ux'
 import {
   shapeInquiryToAdmin,
   generateInquiriesCsv,
@@ -84,6 +86,29 @@ export function AdminInquiryListPage() {
   const inquiries = data?.data ?? []
   const total = data?.total ?? 0
 
+  const hasActiveFilters = Boolean(
+    (statusFilter && statusFilter !== 'all') ||
+      (paymentStatusFilter && paymentStatusFilter !== 'all') ||
+      destinationId ||
+      hostId ||
+      guestEmail.trim() ||
+      dateFrom ||
+      dateTo ||
+      search.trim()
+  )
+
+  const clearFilters = useCallback(() => {
+    setStatusFilter('all')
+    setPaymentStatusFilter('all')
+    setDestinationId('')
+    setHostId('')
+    setGuestEmail('')
+    setDateFrom('')
+    setDateTo('')
+    setSearch('')
+    setPage(1)
+  }, [])
+
   const fetchAllFiltered = useCallback(async () => {
     const result = await fetchAdminInquiries({
       ...filters,
@@ -148,19 +173,46 @@ export function AdminInquiryListPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar links={adminSidebarLinks} title="Concierge" />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
-          <h1 className="font-serif text-3xl font-bold">Inquiries</h1>
-          <p className="mt-2 text-muted-foreground">
+      <main
+        className="flex-1 overflow-auto"
+        role="main"
+        aria-label="Admin inquiries list"
+      >
+        <div className="p-4 sm:p-6 lg:p-8">
+          <h1 className="font-serif text-2xl font-bold sm:text-3xl" id="inquiries-heading">
+            Inquiries
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base" id="inquiries-description">
             Manage all stay inquiries, apply filters, and export to CSV.
           </p>
 
           {isError && (
-            <ErrorBanner
-              message={toUserMessage(error, 'Failed to load inquiries')}
-              onRetry={() => refetch()}
-              className="mb-6"
-            />
+            <>
+              <ErrorBanner
+                message={toUserMessage(error, 'Failed to load inquiries')}
+                onRetry={() => refetch()}
+                className="mb-6"
+              />
+              {/* Inline error feedback in table area */}
+              <Card
+                className="mb-6 border-destructive/30 bg-destructive/5"
+                role="alert"
+                aria-live="assertive"
+                aria-label="Error loading inquiries"
+              >
+                <CardContent className="flex items-center justify-between gap-4 py-4">
+                  <p className="text-sm text-destructive">
+                    {toUserMessage(error, 'Failed to load inquiries')}
+                  </p>
+                  <RetryButton
+                    onRetry={() => refetch()}
+                    label="Retry"
+                    variant="outline"
+                    size="sm"
+                  />
+                </CardContent>
+              </Card>
+            </>
           )}
 
           <div className="mt-8 space-y-6">
@@ -203,6 +255,8 @@ export function AdminInquiryListPage() {
               onSelectionChange={setSelectedIds}
               onExportSingle={handleExportSingle}
               onQuickView={(i) => setDrawerInquiry(i)}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
             />
           </div>
         </div>
