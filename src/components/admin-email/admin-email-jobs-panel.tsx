@@ -4,13 +4,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import type { EmailJob } from '@/types/email'
 
+/** Status badge styles using design tokens (no hardcoded hex) */
 function getStatusClass(status: string): string {
   const map: Record<string, string> = {
-    queued: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    sending: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    delivered: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    bounced: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    queued: 'bg-accent/10 text-accent',
+    sending: 'bg-primary/10 text-primary',
+    delivered: 'bg-accent/20 text-accent',
+    bounced: 'bg-destructive/10 text-destructive',
+    failed: 'bg-destructive/10 text-destructive',
     suppressed: 'bg-muted text-muted-foreground',
   }
   return map[status] ?? 'bg-muted text-muted-foreground'
@@ -42,10 +43,11 @@ export function AdminEmailJobsPanel({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" role="status" aria-label="Loading email jobs">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
+        <span className="sr-only">Loading email jobs…</span>
       </div>
     )
   }
@@ -75,10 +77,17 @@ export function AdminEmailJobsPanel({
       )}
 
       {list.length === 0 ? (
-        <Card className="border-border">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Mail className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">No email jobs</p>
+        <Card className="border-border shadow-card">
+          <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="rounded-full bg-muted p-4">
+              <Mail className="h-12 w-12 text-muted-foreground" aria-hidden />
+            </div>
+            <h3 className="mt-4 font-serif text-lg font-semibold text-foreground">
+              No email jobs
+            </h3>
+            <p className="mt-2 text-center text-sm text-muted-foreground max-w-sm">
+              The queue is empty. New jobs will appear here when emails are sent.
+            </p>
           </CardContent>
         </Card>
       ) : (

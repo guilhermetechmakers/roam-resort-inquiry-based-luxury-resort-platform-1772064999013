@@ -1,5 +1,6 @@
-import { Mail } from 'lucide-react'
+import { ShieldOff } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { SuppressionEntry } from '@/types/email'
 
 function formatDate(d: string): string {
@@ -25,20 +26,28 @@ export function AdminSuppressionList({ entries, isLoading }: AdminSuppressionLis
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" role="status" aria-label="Loading suppression list">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
+        <span className="sr-only">Loading suppression list…</span>
       </div>
     )
   }
 
   if (list.length === 0) {
     return (
-      <Card className="border-border">
-        <CardContent className="flex flex-col items-center justify-center py-16">
-          <Mail className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">No suppressions</p>
+      <Card className="border-border shadow-card">
+        <CardContent className="flex flex-col items-center justify-center py-16 px-6">
+          <div className="rounded-full bg-muted p-4">
+            <ShieldOff className="h-12 w-12 text-muted-foreground" aria-hidden />
+          </div>
+          <h3 className="mt-4 font-serif text-lg font-semibold text-foreground">
+            No suppressions
+          </h3>
+          <p className="mt-2 text-center text-sm text-muted-foreground max-w-sm">
+            No bounced or unsubscribed emails. Suppressed addresses will appear here.
+          </p>
         </CardContent>
       </Card>
     )

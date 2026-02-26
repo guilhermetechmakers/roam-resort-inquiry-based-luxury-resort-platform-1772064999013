@@ -33,45 +33,66 @@ export function AdminEmailJobsPage() {
   return (
     <div className="flex min-h-screen">
       <Sidebar links={adminSidebarLinks} title="Concierge" />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
-          {(jobsError || suppError) && (
-            <ErrorBanner
-              message={toUserMessage(jobsErr ?? suppErr, 'Failed to load')}
-              onRetry={() => {
-                refetchJobs()
-                refetchSupp()
-              }}
-              className="mb-6"
-            />
-          )}
+      <main className="flex-1 overflow-auto bg-background">
+        <div className="p-4 sm:p-6 md:p-8">
+          <header className="mb-6 sm:mb-8">
+            <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl">
+              Email & Suppression
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Monitor email job queue and suppression list (bounces, unsubscribes).
+            </p>
+          </header>
 
-          <h1 className="font-serif text-3xl font-bold">Email & Suppression</h1>
-          <p className="mt-2 text-muted-foreground">
-            Monitor email job queue and suppression list (bounces, unsubscribes).
-          </p>
-
-          <Tabs defaultValue="jobs" className="mt-8">
-            <TabsList className="mb-6">
-              <TabsTrigger value="jobs" className="gap-2">
-                <Mail className="h-4 w-4" />
+          <Tabs defaultValue="jobs" className="mt-6 sm:mt-8">
+            <TabsList className="mb-4 sm:mb-6 w-full sm:w-auto flex-wrap h-auto gap-1 p-1">
+              <TabsTrigger value="jobs" className="gap-2 flex-1 sm:flex-initial">
+                <Mail className="h-4 w-4 shrink-0" aria-hidden />
                 Email Jobs
               </TabsTrigger>
-              <TabsTrigger value="suppression" className="gap-2">
-                <ShieldOff className="h-4 w-4" />
+              <TabsTrigger value="suppression" className="gap-2 flex-1 sm:flex-initial">
+                <ShieldOff className="h-4 w-4 shrink-0" aria-hidden />
                 Suppression List
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="jobs">
-              <AdminEmailJobsPanel
-                jobs={jobsList}
-                isLoading={jobsLoading}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-              />
+            <TabsContent value="jobs" className="mt-4 sm:mt-6">
+              <section aria-labelledby="email-jobs-heading">
+                <h2 id="email-jobs-heading" className="sr-only">
+                  Email Jobs
+                </h2>
+                {jobsError && (
+                  <ErrorBanner
+                    message={toUserMessage(jobsErr, 'Failed to load email jobs')}
+                    onRetry={() => refetchJobs()}
+                    className="mb-4"
+                  />
+                )}
+                {!jobsError && (
+                  <AdminEmailJobsPanel
+                    jobs={jobsList}
+                    isLoading={jobsLoading}
+                    statusFilter={statusFilter}
+                    onStatusFilterChange={setStatusFilter}
+                  />
+                )}
+              </section>
             </TabsContent>
-            <TabsContent value="suppression">
-              <AdminSuppressionList entries={suppList} isLoading={suppLoading} />
+            <TabsContent value="suppression" className="mt-4 sm:mt-6">
+              <section aria-labelledby="suppression-list-heading">
+                <h2 id="suppression-list-heading" className="sr-only">
+                  Suppression List
+                </h2>
+                {suppError && (
+                  <ErrorBanner
+                    message={toUserMessage(suppErr, 'Failed to load suppression list')}
+                    onRetry={() => refetchSupp()}
+                    className="mb-4"
+                  />
+                )}
+                {!suppError && (
+                  <AdminSuppressionList entries={suppList} isLoading={suppLoading} />
+                )}
+              </section>
             </TabsContent>
           </Tabs>
         </div>
