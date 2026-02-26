@@ -91,6 +91,10 @@ export default {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
+      animationDelay: {
+        100: '100ms',
+        200: '200ms',
+      },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out forwards',
         'fade-in-up': 'fade-in-up 0.5s ease-out forwards',

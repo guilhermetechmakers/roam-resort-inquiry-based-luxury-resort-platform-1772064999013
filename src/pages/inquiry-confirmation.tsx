@@ -8,6 +8,7 @@ import {
   FileText,
   Mail,
   HelpCircle,
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -62,7 +63,10 @@ function ConfirmationHeader({ reference }: { reference: string }) {
       >
         <CheckCircle2 className="h-12 w-12 text-accent" />
       </div>
-      <h1 className="mt-8 font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl animate-fade-in-up">
+      <h1
+        id="confirmation-heading"
+        className="mt-8 font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl animate-fade-in-up"
+      >
         Inquiry Confirmed
       </h1>
       <p className="mt-4 font-mono text-lg font-medium text-accent sm:text-xl" aria-label="Reference number">
@@ -243,15 +247,17 @@ function EmailConfirmationBadge({
           : 'Confirmation email will be sent shortly.'}
       </span>
       {onResend && (
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
           onClick={onResend}
           disabled={isResending}
-          className="text-sm font-medium text-accent hover:underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded"
+          className="text-accent h-auto p-0 font-medium"
           aria-label="Resend confirmation email"
         >
           {isResending ? 'Sending…' : 'Resend'}
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -299,32 +305,26 @@ function ActionsBar() {
       role="navigation"
       aria-label="Confirmation actions"
     >
-      <Link
-        to="/profile"
-        className="inline-flex items-center justify-center"
-        aria-label="View my inquiries"
+      <Button
+        asChild
+        size="lg"
+        className="w-full sm:w-auto min-h-[44px] bg-accent text-accent-foreground hover:bg-accent/90 shadow hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
       >
-        <Button
-          size="lg"
-          className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90 shadow hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-        >
+        <Link to="/profile" aria-label="View my inquiries">
           View My Inquiries
           <ArrowRight className="ml-2 h-5 w-5" aria-hidden />
-        </Button>
-      </Link>
-      <Link
-        to="/destinations"
-        className="inline-flex items-center justify-center"
-        aria-label="Return to destinations"
+        </Link>
+      </Button>
+      <Button
+        asChild
+        variant="outline"
+        size="lg"
+        className="w-full sm:w-auto min-h-[44px] border-border hover:bg-secondary hover:text-secondary-foreground transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
       >
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full sm:w-auto border-border hover:bg-secondary hover:text-secondary-foreground transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-        >
+        <Link to="/destinations" aria-label="Return to destinations">
           Return to Destinations
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     </div>
   )
 }
@@ -332,20 +332,68 @@ function ActionsBar() {
 // --- LoadingSkeletons ---
 function ConfirmationLoadingSkeletons() {
   return (
-    <div className="mx-auto max-w-2xl space-y-8" aria-busy="true" aria-label="Loading inquiry details">
+    <div
+      className="mx-auto max-w-2xl space-y-8 animate-fade-in"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="Loading inquiry details"
+    >
       <div className="flex flex-col items-center">
-        <Skeleton className="h-20 w-20 rounded-full" />
-        <Skeleton className="mt-6 h-10 w-64" />
-        <Skeleton className="mt-4 h-6 w-32" />
+        <Skeleton className="h-20 w-20 rounded-full animate-pulse" />
+        <Skeleton className="mt-6 h-10 w-64 animate-pulse" />
+        <Skeleton className="mt-4 h-6 w-32 animate-pulse" />
       </div>
-      <Skeleton className="h-64 rounded-xl" />
-      <Skeleton className="h-64 rounded-xl" />
-      <Skeleton className="h-12 w-48" />
-      <div className="flex justify-center gap-4">
-        <Skeleton className="h-12 w-40" />
-        <Skeleton className="h-12 w-44" />
+      <Skeleton className="h-64 rounded-xl animate-pulse" />
+      <Skeleton className="h-64 rounded-xl animate-pulse" />
+      <Skeleton className="h-12 w-48 animate-pulse" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-center sm:gap-6">
+        <Skeleton className="h-12 w-full rounded-md sm:w-40" />
+        <Skeleton className="h-12 w-full rounded-md sm:w-44" />
       </div>
     </div>
+  )
+}
+
+// --- ErrorState ---
+function ConfirmationErrorState() {
+  return (
+    <Card
+      className="rounded-xl border-destructive/30 bg-destructive/5 px-4 py-8 sm:px-6"
+      role="alert"
+      aria-live="polite"
+      aria-label="Inquiry not found or access denied"
+    >
+      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+        <div
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-destructive/20"
+          aria-hidden
+        >
+          <AlertCircle className="h-8 w-8 text-destructive" aria-hidden />
+        </div>
+        <div className="flex-1">
+          <h2 className="font-serif text-xl font-semibold text-foreground">
+            Inquiry Not Found
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            We couldn&apos;t find this inquiry or you don&apos;t have access to view it.
+            Please check your reference number or contact our concierge team for assistance.
+          </p>
+          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+            <Button asChild variant="outline" size="lg">
+              <Link to="/destinations" aria-label="Return to destinations">
+                Return to Destinations
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/contact" aria-label="Contact support">
+                Contact Support
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
 
@@ -368,28 +416,39 @@ export function InquiryConfirmationPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[80vh] px-4 py-16">
+      <main
+        className="min-h-[80vh] px-4 py-16 sm:py-24"
+        role="main"
+        aria-label="Loading inquiry confirmation"
+      >
         <ConfirmationLoadingSkeletons />
-      </div>
+      </main>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-[80vh] px-4 py-16">
+      <main
+        className="min-h-[80vh] px-4 py-16 sm:py-24"
+        role="main"
+        aria-label="Loading inquiry confirmation"
+      >
         <ConfirmationLoadingSkeletons />
-      </div>
+      </main>
     )
   }
 
   if (error || !inquiry) {
     return (
-      <div className="flex min-h-[80vh] flex-col items-center justify-center px-4">
-        <p className="text-muted-foreground">Inquiry not found or you don&apos;t have access to view it.</p>
-        <Link to="/destinations" className="mt-6">
-          <Button variant="outline">Return to Destinations</Button>
-        </Link>
-      </div>
+      <main
+        className="flex min-h-[80vh] flex-col items-center justify-center px-4 py-16 sm:py-24"
+        role="main"
+        aria-label="Inquiry confirmation error"
+      >
+        <div className="mx-auto w-full max-w-2xl">
+          <ConfirmationErrorState />
+        </div>
+      </main>
     )
   }
 
@@ -414,11 +473,19 @@ export function InquiryConfirmationPage() {
   const attachments = normalizeAttachments(inquiry.attachments)
 
   return (
-    <div className="min-h-[80vh] px-4 py-16 sm:py-24">
+    <main
+      className="min-h-[80vh] px-4 py-16 sm:py-24"
+      role="main"
+      aria-labelledby="confirmation-heading"
+      aria-label="Inquiry confirmation"
+    >
       <div className="mx-auto max-w-2xl space-y-12">
         <ConfirmationHeader reference={displayRef} />
 
-        <section className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <section
+          className="space-y-8 animate-fade-in-up [animation-delay:100ms]"
+          aria-label="Inquiry summary and next steps"
+        >
           <InquirySummaryCard
             destinationName={destinationName}
             checkIn={checkIn}
@@ -440,11 +507,14 @@ export function InquiryConfirmationPage() {
 
           <EmailConfirmationBadge emailConfirmed={true} />
 
-          <div className="pt-4 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div
+            className="pt-4 animate-fade-in-up [animation-delay:200ms]"
+            aria-label="Action buttons"
+          >
             <ActionsBar />
           </div>
         </section>
       </div>
-    </div>
+    </main>
   )
 }
