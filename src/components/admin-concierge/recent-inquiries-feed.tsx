@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FileText, ExternalLink, CreditCard } from 'lucide-react'
+import { FileText, ExternalLink, CreditCard, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,13 +16,14 @@ export interface RecentInquiriesFeedProps {
   className?: string
 }
 
+/** Status badge classes using design tokens (info, warning, success, muted) */
 function getStatusBadgeClass(status: string): string {
   const map: Record<string, string> = {
-    new: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    contacted: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-    deposit_paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    confirmed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    cancelled: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    new: 'bg-info/20 text-info',
+    contacted: 'bg-warning/20 text-warning',
+    deposit_paid: 'bg-success/20 text-success',
+    confirmed: 'bg-success/20 text-success',
+    cancelled: 'bg-muted text-muted-foreground',
   }
   return map[status] ?? 'bg-muted text-muted-foreground'
 }
@@ -51,19 +52,40 @@ export function RecentInquiriesFeed({
   if (items.length === 0) {
     return (
       <Card className={cn(className)}>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <FileText className="mb-4 h-12 w-12 text-muted-foreground" aria-hidden />
-          <p className="font-medium text-foreground">No inquiries yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+        <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <FileText
+            className="mb-4 h-12 w-12 text-muted-foreground"
+            aria-hidden
+          />
+          <h2 className="font-serif text-xl font-semibold text-foreground">
+            No inquiries yet
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             New inquiries will appear here as guests submit requests.
           </p>
+          <Button
+            asChild
+            variant="default"
+            size="lg"
+            className="mt-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-accent-glow active:scale-[0.98]"
+          >
+            <Link
+              to="/admin/inquiries"
+              className="inline-flex items-center gap-2"
+            >
+              View all inquiries
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <div className={cn('space-y-2', className)} role="list" aria-label="Recent inquiries">
+    <div className={cn('space-y-2', className)}>
+      <h2 className="sr-only">Recent inquiries</h2>
+      <div role="list" aria-label="Recent inquiries" className="space-y-2">
       {items.map((inquiry) => {
         const listing = typeof inquiry.listing === 'object' ? inquiry.listing : null
         const title = listing?.title ?? 'Destination'
@@ -124,6 +146,7 @@ export function RecentInquiriesFeed({
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
