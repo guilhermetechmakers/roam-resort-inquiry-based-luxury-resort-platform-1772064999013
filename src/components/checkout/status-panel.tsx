@@ -37,16 +37,17 @@ export function StatusPanel({
   if (status === 'success') {
     return (
       <div
-        className="rounded-xl border border-green-200/60 bg-green-50/30 px-6 py-8 dark:border-green-900/40 dark:bg-green-950/20"
+        className="rounded-xl border border-success/30 bg-success/5 px-6 py-8"
         role="alert"
         aria-live="polite"
+        aria-label="Payment completed successfully"
       >
         <div className="flex items-start gap-4">
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-success/20"
             aria-hidden
           >
-            <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="h-7 w-7 text-success" aria-hidden />
           </div>
           <div className="flex-1">
             <h3 className="font-serif text-xl font-semibold text-foreground">
@@ -60,14 +61,14 @@ export function StatusPanel({
                 <Link to={`/inquiries/confirmation/${inquiryId}`}>
                   <Button
                     className="bg-accent hover:bg-accent/90"
-                    aria-label={`View inquiry ${reference ?? inquiryId}`}
+                    aria-label={`View inquiry confirmation ${reference ?? inquiryId}`}
                   >
                     View Inquiry
                   </Button>
                 </Link>
               )}
               <Link to="/profile">
-                <Button variant="outline">My Inquiries</Button>
+                <Button variant="outline" aria-label="View my inquiries">My Inquiries</Button>
               </Link>
             </div>
           </div>
@@ -79,16 +80,17 @@ export function StatusPanel({
   if (status === 'cancelled') {
     return (
       <div
-        className="rounded-xl border border-amber-200/60 bg-amber-50/30 px-6 py-8 dark:border-amber-900/40 dark:bg-amber-950/20"
+        className="rounded-xl border border-warning/30 bg-warning/5 px-6 py-8"
         role="alert"
         aria-live="polite"
+        aria-label="Payment was cancelled"
       >
         <div className="flex items-start gap-4">
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-warning/20"
             aria-hidden
           >
-            <AlertCircle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+            <AlertCircle className="h-7 w-7 text-warning" aria-hidden />
           </div>
           <div className="flex-1">
             <h3 className="font-serif text-xl font-semibold text-foreground">
@@ -101,11 +103,11 @@ export function StatusPanel({
             <div className="mt-6 flex flex-wrap gap-4">
               {inquiryId && (
                 <Link to={`/checkout/bridge/${inquiryId}`}>
-                  <Button className="bg-accent hover:bg-accent/90">Proceed to Payment</Button>
+                  <Button className="bg-accent hover:bg-accent/90" aria-label="Proceed to payment">Proceed to Payment</Button>
                 </Link>
               )}
               <Link to="/contact">
-                <Button variant="outline">Contact Support</Button>
+                <Button variant="outline" aria-label="Contact support">Contact Support</Button>
               </Link>
             </div>
           </div>
@@ -120,13 +122,14 @@ export function StatusPanel({
         className="rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-8"
         role="alert"
         aria-live="polite"
+        aria-label="Payment failed"
       >
         <div className="flex items-start gap-4">
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/10"
             aria-hidden
           >
-            <XCircle className="h-7 w-7 text-destructive" />
+            <XCircle className="h-7 w-7 text-destructive" aria-hidden />
           </div>
           <div className="flex-1">
             <h3 className="font-serif text-xl font-semibold text-foreground">
@@ -138,10 +141,10 @@ export function StatusPanel({
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Link to="/contact">
-                <Button className="bg-accent hover:bg-accent/90">Contact Support</Button>
+                <Button className="bg-accent hover:bg-accent/90" aria-label="Contact support for payment issues">Contact Support</Button>
               </Link>
               <Link to="/help">
-                <Button variant="outline">Help</Button>
+                <Button variant="outline" aria-label="Visit help center">Help</Button>
               </Link>
             </div>
           </div>
