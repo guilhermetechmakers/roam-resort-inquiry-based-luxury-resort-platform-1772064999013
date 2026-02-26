@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { auditLog } from '@/lib/audit-logger'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseUserMeta = any
@@ -14,10 +15,11 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<User>
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ user: User; needsEmailVerification?: boolean }>
   signOut: () => Promise<void>
   hasRole: (role: UserRole) => boolean
+  requestPasswordReset: (email: string) => Promise<void>
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null)
@@ -71,24 +73,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = React.useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    auditLog('login_attempt', { email })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) {
+      auditLog('login_failure', { email, error: error.message })
+      throw error
+    }
+    auditLog('login_success', { email, userId: data?.user?.id })
+    const u = data?.user ?? null
+    const mapped = mapSupabaseUser(u)
+    if (!mapped) throw new Error('Login failed')
+    return mapped
   }, [])
 
   const signUp = React.useCallback(
     async (email: string, password: string, fullName?: string) => {
-      const { error } = await supabase.auth.signUp({
+      auditLog('signup_attempt', { email })
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { full_name: fullName, role: 'guest' } },
       })
-      if (error) throw error
+      if (error) {
+        auditLog('signup_failure', { email, error: error.message })
+        throw error
+      }
+      auditLog('signup_success', { email, userId: data?.user?.id })
+      const u = data?.user ?? null
+      const mapped = mapSupabaseUser(u)
+      if (!mapped) throw new Error('Signup failed')
+      const needsEmailVerification =
+        !(u as { email_confirmed_at?: string })?.email_confirmed_at &&
+        !(u as { confirmed_at?: boolean })?.confirmed_at
+      return { user: mapped, needsEmailVerification: !!needsEmailVerification }
     },
     []
   )
 
   const signOut = React.useCallback(async () => {
+    auditLog('logout')
     await supabase.auth.signOut()
+  }, [])
+
+  const requestPasswordReset = React.useCallback(async (email: string) => {
+    auditLog('password_reset_request', { email })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) {
+      auditLog('password_reset_failure', { email, error: error.message })
+      throw error
+    }
+    auditLog('password_reset_success', { email })
   }, [])
 
   const hasRole = React.useCallback(
@@ -107,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     hasRole,
+    requestPasswordReset,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

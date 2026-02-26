@@ -1,198 +1,184 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password required'),
-})
-
-const signupSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  fullName: z.string().optional(),
-})
-
-type LoginForm = z.infer<typeof loginSchema>
-type SignupForm = z.infer<typeof signupSchema>
+import { getRoleRedirectPath } from '@/lib/guards'
+import {
+  AuthTabs,
+  RedirectHandler,
+  SignUpSuccessCard,
+} from '@/components/auth'
+import type { AuthTab } from '@/components/auth/auth-tabs'
+import type { LoginFormData, SignupFormData } from '@/lib/validation/auth-validation'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 export function LoginPage() {
-  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirectTo = searchParams.get('redirect') ?? '/profile'
-  const { signIn, signUp } = useAuth()
+  const redirectParam = searchParams.get('redirect')
+  const signupParam = searchParams.get('signup')
 
-  const loginForm = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  })
+  const [activeTab, setActiveTab] = useState<AuthTab>(
+    () => (signupParam === '1' ? 'signup' : 'login')
+  )
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<{ message: string; subMessage?: string } | null>(null)
+  const [signupSuccess, setSignupSuccess] = useState<{
+    email: string
+    needsEmailVerification: boolean
+  } | null>(null)
+  const { signIn, signUp, user, isLoading } = useAuth()
 
-  const signupForm = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: { email: '', password: '', fullName: '' },
-  })
+  // Redirect authenticated users away from login
+  const isAuthenticated = user != null && !isLoading
+  if (isAuthenticated) {
+    return (
+      <>
+        <RedirectHandler
+          user={user}
+          isLoading={false}
+          redirectIfAuthenticated
+          redirectTo={redirectParam}
+        />
+        <div className="flex min-h-[80vh] items-center justify-center">
+          <p className="text-muted-foreground">Redirecting...</p>
+        </div>
+      </>
+    )
+  }
 
-  const onLogin = async (data: LoginForm) => {
+  const handleLogin = async (data: LoginFormData) => {
+    setError(null)
     setLoading(true)
     try {
-      await signIn(data.email, data.password)
+      const loggedInUser = await signIn(data.email, data.password)
       toast.success('Welcome back!')
-      navigate(redirectTo)
+      const path =
+        redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+          ? redirectParam
+          : getRoleRedirectPath(loggedInUser.role)
+      navigate(path, { replace: true })
     } catch (err) {
-      toast.error((err as Error).message ?? 'Login failed')
+      const msg = (err as Error).message ?? 'Login failed'
+      setError({
+        message: msg,
+        subMessage:
+          msg.includes('Email not confirmed') || msg.includes('email')
+            ? 'Please verify your email before signing in.'
+            : undefined,
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const onSignup = async (data: SignupForm) => {
+  const handleSignup = async (data: SignupFormData) => {
+    setError(null)
     setLoading(true)
     try {
-      await signUp(data.email, data.password, data.fullName)
-      toast.success('Check your email to verify your account.')
-      navigate(redirectTo)
+      const result = await signUp(data.email, data.password, data.name)
+      setSignupSuccess({
+        email: data.email,
+        needsEmailVerification: result.needsEmailVerification ?? true,
+      })
+      toast.success('Account created. Check your email to verify.')
     } catch (err) {
-      toast.error((err as Error).message ?? 'Signup failed')
+      const msg = (err as Error).message ?? 'Signup failed'
+      setError({
+        message: msg,
+        subMessage: msg.includes('already registered') ? 'Try signing in instead.' : undefined,
+      })
     } finally {
       setLoading(false)
     }
   }
+
+  const handleRetry = () => setError(null)
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="font-serif text-2xl font-semibold">
-            Roam Resort
-          </Link>
-          <h1 className="mt-4 font-serif text-3xl font-bold">Welcome</h1>
-          <p className="mt-2 text-muted-foreground">
-            Sign in or create an account to submit stay inquiries.
-          </p>
+    <div className="relative min-h-[85vh] flex flex-col">
+        {/* Hero background with gradient overlay */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{
+            backgroundImage: `url(https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1920)`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/95 to-background" />
+
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-16">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8 animate-fade-in">
+              <Link
+                to="/"
+                className="font-serif text-2xl font-semibold text-foreground hover:text-accent transition-colors"
+              >
+                Roam Resort
+              </Link>
+              <h1 className="mt-4 font-serif text-4xl font-bold tracking-tight sm:text-5xl">
+                Welcome
+              </h1>
+              <p className="mt-3 text-muted-foreground text-lg">
+                Sign in or create an account to submit stay inquiries.
+              </p>
+            </div>
+
+            <Card
+              className={cn(
+                'border-border bg-card/95 backdrop-blur-sm shadow-card',
+                'animate-fade-in-up'
+              )}
+            >
+              <CardHeader className="pb-4">
+                <CardTitle className="font-serif text-xl">
+                  {signupSuccess ? 'Almost there' : 'Account'}
+                </CardTitle>
+                <CardDescription>
+                  {signupSuccess
+                    ? 'Verify your email to continue'
+                    : 'Sign in or create an account'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {signupSuccess ? (
+                  <SignUpSuccessCard
+                    email={signupSuccess.email}
+                    needsEmailVerification={signupSuccess.needsEmailVerification}
+                  />
+                ) : (
+                  <AuthTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    onLogin={handleLogin}
+                    onSignup={handleSignup}
+                    isLoading={loading}
+                    error={error}
+                    onRetry={handleRetry}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground animate-fade-in">
+              By signing in, you agree to our{' '}
+              <Link to="/terms" className="text-accent hover:underline">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy" className="text-accent hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          </div>
         </div>
-
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value="login">
-            <form
-              onSubmit={loginForm.handleSubmit(onLogin)}
-              className="mt-6 space-y-4"
-            >
-              <div>
-                <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="mt-2"
-                  {...loginForm.register('email')}
-                />
-                {loginForm.formState.errors.email && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {loginForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  className="mt-2"
-                  {...loginForm.register('password')}
-                />
-                {loginForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {loginForm.formState.errors.password.message}
-                  </p>
-                )}
-                <Link
-                  to="/forgot-password"
-                  className="mt-2 block text-sm text-accent hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
-          </TabsContent>
-          <TabsContent value="signup">
-            <form
-              onSubmit={signupForm.handleSubmit(onSignup)}
-              className="mt-6 space-y-4"
-            >
-              <div>
-                <Label htmlFor="signup-fullName">Full Name (optional)</Label>
-                <Input
-                  id="signup-fullName"
-                  placeholder="Jane Doe"
-                  className="mt-2"
-                  {...signupForm.register('fullName')}
-                />
-              </div>
-              <div>
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="mt-2"
-                  {...signupForm.register('email')}
-                />
-                {signupForm.formState.errors.email && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {signupForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="Min 8 characters"
-                  className="mt-2"
-                  {...signupForm.register('password')}
-                />
-                {signupForm.formState.errors.password && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {signupForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating account...' : 'Create Account'}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          By signing in, you agree to our{' '}
-          <Link to="/terms" className="text-accent hover:underline">
-            Terms
-          </Link>{' '}
-          and{' '}
-          <Link to="/privacy" className="text-accent hover:underline">
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </div>
-    </div>
   )
 }

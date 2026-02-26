@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/contexts/auth-context'
+import { ProtectedRoute } from '@/components/auth'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { HomePage } from '@/pages/home'
@@ -9,6 +10,7 @@ import { DestinationsPage } from '@/pages/destinations'
 import { DestinationDetailPage } from '@/pages/destination-detail'
 import { LoginPage } from '@/pages/login'
 import { ForgotPasswordPage } from '@/pages/forgot-password'
+import { ResetPasswordPage } from '@/pages/reset-password'
 import { InquiryFormPage } from '@/pages/inquiry-form'
 import { InquiryConfirmationPage } from '@/pages/inquiry-confirmation'
 import { ProfilePage } from '@/pages/profile'
@@ -100,6 +102,14 @@ export default function App() {
               }
             />
             <Route
+              path="/reset-password"
+              element={
+                <AppLayout>
+                  <ResetPasswordPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/inquiry/:listingId"
               element={
                 <AppLayout>
@@ -135,7 +145,9 @@ export default function App() {
               path="/profile"
               element={
                 <AppLayout>
-                  <ProfilePage />
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
                 </AppLayout>
               }
             />
@@ -143,7 +155,9 @@ export default function App() {
               path="/host"
               element={
                 <DashboardLayout>
-                  <HostDashboardPage />
+                  <ProtectedRoute role="host">
+                    <HostDashboardPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -151,7 +165,9 @@ export default function App() {
               path="/host/listings/:listingId"
               element={
                 <DashboardLayout>
-                  <HostListingEditPage />
+                  <ProtectedRoute role="host">
+                    <HostListingEditPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -159,7 +175,9 @@ export default function App() {
               path="/host/listings/new"
               element={
                 <DashboardLayout>
-                  <HostListingEditPage />
+                  <ProtectedRoute role="host">
+                    <HostListingEditPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -167,7 +185,9 @@ export default function App() {
               path="/admin"
               element={
                 <DashboardLayout>
-                  <AdminDashboardPage />
+                  <ProtectedRoute role="concierge">
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -175,7 +195,9 @@ export default function App() {
               path="/admin/inquiries"
               element={
                 <DashboardLayout>
-                  <AdminInquiryListPage />
+                  <ProtectedRoute role="concierge">
+                    <AdminInquiryListPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -183,7 +205,9 @@ export default function App() {
               path="/admin/inquiries/:inquiryId"
               element={
                 <DashboardLayout>
-                  <AdminInquiryDetailPage />
+                  <ProtectedRoute role="concierge">
+                    <AdminInquiryDetailPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />
@@ -191,7 +215,9 @@ export default function App() {
               path="/admin/exports"
               element={
                 <DashboardLayout>
-                  <AdminExportsPage />
+                  <ProtectedRoute role="concierge">
+                    <AdminExportsPage />
+                  </ProtectedRoute>
                 </DashboardLayout>
               }
             />

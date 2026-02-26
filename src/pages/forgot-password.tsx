@@ -2,32 +2,26 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const schema = z.object({
-  email: z.string().email('Invalid email'),
-})
-
-type FormData = z.infer<typeof schema>
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { requestResetSchema, type RequestResetFormData } from '@/lib/validation/auth-validation'
 
 export function ForgotPasswordPage() {
   const [sent, setSent] = useState(false)
-  const form = useForm<FormData>({
-    resolver: zodResolver(schema),
+  const { requestPasswordReset } = useAuth()
+
+  const form = useForm<RequestResetFormData>({
+    resolver: zodResolver(requestResetSchema),
     defaultValues: { email: '' },
   })
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: RequestResetFormData) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
-      if (error) throw error
+      await requestPasswordReset(data.email)
       setSent(true)
       toast.success('Check your email for the reset link.')
     } catch (err) {
@@ -37,50 +31,81 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <h1 className="font-serif text-2xl font-bold">Check your email</h1>
-          <p className="mt-4 text-muted-foreground">
-            We've sent a password reset link to {form.getValues('email')}.
-          </p>
-          <Link to="/login" className="mt-8 inline-block">
-            <Button>Back to Login</Button>
-          </Link>
+      <div className="relative min-h-[85vh] flex flex-col">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{
+            backgroundImage: `url(https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1920)`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/95 to-background" />
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-16">
+          <Card className="w-full max-w-md border-border bg-card/95 backdrop-blur-sm shadow-card animate-fade-in text-center">
+            <CardHeader>
+              <CardTitle className="font-serif text-xl">Check your email</CardTitle>
+              <CardDescription>
+                We've sent a password reset link to {form.getValues('email')}.
+                Click the link to set a new password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/login">
+                <Button className="w-full">Back to Login</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <h1 className="font-serif text-2xl font-bold text-center">Reset Password</h1>
-        <p className="mt-2 text-center text-muted-foreground">
-          Enter your email and we'll send you a reset link.
-        </p>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              className="mt-2"
-              {...form.register('email')}
-            />
-            {form.formState.errors.email && (
-              <p className="mt-1 text-sm text-destructive">
-                {form.formState.errors.email.message}
-              </p>
-            )}
-          </div>
-          <Button type="submit" className="w-full">
-            Send Reset Link
-          </Button>
-        </form>
-        <Link to="/login" className="mt-6 block text-center text-sm text-accent hover:underline">
-          Back to Login
-        </Link>
+    <div className="relative min-h-[85vh] flex flex-col">
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-30"
+        style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1920)`,
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/95 to-background" />
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-16">
+        <Card className="w-full max-w-md border-border bg-card/95 backdrop-blur-sm shadow-card animate-fade-in-up">
+          <CardHeader>
+            <CardTitle className="font-serif text-xl">Reset Password</CardTitle>
+            <CardDescription>
+              Enter your email and we'll send you a link to reset your password.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className="mt-2"
+                  {...form.register('email')}
+                />
+                {form.formState.errors.email && (
+                  <p className="mt-1 text-sm text-destructive" role="alert">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+              <Button type="submit" className="w-full">
+                Send Reset Link
+              </Button>
+            </form>
+            <Link
+              to="/login"
+              className="mt-6 block text-center text-sm text-accent hover:underline"
+            >
+              Back to Login
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
