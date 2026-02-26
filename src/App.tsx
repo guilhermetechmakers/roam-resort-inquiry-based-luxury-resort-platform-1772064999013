@@ -117,6 +117,10 @@ export default function App() {
               }
             />
             <Route
+              path="/signup"
+              element={<Navigate to="/login?signup=1" replace />}
+            />
+            <Route
               path="/verify"
               element={
                 <AppLayout>
@@ -149,7 +153,7 @@ export default function App() {
               }
             />
             <Route
-              path="/verify"
+              path="/verify-email"
               element={
                 <AppLayout>
                   <VerifyPage />

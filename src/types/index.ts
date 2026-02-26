@@ -8,6 +8,8 @@ export interface User {
   avatar_url?: string
   created_at: string
   updated_at: string
+  /** Whether the user's email has been verified (Supabase email_confirmed_at) */
+  is_email_verified?: boolean
 }
 
 export type ListingStatus = 'draft' | 'live'

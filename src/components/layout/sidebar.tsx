@@ -1,5 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+
+const STORAGE_KEY_COLLAPSED = 'roam-sidebar-collapsed'
+
+function loadCollapsedPreference(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_COLLAPSED) === 'true'
+  } catch {
+    return false
+  }
+}
 import {
   LayoutDashboard,
   FileText,
@@ -28,8 +38,16 @@ interface SidebarProps {
 }
 
 export function Sidebar({ links, title = 'Dashboard', className }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(loadCollapsedPreference)
   const location = useLocation()
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_COLLAPSED, String(collapsed))
+    } catch {
+      // ignore
+    }
+  }, [collapsed])
 
   return (
     <aside

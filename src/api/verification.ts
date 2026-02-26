@@ -15,6 +15,7 @@ function mapSupabaseUser(
 ): User | null {
   if (!u) return null
   const meta = (u.user_metadata ?? {}) as SupabaseUserMeta
+  const emailConfirmed = !!(u.email_confirmed_at ?? (u as { confirmed_at?: boolean })?.confirmed_at)
   return {
     id: u.id,
     email: u.email ?? '',
@@ -23,6 +24,7 @@ function mapSupabaseUser(
     avatar_url: meta.avatar_url as string | undefined,
     created_at: u.created_at ?? new Date().toISOString(),
     updated_at: (meta.updated_at as string) ?? u.created_at ?? new Date().toISOString(),
+    is_email_verified: emailConfirmed,
   }
 }
 

@@ -27,6 +27,7 @@ const AuthContext = React.createContext<AuthContextValue | null>(null)
 function mapSupabaseUser(u: SupabaseUser | null): User | null {
   if (!u) return null
   const meta = (u.user_metadata ?? {}) as SupabaseUserMeta
+  const emailConfirmed = !!(u.email_confirmed_at ?? (u as { confirmed_at?: boolean })?.confirmed_at)
   return {
     id: u.id,
     email: u.email ?? '',
@@ -35,6 +36,7 @@ function mapSupabaseUser(u: SupabaseUser | null): User | null {
     avatar_url: meta.avatar_url,
     created_at: u.created_at,
     updated_at: (u as { updated_at?: string }).updated_at ?? u.created_at,
+    is_email_verified: emailConfirmed,
   }
 }
 
