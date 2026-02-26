@@ -111,6 +111,10 @@ export interface Inquiry {
   budget_hint?: string
   contact_preferences?: ContactPreferences
   internal_notes?: string
+  /** Profile/dashboard fields */
+  total_amount?: number
+  payment_state?: 'paid' | 'pending' | 'cancelled'
+  receipt_url?: string
 }
 
 export interface Activity {
@@ -148,3 +152,69 @@ export interface EditorialBlock {
 
 /** Sort options for destination listings */
 export type DestinationSortOption = 'popularity' | 'newest' | 'alphabetical'
+
+/** User profile for dashboard (extends auth user) */
+export interface UserProfile {
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  phone?: string
+  locale?: string
+  contactPrefs?: ContactPreferences
+  lastLogin?: string
+  avatarUrl?: string
+}
+
+/** Payment/transaction state for guest inquiry history */
+export type PaymentState = 'paid' | 'pending' | 'cancelled'
+
+/** Session for session management */
+export interface Session {
+  id: string
+  device?: string
+  location?: string
+  ip?: string
+  lastActive: string
+  expiresAt?: string
+  isCurrent?: boolean
+}
+
+/** Concierge message / notification */
+export interface Message {
+  id: string
+  channel: string
+  content: string
+  readAt?: string | null
+  createdAt: string
+  relatedInquiryId?: string | null
+}
+
+/** Inquiry lifecycle event */
+export interface InquiryEvent {
+  id: string
+  inquiryId: string
+  eventType: string
+  timestamp: string
+  metadata?: Record<string, unknown>
+}
+
+/** Internal note (staff/hosts only) */
+export interface InternalNote {
+  id: string
+  inquiryId: string
+  authorId: string
+  authorName?: string
+  content: string
+  visibleTo?: ('host' | 'concierge')[]
+  createdAt: string
+  created_at?: string
+}
+
+/** Receipt linked to inquiry */
+export interface Receipt {
+  id: string
+  inquiryId: string
+  url: string
+  createdAt: string
+}

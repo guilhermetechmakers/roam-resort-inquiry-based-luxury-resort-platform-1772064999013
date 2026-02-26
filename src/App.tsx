@@ -13,7 +13,15 @@ import { PasswordResetPage } from '@/pages/password-reset'
 import { VerifyPage } from '@/pages/verify'
 import { InquiryFormPage } from '@/pages/inquiry-form'
 import { InquiryConfirmationPage } from '@/pages/inquiry-confirmation'
-import { ProfilePage } from '@/pages/profile'
+import {
+  ProfileLayout,
+  ProfileOverview,
+  ProfileInquiries,
+  ProfileHistory,
+  ProfileSessions,
+  ProfileNotifications,
+  ProfileSettings,
+} from '@/pages/profile'
 import { HostDashboardPage } from '@/pages/host-dashboard'
 import { HostListingEditPage } from '@/pages/host-listing-edit'
 import { AdminDashboardPage } from '@/pages/admin-dashboard'
@@ -168,13 +176,20 @@ export default function App() {
             <Route
               path="/profile"
               element={
-                <AppLayout>
+                <DashboardLayout>
                   <ProtectedRoute>
-                    <ProfilePage />
+                    <ProfileLayout />
                   </ProtectedRoute>
-                </AppLayout>
+                </DashboardLayout>
               }
-            />
+            >
+              <Route index element={<ProfileOverview />} />
+              <Route path="inquiries" element={<ProfileInquiries />} />
+              <Route path="history" element={<ProfileHistory />} />
+              <Route path="sessions" element={<ProfileSessions />} />
+              <Route path="notifications" element={<ProfileNotifications />} />
+              <Route path="settings" element={<ProfileSettings />} />
+            </Route>
             <Route
               path="/host"
               element={

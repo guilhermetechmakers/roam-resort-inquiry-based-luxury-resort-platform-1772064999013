@@ -5,6 +5,10 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  User,
+  Receipt,
+  Bell,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -77,4 +81,12 @@ export const adminSidebarLinks: SidebarLink[] = [
   { to: '/admin', label: 'Overview', icon: <LayoutDashboard className="h-5 w-5" /> },
   { to: '/admin/inquiries', label: 'Inquiries', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/exports', label: 'Exports', icon: <FileText className="h-5 w-5" /> },
+]
+
+export const profileSidebarLinks: SidebarLink[] = [
+  { to: '/profile', label: 'Overview', icon: <User className="h-5 w-5" /> },
+  { to: '/profile#inquiries', label: 'My Inquiries', icon: <FileText className="h-5 w-5" /> },
+  { to: '/profile#history', label: 'Transaction History', icon: <Receipt className="h-5 w-5" /> },
+  { to: '/profile#sessions', label: 'Sessions', icon: <Shield className="h-5 w-5" /> },
+  { to: '/profile#notifications', label: 'Notifications', icon: <Bell className="h-5 w-5" /> },
 ]
