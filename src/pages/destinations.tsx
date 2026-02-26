@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   FilterBar,
   ResultsHint,
@@ -20,7 +21,19 @@ const DEFAULT_FILTERS: DestinationFilters = {
 }
 
 export function DestinationsPage() {
-  const [filters, setFilters] = useState<DestinationFilters>(DEFAULT_FILTERS)
+  const [searchParams] = useSearchParams()
+  const qFromUrl = searchParams.get('q')?.trim() ?? ''
+
+  const [filters, setFilters] = useState<DestinationFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    query: qFromUrl,
+  }))
+
+  useEffect(() => {
+    if (qFromUrl && filters.query !== qFromUrl) {
+      setFilters((prev) => ({ ...prev, query: qFromUrl }))
+    }
+  }, [qFromUrl])
 
   const filtersForApi = useMemo(
     () => ({
