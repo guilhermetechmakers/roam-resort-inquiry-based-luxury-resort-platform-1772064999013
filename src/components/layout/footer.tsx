@@ -5,6 +5,7 @@ const footerLinks = [
   { to: '/contact', label: 'Contact' },
   { to: '/terms', label: 'Terms' },
   { to: '/privacy', label: 'Privacy' },
+  { to: '/cookie-policy', label: 'Cookies' },
 ]
 
 export function Footer() {

@@ -24,6 +24,7 @@ const META_DESCRIPTION =
 
 const FOOTER_LINKS = [
   { text: 'Terms of Service', href: '/terms' },
+  { text: 'Cookie Policy', href: '/cookie-policy' },
   { text: 'Privacy & Data Tools', href: '/settings' },
   { text: 'Contact', href: '/contact' },
   { text: 'Help', href: '/help' },
@@ -202,6 +203,18 @@ export function PrivacyPolicyPage() {
                   className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                 >
                   Terms of Service
+                </Link>
+                <Link
+                  to="/cookie-policy"
+                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                >
+                  Cookie Policy
+                </Link>
+                <Link
+                  to="/cookie-policy"
+                  className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                >
+                  Cookie Policy
                 </Link>
                 <Link
                   to="/settings"

@@ -37,6 +37,7 @@ import { SettingsPage } from '@/pages/settings'
 import { StaticPage } from '@/pages/static-page'
 import { TermsOfServicePage } from '@/pages/terms-of-service'
 import { PrivacyPolicyPage } from '@/pages/privacy-policy'
+import { CookiePolicyPage } from '@/pages/cookie-policy'
 import { NotFoundPage } from '@/pages/not-found'
 import { ErrorPage } from '@/pages/error-page'
 
@@ -347,6 +348,22 @@ export default function App() {
               element={
                 <AppLayout transparentNav>
                   <PrivacyPolicyPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/cookie-policy"
+              element={
+                <AppLayout transparentNav>
+                  <CookiePolicyPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/cookie-policy"
+              element={
+                <AppLayout transparentNav>
+                  <CookiePolicyPage />
                 </AppLayout>
               }
             />
