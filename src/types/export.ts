@@ -2,7 +2,7 @@
  * CSV Export / Reports types for admin.
  */
 
-export type ExportDataset = 'inquiries' | 'reconciliation'
+export type ExportDataset = 'inquiries' | 'reconciliation' | 'both' | 'both'
 
 export type ExportJobStatus =
   | 'queued'
@@ -46,6 +46,14 @@ export interface CreateExportPayload {
   dateFrom: string
   dateTo: string
   filters?: ExportFilters
+  delimiter?: string
+  includeHeaders?: boolean
+}
+
+export interface ExportDefinitions {
+  datasets: Array<{ id: ExportDataset; label: string }>
+  defaultMappings: Record<ExportDataset, string[]>
+  exampleHeaders: Record<ExportDataset, string[]>
 }
 
 export interface HostOption {

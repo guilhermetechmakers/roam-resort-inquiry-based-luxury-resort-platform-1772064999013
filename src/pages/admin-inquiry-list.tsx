@@ -6,6 +6,7 @@ import {
   useAdminDestinations,
   useAdminHosts,
   useBulkUpdateInquiryStatus,
+  useBulkAddInternalNotes,
 } from '@/hooks/use-admin-inquiries'
 import {
   AdminInquiryListToolbar,
@@ -13,6 +14,7 @@ import {
   AdminInquiryDetailDrawer,
   CsvExportModal,
   BulkStatusUpdateModal,
+  BulkAddNoteModal,
 } from '@/components/admin-concierge'
 import { ErrorBanner } from '@/components/auth'
 import {
@@ -27,9 +29,10 @@ import type { Inquiry } from '@/types'
 import type { AdminInquiryFilters } from '@/api/admin'
 
 export function AdminInquiryListPage() {
-  const { hasRole, isLoading: authLoading } = useAuth()
+  const { hasRole, isLoading: authLoading, user } = useAuth()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [destinationId, setDestinationId] = useState('')
@@ -40,10 +43,13 @@ export function AdminInquiryListPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [csvModalOpen, setCsvModalOpen] = useState(false)
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false)
+  const [bulkNoteOpen, setBulkNoteOpen] = useState(false)
   const [drawerInquiry, setDrawerInquiry] = useState<Inquiry | null>(null)
 
   const filters: AdminInquiryFilters = {
     status: statusFilter === 'all' ? undefined : statusFilter,
+    payment_status:
+      !paymentStatusFilter || paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
     destination_id: destinationId || undefined,
     host_id: hostId || undefined,
     guest_email: guestEmail.trim() || undefined,
@@ -58,6 +64,7 @@ export function AdminInquiryListPage() {
   const { data: listings = [] } = useAdminDestinations()
   const { data: hosts = [] } = useAdminHosts()
   const bulkStatusMutation = useBulkUpdateInquiryStatus()
+  const bulkNoteMutation = useBulkAddInternalNotes()
 
   const inquiries = data?.data ?? []
   const total = data?.total ?? 0
@@ -72,6 +79,7 @@ export function AdminInquiryListPage() {
   }, [
     search,
     statusFilter,
+    paymentStatusFilter,
     dateFrom,
     dateTo,
     destinationId,
@@ -104,6 +112,22 @@ export function AdminInquiryListPage() {
       refetch()
     },
     [selectedIds, bulkStatusMutation, refetch]
+  )
+
+  const handleBulkNoteConfirm = useCallback(
+    async (note: string) => {
+      const ids = Array.from(selectedIds)
+      const authorName = user?.full_name ?? user?.email ?? 'Staff'
+      const result = await bulkNoteMutation.mutateAsync({
+        ids,
+        text: note,
+        authorName,
+      })
+      toast.success(`Added note to ${result.added} inquiries`)
+      setSelectedIds(new Set())
+      refetch()
+    },
+    [selectedIds, user, bulkNoteMutation, refetch]
   )
 
   if (authLoading) return null
@@ -139,6 +163,8 @@ export function AdminInquiryListPage() {
               onSearchChange={setSearch}
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
+              paymentStatusFilter={paymentStatusFilter}
+              onPaymentStatusFilterChange={setPaymentStatusFilter}
               dateFrom={dateFrom}
               dateTo={dateTo}
               onDateFromChange={setDateFrom}
@@ -155,6 +181,7 @@ export function AdminInquiryListPage() {
               selectedCount={selectedIds.size}
               onBulkExport={selectedIds.size > 0 ? handleBulkExport : undefined}
               onBulkStatus={selectedIds.size > 0 ? () => setBulkStatusOpen(true) : undefined}
+              onBulkAddNote={selectedIds.size > 0 ? () => setBulkNoteOpen(true) : undefined}
               disabled={(inquiries ?? []).length === 0}
               page={page}
               pageSize={pageSize}
@@ -194,6 +221,16 @@ export function AdminInquiryListPage() {
         selectedIds={selectedIds}
         onConfirm={handleBulkStatusConfirm}
         isPending={bulkStatusMutation.isPending}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+
+      <BulkAddNoteModal
+        open={bulkNoteOpen}
+        onOpenChange={setBulkNoteOpen}
+        selectedCount={selectedIds.size}
+        selectedIds={selectedIds}
+        onConfirm={handleBulkNoteConfirm}
+        isPending={bulkNoteMutation.isPending}
         onClearSelection={() => setSelectedIds(new Set())}
       />
 

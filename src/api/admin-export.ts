@@ -31,6 +31,29 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   return headers
 }
 
+/** Fetch export definitions (datasets, default mappings, example headers) */
+export async function fetchExportDefinitions(): Promise<{
+  datasets: Array<{ id: string; label: string }>
+  defaultMappings: Record<string, string[]>
+  exampleHeaders: Record<string, string[]>
+}> {
+  const url = getFunctionsUrl('', { definitions: '1' })
+  const headers = await getAuthHeaders()
+  const res = await fetch(url, { method: 'GET', headers })
+  const data = (await res.json().catch(() => ({}))) as {
+    datasets?: Array<{ id: string; label: string }>
+    defaultMappings?: Record<string, string[]>
+    exampleHeaders?: Record<string, string[]>
+    error?: string
+  }
+  if (!res.ok) throw new Error(data?.error ?? 'Failed to fetch definitions')
+  return {
+    datasets: Array.isArray(data?.datasets) ? data.datasets : [],
+    defaultMappings: data?.defaultMappings ?? {},
+    exampleHeaders: data?.exampleHeaders ?? {},
+  }
+}
+
 /** Fetch available fields for a dataset */
 export async function fetchFieldOptions(
   dataset: 'inquiries' | 'reconciliation'
@@ -68,6 +91,8 @@ export async function createExportJob(payload: CreateExportPayload): Promise<{ i
       dateFrom: payload.dateFrom,
       dateTo: payload.dateTo,
       filters: payload.filters ?? {},
+      delimiter: payload.delimiter ?? ',',
+      includeHeaders: payload.includeHeaders ?? true,
     }),
   })
   const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string }

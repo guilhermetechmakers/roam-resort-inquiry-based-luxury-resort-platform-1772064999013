@@ -1,4 +1,4 @@
-import { Search, Download, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Download, ChevronLeft, ChevronRight, MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -21,6 +21,13 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ] as const
 
+const PAYMENT_STATUS_OPTIONS = [
+  { value: 'all', label: 'All payments' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'cancelled', label: 'Refunded' },
+] as const
+
 const PAGE_SIZE_OPTIONS = [
   { value: '20', label: '20 per page' },
   { value: '50', label: '50 per page' },
@@ -32,6 +39,8 @@ export interface AdminInquiryListToolbarProps {
   onSearchChange: (v: string) => void
   statusFilter: string
   onStatusFilterChange: (v: string) => void
+  paymentStatusFilter?: string
+  onPaymentStatusFilterChange?: (v: string) => void
   dateFrom?: string
   dateTo?: string
   onDateFromChange?: (v: string) => void
@@ -48,6 +57,7 @@ export interface AdminInquiryListToolbarProps {
   selectedCount: number
   onBulkExport?: () => void
   onBulkStatus?: () => void
+  onBulkAddNote?: () => void
   disabled?: boolean
   page?: number
   pageSize?: number
@@ -62,6 +72,8 @@ export function AdminInquiryListToolbar({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  paymentStatusFilter,
+  onPaymentStatusFilterChange,
   dateFrom,
   dateTo,
   onDateFromChange,
@@ -78,6 +90,7 @@ export function AdminInquiryListToolbar({
   selectedCount,
   onBulkExport,
   onBulkStatus,
+  onBulkAddNote,
   disabled,
   page = 1,
   pageSize = 20,
@@ -123,6 +136,23 @@ export function AdminInquiryListToolbar({
               ))}
             </SelectContent>
           </Select>
+          {onPaymentStatusFilterChange && (
+            <Select
+              value={paymentStatusFilter || 'all'}
+              onValueChange={(v) => onPaymentStatusFilterChange(v === 'all' ? '' : v)}
+            >
+              <SelectTrigger className="w-[140px]" aria-label="Filter by payment status">
+                <SelectValue placeholder="Payment" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {onDestinationChange && (
             <Select
               value={destinationId ?? 'all'}
@@ -198,6 +228,18 @@ export function AdminInquiryListToolbar({
               className="bg-accent hover:bg-accent/90"
             >
               Update status ({selectedCount})
+            </Button>
+          )}
+          {selectedCount > 0 && onBulkAddNote && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBulkAddNote}
+              disabled={disabled}
+              aria-label={`Add note to ${selectedCount} selected`}
+            >
+              <MessageSquarePlus className="mr-2 h-4 w-4" />
+              Add note ({selectedCount})
             </Button>
           )}
           {selectedCount > 0 && onBulkExport && (

@@ -40,10 +40,10 @@ const RECONCILIATION_FIELDS = [
   { id: 'notes', label: 'Notes' },
 ]
 
-function escapeCsv(val: unknown): string {
+function escapeCsv(val: unknown, delim: string): string {
   if (val == null) return ''
   const s = String(val)
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+  if (s.includes(delim) || s.includes('"') || s.includes('\n')) {
     return `"${s.replace(/"/g, '""')}"`
   }
   return s
@@ -85,8 +85,68 @@ Deno.serve(async (req) => {
     if (req.method === 'GET') {
       const dataset = url.searchParams.get('dataset')
       const list = url.searchParams.get('list')
+      const definitions = url.searchParams.get('definitions') === '1'
+
+      if (definitions) {
+        const auth = await ensureConcierge(req)
+        if (!auth) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        const datasets = [
+          { id: 'inquiries', label: 'Inquiries' },
+          { id: 'reconciliation', label: 'Payment Reconciliation' },
+        ]
+        const defaultMappings: Record<string, string[]> = {
+          inquiries: ['reference', 'guest_name', 'destination', 'inquiry_date', 'status', 'amount'],
+          reconciliation: ['id', 'inquiry_id', 'reference', 'amount', 'currency', 'payment_status'],
+        }
+        const exampleHeaders: Record<string, string[]> = {
+          inquiries: ['Reference', 'Guest Name', 'Destination', 'Inquiry Date', 'Status', 'Amount'],
+          reconciliation: ['ID', 'Inquiry ID', 'Reference', 'Amount', 'Currency', 'Payment Status'],
+        }
+        return new Response(
+          JSON.stringify({ datasets, defaultMappings, exampleHeaders }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const definitions = url.searchParams.get('definitions') === '1'
       const exportId = url.searchParams.get('id') ?? id
       const download = url.searchParams.get('download') === '1'
+
+      if (definitions) {
+        const auth = await ensureConcierge(req)
+        if (!auth) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+        const defs = {
+          datasets: [
+            { id: 'inquiries', label: 'Inquiries' },
+            { id: 'reconciliation', label: 'Payment Reconciliation' },
+            { id: 'both', label: 'Both (Inquiries + Reconciliation)' },
+          ],
+          defaultMappings: {
+            inquiries: INQUIRY_FIELDS.slice(0, 8).map((f) => f.id),
+            reconciliation: RECONCILIATION_FIELDS.slice(0, 6).map((f) => f.id),
+            both: [...INQUIRY_FIELDS.slice(0, 5).map((f) => f.id), ...RECONCILIATION_FIELDS.slice(0, 3).map((f) => f.id)],
+          },
+          exampleHeaders: {
+            inquiries: INQUIRY_FIELDS.map((f) => f.label),
+            reconciliation: RECONCILIATION_FIELDS.map((f) => f.label),
+            both: [...INQUIRY_FIELDS.map((f) => `[Inquiry] ${f.label}`), ...RECONCILIATION_FIELDS.map((f) => `[Recon] ${f.label}`)],
+          },
+        }
+        return new Response(JSON.stringify(defs), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
 
       if (dataset) {
         const auth = await ensureConcierge(req)
@@ -293,6 +353,8 @@ Deno.serve(async (req) => {
       const dateFrom = body?.dateFrom as string
       const dateTo = body?.dateTo as string
       const filters = (body?.filters as Record<string, unknown>) ?? {}
+      const delimiter = (body?.delimiter as string) ?? ','
+      const includeHeaders = body?.includeHeaders !== false
 
       if (!dataset || !['inquiries', 'reconciliation'].includes(dataset)) {
         return new Response(JSON.stringify({ error: 'Invalid dataset' }), {
@@ -379,7 +441,7 @@ Deno.serve(async (req) => {
           const list = Array.isArray(rowsData) ? rowsData : []
           const fieldLabels = INQUIRY_FIELDS.reduce((acc, f) => { acc[f.id] = f.label; return acc }, {} as Record<string, string>)
           const headers = fields.map((f) => fieldLabels[f] ?? f)
-          csv = headers.join(',') + '\n'
+          csv = includeHeaders ? headers.join(delimiter) + '\n' : ''
 
           for (const row of list) {
             const r = row as Record<string, unknown>
@@ -409,8 +471,8 @@ Deno.serve(async (req) => {
               currency: 'USD',
               created_at: String(r.created_at ?? ''),
             }
-            const rowCells = fields.map((f) => escapeCsv(values[f] ?? ''))
-            csv += rowCells.join(',') + '\n'
+            const rowCells = fields.map((f) => escapeCsv(values[f] ?? '', delimiter))
+            csv += rowCells.join(delimiter) + '\n'
             rows++
           }
         } else {
@@ -424,7 +486,7 @@ Deno.serve(async (req) => {
           const list = Array.isArray(paymentsData) ? paymentsData : []
           const fieldLabels = RECONCILIATION_FIELDS.reduce((acc, f) => { acc[f.id] = f.label; return acc }, {} as Record<string, string>)
           const headers = fields.map((f) => fieldLabels[f] ?? f)
-          csv = headers.join(',') + '\n'
+          csv = includeHeaders ? headers.join(delimiter) + '\n' : ''
 
           for (const row of list) {
             const r = row as Record<string, unknown>
@@ -450,8 +512,8 @@ Deno.serve(async (req) => {
               reconciliation_date: String(r.updated_at ?? r.created_at ?? ''),
               notes: '',
             }
-            const rowCells = fields.map((f) => escapeCsv(values[f] ?? ''))
-            csv += rowCells.join(',') + '\n'
+            const rowCells = fields.map((f) => escapeCsv(values[f] ?? '', delimiter))
+            csv += rowCells.join(delimiter) + '\n'
             rows++
           }
         }

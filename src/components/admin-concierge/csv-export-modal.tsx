@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Download } from 'lucide-react'
+import { Download, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AdminExportType } from '@/types/admin'
 import {
@@ -52,6 +53,7 @@ export function CsvExportModal({
   appliedFilters = {},
   onSuccess,
 }: CsvExportModalProps) {
+  const navigate = useNavigate()
   const [exportType, setExportType] = useState<AdminExportType>('inquiries')
   const [dateFrom, setDateFrom] = useState(appliedFilters.dateFrom ?? '')
   const [dateTo, setDateTo] = useState(appliedFilters.dateTo ?? '')
@@ -133,18 +135,32 @@ export function CsvExportModal({
             </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
+        <DialogFooter className="flex-col gap-4 sm:flex-row sm:justify-between">
           <Button
-            onClick={handleExport}
-            disabled={isExporting}
-            aria-busy={isExporting}
+            variant="outline"
+            onClick={() => {
+              onOpenChange(false)
+              navigate('/admin/exports')
+            }}
+            className="border-accent/50 text-accent hover:bg-accent/10"
           >
-            <Download className="mr-2 h-4 w-4" />
-            {isExporting ? 'Exporting…' : 'Export'}
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Server export (advanced)
           </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExport}
+              disabled={isExporting}
+              aria-busy={isExporting}
+              className="bg-accent hover:bg-accent/90"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {isExporting ? 'Exporting…' : 'Export now'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

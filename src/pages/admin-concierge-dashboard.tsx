@@ -89,30 +89,31 @@ export function AdminConciergeDashboardPage() {
             aria-label="Overview metrics"
           >
             <MetricCard
-              title="Total Inquiries"
-              value={metrics.totalInquiries}
-              icon={FileText}
-              isLoading={isLoading}
-            />
-            <MetricCard
-              title="New This Week"
-              value={metrics.newThisWeek}
+              title="New Inquiries"
+              value={metrics.newInquiries}
               icon={FileText}
               isLoading={isLoading}
               variant="accent"
             />
             <MetricCard
-              title="Overdue"
-              value={metrics.overdue}
-              icon={FileText}
-              isLoading={isLoading}
-              variant={metrics.overdue > 0 ? 'accent' : 'default'}
-            />
-            <MetricCard
-              title="Unresolved"
+              title="Open Cases"
               value={metrics.unresolved}
               icon={FileText}
               isLoading={isLoading}
+            />
+            <MetricCard
+              title="Avg Response"
+              value={metrics.avgResponseTimeHours > 0 ? `${metrics.avgResponseTimeHours}h` : '—'}
+              icon={FileText}
+              isLoading={isLoading}
+              subtitle="Response time"
+            />
+            <MetricCard
+              title="Payments Pending"
+              value={metrics.pendingPayments}
+              icon={Wallet}
+              isLoading={isLoading}
+              variant={metrics.pendingPayments > 0 ? 'accent' : 'default'}
             />
             <MetricCard
               title="Revenue"

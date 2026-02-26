@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { FieldSelector } from './field-selector'
 import { DateRangePicker } from './date-range-picker'
 import { FiltersPanel } from './filters-panel'
@@ -22,6 +23,13 @@ import type { ExportDataset, ExportFilters } from '@/types/export'
 const DATASET_OPTIONS: { value: ExportDataset; label: string }[] = [
   { value: 'inquiries', label: 'Inquiries' },
   { value: 'reconciliation', label: 'Payment Reconciliation' },
+  { value: 'both', label: 'Both (Inquiries + Reconciliation)' },
+]
+
+const DELIMITER_OPTIONS = [
+  { value: ',', label: 'Comma (,)' },
+  { value: ';', label: 'Semicolon (;)' },
+  { value: '\t', label: 'Tab' },
 ]
 
 export interface ExportBuilderPanelProps {
@@ -31,6 +39,8 @@ export interface ExportBuilderPanelProps {
     dateFrom: string
     dateTo: string
     filters: ExportFilters
+    delimiter?: string
+    includeHeaders?: boolean
   }) => void
   isSubmitting?: boolean
 }
@@ -54,10 +64,32 @@ export function ExportBuilderPanel({
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [filters, setFilters] = useState<ExportFilters>({})
+  const [delimiter, setDelimiter] = useState(',')
+  const [includeHeaders, setIncludeHeaders] = useState(true)
 
-  const { data: fieldOptions = [], isLoading: fieldsLoading } = useExportFields(
-    selectedDataset
-  )
+  const { data: inquiryFields = [], isLoading: inquiryFieldsLoading } =
+    useExportFields(selectedDataset === 'both' ? 'inquiries' : selectedDataset)
+  const { data: reconFields = [], isLoading: reconFieldsLoading } =
+    useExportFields(selectedDataset === 'both' ? 'reconciliation' : null)
+  const fieldOptions =
+    selectedDataset === 'both'
+      ? [
+          ...inquiryFields.map((f) => ({
+            ...f,
+            id: `inquiry_${f.id}`,
+            label: `[Inquiry] ${f.label}`,
+          })),
+          ...reconFields.map((f) => ({
+            ...f,
+            id: `recon_${f.id}`,
+            label: `[Recon] ${f.label}`,
+          })),
+        ]
+      : inquiryFields
+  const fieldsLoading =
+    selectedDataset === 'both'
+      ? inquiryFieldsLoading || reconFieldsLoading
+      : inquiryFieldsLoading
   const { data: hosts = [], isLoading: hostsLoading } = useExportHosts()
 
   useEffect(() => {
@@ -88,6 +120,8 @@ export function ExportBuilderPanel({
       dateFrom: from,
       dateTo: to,
       filters: filters ?? {},
+      delimiter,
+      includeHeaders,
     })
   }
 
@@ -147,6 +181,40 @@ export function ExportBuilderPanel({
           onFiltersChange={setFilters}
           disabled={hostsLoading || isSubmitting}
         />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="delimiter">CSV Delimiter</Label>
+            <Select
+              value={delimiter}
+              onValueChange={setDelimiter}
+              disabled={isSubmitting}
+            >
+              <SelectTrigger id="delimiter" aria-label="Select delimiter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DELIMITER_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 pt-8">
+            <Checkbox
+              id="include-headers"
+              checked={includeHeaders}
+              onCheckedChange={(c) => setIncludeHeaders(c === true)}
+              disabled={isSubmitting}
+              aria-label="Include column headers"
+            />
+            <Label htmlFor="include-headers" className="cursor-pointer">
+              Include column headers
+            </Label>
+          </div>
+        </div>
 
         <div className="pt-4">
           <ExportButton

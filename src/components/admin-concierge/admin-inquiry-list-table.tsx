@@ -39,6 +39,15 @@ function getStatusBadgeClass(status: string): string {
   return map[status] ?? 'bg-muted text-muted-foreground'
 }
 
+function getPaymentBadgeClass(paymentState?: string): string {
+  const map: Record<string, string> = {
+    paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    cancelled: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+  }
+  return map[paymentState ?? 'pending'] ?? 'bg-muted text-muted-foreground'
+}
+
 export function AdminInquiryListTable({
   inquiries,
   isLoading,
@@ -114,6 +123,9 @@ export function AdminInquiryListTable({
               Status
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+              Payment
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
               Created At
             </th>
             <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
@@ -165,6 +177,16 @@ export function AdminInquiryListTable({
                     )}
                   >
                     {(inquiry.status ?? '').replace('_', ' ')}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={cn(
+                      'inline-flex rounded-full px-2 py-1 text-xs font-medium',
+                      getPaymentBadgeClass(inquiry.payment_state)
+                    )}
+                  >
+                    {(inquiry.payment_state ?? 'pending').replace('_', ' ')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -238,14 +260,24 @@ export function AdminInquiryListTable({
                       {formatDateShort(inquiry.created_at ?? '')}
                     </p>
                   </div>
-                  <span
-                    className={cn(
-                      'shrink-0 rounded-full px-2 py-1 text-xs',
-                      getStatusBadgeClass(inquiry.status ?? '')
-                    )}
-                  >
-                    {(inquiry.status ?? '').replace('_', ' ')}
-                  </span>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-1 text-xs',
+                        getStatusBadgeClass(inquiry.status ?? '')
+                      )}
+                    >
+                      {(inquiry.status ?? '').replace('_', ' ')}
+                    </span>
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-1 text-xs',
+                        getPaymentBadgeClass(inquiry.payment_state)
+                      )}
+                    >
+                      {(inquiry.payment_state ?? 'pending').replace('_', ' ')}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             </Link>

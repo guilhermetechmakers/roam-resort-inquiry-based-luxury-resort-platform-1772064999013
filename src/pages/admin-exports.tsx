@@ -32,26 +32,46 @@ export function AdminExportsPage() {
   }>({ open: false, action: 'retry', exportId: null })
 
   const handleSubmitExport = (config: {
-    dataset: 'inquiries' | 'reconciliation'
+    dataset: 'inquiries' | 'reconciliation' | 'both'
     fields: string[]
     dateFrom: string
     dateTo: string
     filters: { status?: string; hostId?: string; destinationId?: string; search?: string }
+    delimiter?: string
+    includeHeaders?: boolean
   }) => {
-    createExport.mutate(
-      {
-        dataset: config.dataset,
-        fields: config.fields,
-        dateFrom: config.dateFrom,
-        dateTo: config.dateTo,
-        filters: config.filters ?? {},
-      },
-      {
-        onSuccess: () => {
-          void refetch()
-        },
+    const basePayload = {
+      dateFrom: config.dateFrom,
+      dateTo: config.dateTo,
+      filters: config.filters ?? {},
+      delimiter: config.delimiter ?? ',',
+      includeHeaders: config.includeHeaders ?? true,
+    }
+    if (config.dataset === 'both') {
+      const inquiryFields = (config.fields ?? []).filter((f) => f.startsWith('inquiry_')).map((f) => f.replace(/^inquiry_/, ''))
+      const reconFields = (config.fields ?? []).filter((f) => f.startsWith('recon_')).map((f) => f.replace(/^recon_/, ''))
+      if (inquiryFields.length > 0) {
+        createExport.mutate(
+          { ...basePayload, dataset: 'inquiries', fields: inquiryFields },
+          { onSuccess: () => void refetch() }
+        )
       }
-    )
+      if (reconFields.length > 0) {
+        createExport.mutate(
+          { ...basePayload, dataset: 'reconciliation', fields: reconFields },
+          { onSuccess: () => void refetch() }
+        )
+      }
+    } else {
+      createExport.mutate(
+        {
+          ...basePayload,
+          dataset: config.dataset,
+          fields: config.fields,
+        },
+        { onSuccess: () => void refetch() }
+      )
+    }
   }
 
   const handleRetry = (exportId: string) => {

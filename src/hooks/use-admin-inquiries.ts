@@ -9,6 +9,7 @@ import {
   fetchListingsForFilter,
   fetchHostsForFilter,
   bulkUpdateInquiryStatus,
+  bulkAddInternalNotes,
   type AdminInquiryFilters,
 } from '@/api/admin'
 export function useAdminInquiriesPaginated(filters: AdminInquiryFilters = {}) {
@@ -38,6 +39,25 @@ export function useBulkUpdateInquiryStatus() {
   return useMutation({
     mutationFn: ({ ids, status }: { ids: string[]; status: string }) =>
       bulkUpdateInquiryStatus(ids, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+    },
+  })
+}
+
+export function useBulkAddInternalNotes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      ids,
+      text,
+      authorName,
+    }: {
+      ids: string[]
+      text: string
+      authorName: string
+    }) => bulkAddInternalNotes(ids, text, authorName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inquiries'] })
       queryClient.invalidateQueries({ queryKey: ['inquiries'] })

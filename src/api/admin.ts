@@ -79,6 +79,7 @@ export function shapeInquiryToAdmin(i: Inquiry): AdminInquiry {
 
 export interface AdminInquiryFilters {
   status?: string
+  payment_status?: string
   destination_id?: string
   /** @deprecated Use destination_id */
   destination?: string
@@ -107,6 +108,10 @@ export async function fetchAdminInquiries(filters?: AdminInquiryFilters): Promis
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
+    }
+    const paymentStatus = filters?.payment_status
+    if (paymentStatus && paymentStatus !== 'all') {
+      query = query.eq('payment_state', paymentStatus)
     }
     const destId = filters?.destination_id ?? filters?.destination
     if (destId) {
@@ -427,6 +432,26 @@ export async function createAdminInternalNote(
   } catch {
     return null
   }
+}
+
+/** Bulk add internal note to multiple inquiries */
+export async function bulkAddInternalNotes(
+  ids: string[],
+  text: string,
+  authorName: string
+): Promise<{ added: number; failed: string[] }> {
+  const validIds = (ids ?? []).filter((id) => typeof id === 'string' && id.length > 0)
+  if (validIds.length === 0 || !text?.trim()) {
+    return { added: 0, failed: [] }
+  }
+  const failed: string[] = []
+  let added = 0
+  for (const inquiryId of validIds) {
+    const note = await createAdminInternalNote(inquiryId, text.trim(), authorName)
+    if (note) added++
+    else failed.push(inquiryId)
+  }
+  return { added, failed }
 }
 
 /** Update internal note */
