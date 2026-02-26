@@ -141,7 +141,7 @@ export function InquiryFormPage() {
           }
         }
         toast.success('Inquiry submitted successfully!')
-        navigate(`/inquiry/confirmation/${inquiry.reference}`)
+        navigate(`/inquiries/confirmation/${inquiry.id}`)
       } catch (err) {
         toast.error((err as Error).message ?? 'Failed to submit inquiry')
       }

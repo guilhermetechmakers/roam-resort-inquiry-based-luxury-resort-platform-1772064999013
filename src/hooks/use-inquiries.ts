@@ -17,6 +17,51 @@ export interface CreateInquiryPayload {
   contact_preferences?: ContactPreferences
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function isUuid(str: string): boolean {
+  return UUID_REGEX.test(str)
+}
+
+async function fetchInquiryByIdOrReference(
+  idOrRef: string,
+  userId?: string
+): Promise<Inquiry | null> {
+  try {
+    let query = supabase
+      .from('inquiries')
+      .select('*, listing:listings(*)')
+
+    if (isUuid(idOrRef)) {
+      query = query.eq('id', idOrRef)
+    } else {
+      query = query.eq('reference', idOrRef)
+    }
+
+    if (userId) {
+      query = query.eq('guest_id', userId)
+    }
+
+    const { data, error } = await query.single()
+
+    if (!error && data) return data as Inquiry
+  } catch {
+    // Fallback
+  }
+  return null
+}
+
+export function useInquiryByIdOrReference(idOrRef: string | undefined, userId: string | undefined) {
+  return useQuery({
+    queryKey: ['inquiry', 'detail', idOrRef, userId],
+    queryFn: () =>
+      idOrRef && userId
+        ? fetchInquiryByIdOrReference(idOrRef, userId)
+        : Promise.resolve(null),
+    enabled: !!idOrRef && !!userId,
+  })
+}
+
 async function fetchMyInquiries(userId: string): Promise<Inquiry[]> {
   try {
     const { data, error } = await supabase

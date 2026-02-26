@@ -108,7 +108,23 @@ export default function App() {
               }
             />
             <Route
+              path="/inquiries/confirmation/:inquiryId"
+              element={
+                <AppLayout>
+                  <InquiryConfirmationPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/inquiry/confirmation/:reference"
+              element={
+                <AppLayout>
+                  <InquiryConfirmationPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/inquiries/confirmation/:inquiryId"
               element={
                 <AppLayout>
                   <InquiryConfirmationPage />
