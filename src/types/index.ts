@@ -122,13 +122,35 @@ export interface Inquiry {
   receipt_url?: string
 }
 
+/** Allowed event types for activities */
+export type ActivityEventType =
+  | 'inquiry_created'
+  | 'email_sent'
+  | 'status_changed'
+  | 'internal_note_added'
+  | 'payment_link_created'
+  | 'payment_received'
+  | 'note_updated'
+
 export interface Activity {
   id: string
   inquiry_id: string
-  event_type: string
+  event_type: ActivityEventType | string
   actor_id?: string
+  actor_name?: string
+  timestamp: string
   metadata?: Record<string, unknown>
+  is_internal: boolean
   created_at: string
+}
+
+/** Filters for activity timeline */
+export interface ActivityFilters {
+  event_type?: string[]
+  date_from?: string
+  date_to?: string
+  actor_id?: string
+  is_internal?: boolean
 }
 
 /** Public destination listing (published only) */
