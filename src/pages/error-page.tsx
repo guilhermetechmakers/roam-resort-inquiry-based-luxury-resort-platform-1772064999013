@@ -1,20 +1,56 @@
-import { Link } from 'react-router-dom'
-import { AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+/**
+ * 500 Server Error page for Roam Resort.
+ * Gracefully communicates server-side issues, offers retry, and reporting guidance.
+ * Runtime-safe: no API calls; all data guarded with nullish checks.
+ */
+import { useState, useCallback } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import { ErrorLayoutWrapper } from '@/components/error-500'
+
+const DEFAULT_ERROR_ID = 'UNKNOWN_ERROR_ID'
+
+interface LocationState {
+  errorId?: string
+}
+
+/** Safe extraction of errorId from URL params or route state */
+function useErrorId(): string {
+  const [searchParams] = useSearchParams()
+  const location = useLocation()
+
+  const fromUrl = searchParams.get('errorId')
+  const state = (location?.state ?? {}) as LocationState
+  const fromState = typeof state?.errorId === 'string' ? state.errorId : undefined
+
+  const raw = fromUrl ?? fromState ?? null
+  return typeof raw === 'string' && raw.trim().length > 0
+    ? raw.trim()
+    : DEFAULT_ERROR_ID
+}
 
 export function ErrorPage() {
+  const [isRetrying, setIsRetrying] = useState(false)
+  const errorId = useErrorId()
+
+  const handleRetry = useCallback(() => {
+    setIsRetrying(true)
+    window.setTimeout(() => {
+      window.location.reload()
+    }, 300)
+    window.setTimeout(() => {
+      setIsRetrying(false)
+    }, 2000)
+  }, [])
+
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center px-4">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-        <AlertCircle className="h-10 w-10 text-destructive" />
-      </div>
-      <h1 className="mt-6 font-serif text-3xl font-bold">Something went wrong</h1>
-      <p className="mt-2 text-center text-muted-foreground max-w-md">
-        We're sorry. An unexpected error occurred. Please try again later.
-      </p>
-      <Link to="/" className="mt-8">
-        <Button>Return Home</Button>
-      </Link>
-    </div>
+    <ErrorLayoutWrapper
+      title="We're sorry — something went wrong"
+      subtitle="Our team has been notified. Please try again, or reach out if the problem persists."
+      errorId={errorId}
+      onRetry={handleRetry}
+      supportLink="/contact"
+      showHomeLink
+      isRetrying={isRetrying}
+    />
   )
 }
