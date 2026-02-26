@@ -66,7 +66,8 @@ export function GuidanceSection({
         {hasEmail && (
           <a
             href={`mailto:${supportEmail!.trim()}`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/90 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded"
+            className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/90 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded min-h-[44px] min-w-[44px] items-center"
+            aria-label={`Email support at ${supportEmail!.trim()}`}
           >
             <Mail className="h-4 w-4" aria-hidden />
             {supportEmail!.trim()}
@@ -74,7 +75,8 @@ export function GuidanceSection({
         )}
         <Link
           to={contactUrl}
-          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/90 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded"
+          className="inline-flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/90 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded min-h-[44px] min-w-[44px] items-center"
+          aria-label="Go to contact support page"
         >
           <ExternalLink className="h-4 w-4" aria-hidden />
           Contact Support

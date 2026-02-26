@@ -8,7 +8,7 @@ import { ErrorCard } from './error-card'
 import { RetryCTA } from './retry-cta'
 import { GuidanceSection } from './guidance-section'
 import { Link } from 'react-router-dom'
-import { Home } from 'lucide-react'
+import { Home, AlertCircle } from 'lucide-react'
 
 export interface ErrorLayoutWrapperProps {
   /** Main heading */
@@ -29,6 +29,8 @@ export interface ErrorLayoutWrapperProps {
   isRetrying?: boolean
   /** Skeleton/loading state for content */
   isLoading?: boolean
+  /** Inline error message (e.g. retry failed) - shown with role="alert" */
+  inlineErrorMessage?: string | null
   className?: string
 }
 
@@ -48,6 +50,7 @@ export function ErrorLayoutWrapper({
   showHomeLink = true,
   isRetrying = false,
   isLoading = false,
+  inlineErrorMessage,
   className,
 }: ErrorLayoutWrapperProps) {
   const safeTitle = safeString(title, "We're sorry — something went wrong")
@@ -86,10 +89,15 @@ export function ErrorLayoutWrapper({
         'relative flex min-h-[80vh] flex-col items-center justify-center px-4 py-16',
         className
       )}
+      role="main"
+      aria-labelledby="error-page-heading"
     >
       <HeroVisual />
       <div className="relative z-10 mx-auto max-w-xl w-full text-center">
-        <h1 className="font-serif text-4xl font-bold text-foreground sm:text-5xl animate-fade-in-up">
+        <h1
+          id="error-page-heading"
+          className="font-serif text-4xl font-bold text-foreground sm:text-5xl animate-fade-in-up"
+        >
           {safeTitle}
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed animate-fade-in-up">
@@ -104,12 +112,24 @@ export function ErrorLayoutWrapper({
           />
         </div>
 
+        {inlineErrorMessage && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="mt-6 mx-auto max-w-md flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive animate-fade-in"
+          >
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" aria-hidden />
+            <p className="text-sm font-medium">{inlineErrorMessage}</p>
+          </div>
+        )}
+
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up">
           <RetryCTA onRetry={onRetry} isLoading={isRetrying} />
           {showHomeLink && (
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded transition-colors min-h-[44px] min-w-[44px] items-center justify-center"
+              aria-label="Return to homepage"
             >
               <Home className="h-4 w-4" aria-hidden />
               Return to Home

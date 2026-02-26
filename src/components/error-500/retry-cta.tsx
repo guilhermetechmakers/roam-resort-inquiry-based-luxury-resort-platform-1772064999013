@@ -35,7 +35,7 @@ export function RetryCTA({ onRetry, isLoading = false, className }: RetryCTAProp
         'bg-accent text-accent-foreground hover:bg-accent/90 hover:scale-[1.02] active:scale-[0.98] shadow-accent-glow',
         className
       )}
-      aria-label="Try again"
+      aria-label="Try again to reload the page"
     >
       {isLoading ? (
         <span className="flex items-center gap-2">

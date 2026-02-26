@@ -27,9 +27,12 @@
     --info: 59 130 246; /* blue-500 for new/in_review */
     --warning: 245 158 11; /* amber-500 for contacted/pending */
     --radius: 0.75rem; /* 12px */
+    --gradient-accent: 180 149 135; /* #B49587 gradient tone for hero/visuals */
+    --primary-dark: 35 33 42; /* deep navy for gradients (theme-invariant) */
   }
 
   .dark {
+    --gradient-accent: 180 149 135;
     --primary: 236 225 212;
     --primary-foreground: 35 33 42;
     --secondary: 58 55 50;
