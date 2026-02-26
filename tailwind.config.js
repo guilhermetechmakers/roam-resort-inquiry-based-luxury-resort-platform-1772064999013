@@ -78,6 +78,11 @@ export default {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'checkmark-pop': {
+          '0%': { opacity: '0', transform: 'scale(0.5)' },
+          '60%': { opacity: '1', transform: 'scale(1.08)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out forwards',
@@ -89,6 +94,7 @@ export default {
         'gradient-shift': 'gradient-shift 8s ease infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'checkmark-pop': 'checkmark-pop 0.5s ease-out forwards',
       },
     },
   },
