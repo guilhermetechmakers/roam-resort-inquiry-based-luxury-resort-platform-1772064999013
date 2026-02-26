@@ -66,3 +66,30 @@ export interface Activity {
   metadata?: Record<string, unknown>
   created_at: string
 }
+
+/** Public destination listing (published only) */
+export interface Destination {
+  id: string
+  slug?: string
+  title?: string
+  tagline?: string
+  region?: string
+  style?: string
+  imageUrl?: string
+  excerpt?: string
+  publishedAt?: string
+  isPublished?: boolean
+}
+
+/** Editorial block for featured host story / editorial narrative */
+export interface EditorialBlock {
+  id: string
+  title?: string
+  teaser?: string
+  imageUrl?: string
+  link?: string
+  priority?: number
+}
+
+/** Sort options for destination listings */
+export type DestinationSortOption = 'popularity' | 'newest' | 'alphabetical'

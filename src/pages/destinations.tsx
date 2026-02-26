@@ -1,38 +1,67 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Search } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
-import { useListings } from '@/hooks/use-listings'
-import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { useState, useMemo } from 'react'
+import {
+  FilterBar,
+  DestinationCardGrid,
+  EditorialSidebarBlock,
+  DestinationLoadingSkeleton,
+  DestinationEmptyState,
+  LoadMore,
+  type DestinationFilters,
+} from '@/components/destinations'
+import { Button } from '@/components/ui/button'
+import { useInfiniteDestinations, useFeaturedEditorial } from '@/hooks/use-destinations'
 
-const regions = ['All', 'Santorini', 'Switzerland', 'Kenya']
-const styles = ['All', 'Coastal', 'Alpine', 'Safari']
+const DEFAULT_FILTERS: DestinationFilters = {
+  region: '',
+  style: '',
+  query: '',
+  sort: 'newest',
+}
 
 export function DestinationsPage() {
-  const [region, setRegion] = useState('')
-  const [style, setStyle] = useState('')
-  const [search, setSearch] = useState('')
-  const { data: listings, isLoading } = useListings({
-    region: region || undefined,
-    style: style || undefined,
-  })
+  const [filters, setFilters] = useState<DestinationFilters>(DEFAULT_FILTERS)
 
-  const filtered = (listings ?? []).filter((l) => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return (
-      l.title.toLowerCase().includes(q) ||
-      l.subtitle?.toLowerCase().includes(q) ||
-      l.region?.toLowerCase().includes(q) ||
-      l.style?.toLowerCase().includes(q)
-    )
-  })
+  const filtersForApi = useMemo(
+    () => ({
+      region: filters.region?.trim() || undefined,
+      style: filters.style?.trim() || undefined,
+      query: filters.query?.trim() || undefined,
+      sort: filters.sort ?? 'newest',
+    }),
+    [filters]
+  )
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useInfiniteDestinations(filtersForApi)
+
+  const { data: editorial } = useFeaturedEditorial()
+
+  const destinations = useMemo(() => {
+    const pages = data?.pages ?? []
+    const list = pages.flatMap((p) => Array.isArray(p?.data) ? p.data : [])
+    return list
+  }, [data?.pages])
+
+  const hasActiveFilters =
+    (filters.region ?? '').trim() !== '' ||
+    (filters.style ?? '').trim() !== '' ||
+    (filters.query ?? '').trim() !== ''
+
+  const handleResetFilters = () => {
+    setFilters(DEFAULT_FILTERS)
+  }
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-border bg-primary py-16 text-primary-foreground">
+      {/* Hero header */}
+      <section className="border-b border-border bg-primary py-16 text-primary-foreground">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h1 className="font-serif text-4xl font-bold sm:text-5xl">
             Destinations
@@ -41,90 +70,61 @@ export function DestinationsPage() {
             Browse our curated editorial listings. Each destination tells a story.
           </p>
         </div>
-      </div>
+      </section>
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Filters */}
-        <div className="mb-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search destinations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {regions.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRegion(r === 'All' ? '' : r)}
-                className={cn(
-                  'rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                  (r === 'All' && !region) || region === r
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                )}
-              >
-                {r}
-              </button>
-            ))}
-            {styles.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStyle(s === 'All' ? '' : s)}
-                className={cn(
-                  'rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                  (s === 'All' && !style) || style === s
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+        {/* Filter bar */}
+        <div className="mb-12">
+          <FilterBar filters={filters} onFiltersChange={setFilters} />
         </div>
 
-        {/* Grid */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-96 rounded-xl" />
-              ))
-            : filtered.map((listing) => (
-                <Link key={listing.id} to={`/destinations/${listing.slug}`}>
-                  <Card className="h-full overflow-hidden transition-all duration-300">
-                    <div
-                      className="h-56 bg-cover bg-center"
-                      style={{
-                        backgroundImage: `url(${listing.hero_image_url ?? listing.gallery_urls?.[0]})`,
-                      }}
-                    />
-                    <CardContent className="p-6">
-                      <span className="text-sm font-medium text-accent">
-                        {listing.region} · {listing.style}
-                      </span>
-                      <h3 className="mt-2 font-serif text-xl font-semibold">
-                        {listing.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                        {listing.subtitle}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+        {/* Main content: grid + sidebar */}
+        <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+          <div className="min-w-0">
+            {isLoading ? (
+              <DestinationLoadingSkeleton count={6} />
+            ) : isError ? (
+              <div className="py-24 text-center">
+                <p className="text-destructive">
+                  {error instanceof Error ? error.message : 'Failed to load destinations.'}
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (destinations ?? []).length === 0 ? (
+              <DestinationEmptyState
+                hasActiveFilters={hasActiveFilters}
+                onReset={handleResetFilters}
+              />
+            ) : (
+              <>
+                <DestinationCardGrid destinations={destinations} />
+                <LoadMore
+                  onClick={() => fetchNextPage()}
+                  isLoading={isFetchingNextPage}
+                  hasMore={hasNextPage ?? false}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Editorial sidebar */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <EditorialSidebarBlock editorial={editorial ?? null} />
+            </div>
+          </aside>
         </div>
 
-        {!isLoading && filtered.length === 0 && (
-          <div className="py-24 text-center">
-            <p className="text-muted-foreground">No destinations match your filters.</p>
-          </div>
-        )}
+        {/* Mobile: editorial below grid */}
+        <div className="mt-12 lg:hidden">
+          <EditorialSidebarBlock editorial={editorial ?? null} />
+        </div>
       </div>
     </div>
   )
