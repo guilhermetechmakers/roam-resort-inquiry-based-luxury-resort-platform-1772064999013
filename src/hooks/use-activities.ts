@@ -8,8 +8,6 @@ import {
   type CreateActivityPayload,
   type UpdateActivityPayload,
 } from '@/api/activities'
-import type { Activity, ActivityFilters } from '@/types'
-
 const ACTIVITIES_QUERY_KEY = 'activities'
 
 export function useActivities(params: FetchActivitiesParams) {

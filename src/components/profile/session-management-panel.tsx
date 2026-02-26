@@ -18,6 +18,8 @@ import type { Session } from '@/types'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { revokeAllSessions } from '@/api/sessions'
+import { toast } from 'sonner'
 
 export interface SessionManagementPanelProps {
   userId: string | undefined
@@ -32,6 +34,8 @@ export function SessionManagementPanel({
   const { data: sessions, isLoading: sessionsLoading } = useSessions(userId)
   const terminateSession = useTerminateSession(userId)
   const [terminatingSession, setTerminatingSession] = useState<Session | null>(null)
+  const [revokeAllConfirm, setRevokeAllConfirm] = useState(false)
+  const [revokingAll, setRevokingAll] = useState(false)
 
   const safeSessions = Array.isArray(sessions) ? sessions : []
 
@@ -43,8 +47,23 @@ export function SessionManagementPanel({
       if (session.isCurrent) {
         navigate('/')
       }
+      toast.success('Session terminated')
     } catch {
-      // Error handled by mutation
+      toast.error('Failed to terminate session')
+    }
+  }
+
+  const handleRevokeAll = async () => {
+    setRevokingAll(true)
+    try {
+      await revokeAllSessions()
+      setRevokeAllConfirm(false)
+      navigate('/')
+      toast.success('All sessions signed out')
+    } catch {
+      toast.error('Failed to revoke all sessions')
+    } finally {
+      setRevokingAll(false)
     }
   }
 
@@ -82,6 +101,20 @@ export function SessionManagementPanel({
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {safeSessions.length > 1 && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRevokeAllConfirm(true)}
+                disabled={terminateSession.isPending || revokingAll}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out all other devices
+              </Button>
+            </div>
+          )}
           {safeSessions.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No active sessions.
@@ -157,6 +190,30 @@ export function SessionManagementPanel({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Terminate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={revokeAllConfirm}
+        onOpenChange={(open) => !open && setRevokeAllConfirm(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out all devices?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will sign you out from all devices including this one. You will need to sign in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevokeAll}
+              disabled={revokingAll}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revokingAll ? 'Signing out...' : 'Sign out all'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -16,7 +16,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   signIn: (email: string, password: string) => Promise<User>
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ user: User; needsEmailVerification?: boolean }>
+  signUp: (email: string, password: string, fullName?: string, role?: 'guest' | 'host') => Promise<{ user: User; needsEmailVerification?: boolean }>
   signOut: () => Promise<void>
   hasRole: (role: UserRole) => boolean
   requestPasswordReset: (email: string) => Promise<void>
@@ -88,17 +88,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = data?.user ?? null
     const mapped = mapSupabaseUser(u)
     if (!mapped) throw new Error('Login failed')
+    try {
+      const { createSession } = await import('@/api/sessions')
+      const { setStoredSessionId } = await import('@/api/profile')
+      const result = await createSession()
+      if (result?.sessionId) setStoredSessionId(result.sessionId)
+    } catch {
+      // Session create is best-effort
+    }
     return mapped
   }, [])
 
   const signUp = React.useCallback(
-    async (email: string, password: string, fullName?: string) => {
+    async (email: string, password: string, fullName?: string, role?: 'guest' | 'host') => {
       auditLog('signup_attempt', { email })
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName, role: 'guest' },
+          data: { full_name: fullName, role: role ?? 'guest' },
           emailRedirectTo: `${window.location.origin}/verify`,
         },
       })
@@ -113,6 +121,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const needsEmailVerification =
         !(u as { email_confirmed_at?: string })?.email_confirmed_at &&
         !(u as { confirmed_at?: boolean })?.confirmed_at
+      if (!needsEmailVerification) {
+        try {
+          const { createSession } = await import('@/api/sessions')
+          const { setStoredSessionId } = await import('@/api/profile')
+          const result = await createSession()
+          if (result?.sessionId) setStoredSessionId(result.sessionId)
+        } catch {
+          // Session create is best-effort
+        }
+      }
       return { user: mapped, needsEmailVerification: !!needsEmailVerification }
     },
     []
@@ -120,6 +138,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = React.useCallback(async () => {
     auditLog('logout')
+    try {
+      sessionStorage.removeItem('roam-session-id')
+    } catch {
+      // ignore
+    }
     await supabase.auth.signOut()
   }, [])
 

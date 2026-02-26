@@ -85,24 +85,51 @@ export async function changePassword(
   if (error) throw error
 }
 
-/** Fetch active sessions - try user_sessions table, fallback to current auth session */
+const STORAGE_KEY_SESSION_ID = 'roam-session-id'
+
+export function getStoredSessionId(): string | null {
+  try {
+    return sessionStorage.getItem(STORAGE_KEY_SESSION_ID)
+  } catch {
+    return null
+  }
+}
+
+export function setStoredSessionId(id: string): void {
+  try {
+    sessionStorage.setItem(STORAGE_KEY_SESSION_ID, id)
+  } catch {
+    // ignore
+  }
+}
+
+/** Fetch active sessions - user_sessions table, fallback to current auth session */
 export async function fetchSessions(userId: string): Promise<Session[]> {
   try {
     const { data } = await supabase
       .from('user_sessions')
       .select('*')
       .eq('user_id', userId)
+      .is('revoked_at', null)
+      .gt('expires_at', new Date().toISOString())
     const list = Array.isArray(data) ? data : []
+    const storedSessionId = getStoredSessionId()
     if (list.length > 0) {
-      return list.map((s: Record<string, unknown>) => ({
-        id: String(s.id ?? ''),
-        device: s.device as string | undefined,
-        location: s.location as string | undefined,
-        ip: s.ip as string | undefined,
-        lastActive: String(s.last_active ?? s.created_at ?? ''),
-        expiresAt: s.expires_at as string | undefined,
-        isCurrent: s.is_current as boolean | undefined,
-      }))
+      return list.map((s: Record<string, unknown>, idx: number) => {
+        const id = String(s.id ?? '')
+        const isCurrent = storedSessionId
+          ? id === storedSessionId
+          : list.length === 1 && idx === 0
+        return {
+          id,
+          device: (s.device_info as string) ?? (s.device as string) ?? undefined,
+          location: (s.location as string) ?? undefined,
+          ip: (s.ip_address as string) ?? (s.ip as string) ?? undefined,
+          lastActive: String(s.last_active_at ?? s.last_active ?? s.created_at ?? ''),
+          expiresAt: s.expires_at as string | undefined,
+          isCurrent,
+        }
+      })
     }
   } catch {
     // Fall through to auth fallback
@@ -111,7 +138,7 @@ export async function fetchSessions(userId: string): Promise<Session[]> {
   if (!session) return []
   return [
     {
-      id: session.access_token?.slice(0, 16) ?? 'current',
+      id: 'current',
       device: typeof navigator !== 'undefined' && navigator.userAgent?.includes('Mobile') ? 'Mobile' : 'Desktop',
       location: undefined,
       ip: undefined,
@@ -121,15 +148,13 @@ export async function fetchSessions(userId: string): Promise<Session[]> {
   ]
 }
 
-/** Terminate session - mock; real impl would call backend */
+/** Terminate session - uses session-revoke Edge Function or signOut for current */
 export async function terminateSession(
   _userId: string,
   sessionId: string
 ): Promise<void> {
-  if (sessionId === 'current') {
-    await supabase.auth.signOut()
-  }
-  // Other sessions would require backend
+  const { revokeSession } = await import('@/api/sessions')
+  await revokeSession(sessionId)
 }
 
 /** Fetch messages/notifications from messages table if it exists */

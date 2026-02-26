@@ -58,7 +58,7 @@ export const loginSchema = z.object({
   rememberMe: z.boolean().optional().default(false),
 })
 
-/** Signup schema with password strength */
+/** Signup schema with password strength, role, honeypot */
 export const signupSchema = z
   .object({
     name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
@@ -71,10 +71,16 @@ export const signupSchema = z
           'Password needs uppercase, lowercase, number, and special character',
       }),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
+    role: z.enum(['guest', 'host']).optional().default('guest'),
+    website: z.string().max(0).optional(), // honeypot - must be empty
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine((data) => !data.website || data.website.length === 0, {
+    message: 'Invalid submission',
+    path: ['website'],
   })
 
 /** Password reset request schema */

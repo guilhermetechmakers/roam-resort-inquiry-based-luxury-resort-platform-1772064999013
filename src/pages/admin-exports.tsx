@@ -75,6 +75,9 @@ export function AdminExportsPage() {
     a.click()
     URL.revokeObjectURL(url)
     toast.success(`Exported ${filtered.length} inquiries`)
+    import('@/lib/audit-logger').then(({ auditLog }) => {
+      auditLog('inquiry_export', { count: filtered.length })
+    }).catch(() => {})
   }
 
   if (authLoading) return null

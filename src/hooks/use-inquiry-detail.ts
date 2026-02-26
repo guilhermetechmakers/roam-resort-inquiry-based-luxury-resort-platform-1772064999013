@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { fetchActivities } from '@/api/activities'
+import { fetchInquiryInternalNotes } from '@/api/admin-inquiry-detail'
 import type { Inquiry } from '@/types'
 import type { InquiryEvent, InternalNote } from '@/types'
 
@@ -7,6 +9,35 @@ export interface InquiryDetail extends Inquiry {
   events?: InquiryEvent[]
   internalNotes?: InternalNote[]
   emails?: { id: string; sentAt: string; subject?: string }[]
+}
+
+/** Map Activity to InquiryEvent shape for backward compat */
+function activityToEvent(
+  a: {
+    id: string
+    inquiry_id?: string
+    event_type: string
+    timestamp?: string
+    created_at?: string
+    actor_name?: string
+    metadata?: Record<string, unknown>
+  },
+  inquiryId: string
+): InquiryEvent {
+  const meta = a.metadata ?? {}
+  let details = (meta.details as string) ?? (meta.content as string)
+  if (!details && a.event_type === 'status_changed') {
+    const from = meta.from as string | undefined
+    const to = meta.to as string | undefined
+    details = from && to ? `${from} → ${to}` : 'Status updated'
+  }
+  return {
+    id: a.id,
+    inquiryId: a.inquiry_id ?? inquiryId,
+    eventType: a.event_type,
+    timestamp: a.timestamp ?? a.created_at ?? '',
+    metadata: { ...meta, details },
+  }
 }
 
 async function fetchInquiryDetail(
@@ -26,24 +57,34 @@ async function fetchInquiryDetail(
   const base: InquiryDetail = inquiry as InquiryDetail
 
   try {
-    const { data: events } = await supabase
-      .from('inquiry_events')
-      .select('*')
-      .eq('inquiry_id', inquiryId)
-      .order('created_at', { ascending: false })
-    base.events = Array.isArray(events) ? (events as InquiryEvent[]) : []
+    const { activities } = await fetchActivities({
+      inquiryId,
+      limit: 50,
+      includeInternal: false,
+    })
+    base.events = Array.isArray(activities) ? activities.map((a) => activityToEvent(a, inquiryId)) : []
   } catch {
     base.events = []
   }
 
   if (isStaff) {
     try {
-      const { data: notes } = await supabase
-        .from('internal_notes')
-        .select('*')
-        .eq('inquiry_id', inquiryId)
-        .order('created_at', { ascending: false })
-      base.internalNotes = Array.isArray(notes) ? (notes as InternalNote[]) : []
+      const notes = await fetchInquiryInternalNotes(
+        inquiryId,
+        typeof (inquiry as { internal_notes?: string }).internal_notes === 'string'
+          ? (inquiry as { internal_notes: string }).internal_notes
+          : undefined
+      )
+      base.internalNotes = (notes ?? []).map((n) => ({
+        id: n.id,
+        inquiryId: n.inquiryId,
+        authorId: '',
+        authorName: n.authorName,
+        content: n.text,
+        visibleTo: undefined,
+        createdAt: n.createdAt,
+        created_at: n.createdAt,
+      }))
     } catch {
       base.internalNotes = []
     }
@@ -76,27 +117,32 @@ export function useAddInternalNote(inquiryId: string | undefined) {
     mutationFn: async ({
       content,
       authorId,
+      authorName,
     }: {
       content: string
       authorId: string
+      authorName?: string
     }) => {
       if (!inquiryId) throw new Error('No inquiry')
-      const { data, error } = await supabase
-        .from('internal_notes')
-        .insert({
-          inquiry_id: inquiryId,
-          author_id: authorId,
-          content,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-      if (error) throw error
-      return data
+      const { createInquiryInternalNote } = await import('@/api/admin-inquiry-detail')
+      const { createInternalNoteActivity } = await import('@/api/activities')
+      const note = await createInquiryInternalNote(
+        inquiryId,
+        content,
+        authorId,
+        authorName ?? 'Staff'
+      )
+      try {
+        await createInternalNoteActivity(inquiryId, content, authorId, authorName)
+      } catch {
+        // Activities table may not exist
+      }
+      return note
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inquiry', 'detail'] })
       queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['activities', inquiryId] })
     },
   })
 }

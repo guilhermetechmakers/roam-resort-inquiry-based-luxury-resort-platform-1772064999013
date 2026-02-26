@@ -30,6 +30,7 @@ import { AdminConciergeDashboardPage } from '@/pages/admin-concierge-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
 import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
 import { AdminExportsPage } from '@/pages/admin-exports'
+import { AdminAuditLogsPage } from '@/pages/admin-audit-logs'
 import { AdminContactInquiriesPage } from '@/pages/admin-contact-inquiries'
 import { ContactConfirmationPage } from '@/pages/contact-confirmation'
 import { ContactPage } from '@/pages/contact'
@@ -328,6 +329,16 @@ export default function App() {
                 <DashboardLayout>
                   <ProtectedRoute role="concierge">
                     <AdminExportsPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/audit-logs"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="concierge">
+                    <AdminAuditLogsPage />
                   </ProtectedRoute>
                 </DashboardLayout>
               }

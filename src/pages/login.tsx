@@ -67,12 +67,15 @@ export function LoginPage() {
       navigate(path, { replace: true })
     } catch (err) {
       const msg = (err as Error).message ?? 'Login failed'
+      const isRateLimited = msg.toLowerCase().includes('rate') || msg.includes('429') || (err as { status?: number })?.status === 429
       setError({
         message: msg,
         subMessage:
-          msg.includes('Email not confirmed') || msg.includes('email')
-            ? 'Please verify your email before signing in.'
-            : undefined,
+          isRateLimited
+            ? 'Too many attempts. Please wait a few minutes and try again.'
+            : msg.includes('Email not confirmed') || msg.includes('email')
+              ? 'Please verify your email before signing in.'
+              : undefined,
       })
     } finally {
       setLoading(false)
@@ -83,7 +86,7 @@ export function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      const result = await signUp(data.email, data.password, data.name)
+      const result = await signUp(data.email, data.password, data.name, data.role)
       setSignupSuccess({
         email: data.email,
         needsEmailVerification: result.needsEmailVerification ?? true,
@@ -91,9 +94,14 @@ export function LoginPage() {
       toast.success('Account created. Check your email to verify.')
     } catch (err) {
       const msg = (err as Error).message ?? 'Signup failed'
+      const isRateLimited = msg.toLowerCase().includes('rate') || msg.includes('429') || (err as { status?: number })?.status === 429
       setError({
         message: msg,
-        subMessage: msg.includes('already registered') ? 'Try signing in instead.' : undefined,
+        subMessage: isRateLimited
+          ? 'Too many attempts. Please wait a few minutes and try again.'
+          : msg.includes('already registered')
+            ? 'Try signing in instead.'
+            : undefined,
       })
     } finally {
       setLoading(false)

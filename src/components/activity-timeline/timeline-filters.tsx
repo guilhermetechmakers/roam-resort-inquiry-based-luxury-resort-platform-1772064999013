@@ -102,7 +102,7 @@ export function TimelineFilters({
             onCheckedChange={(c) =>
               onChange({
                 ...filters,
-                is_internal: c === true ? true : c === false ? false : undefined,
+                is_internal: c === true ? true : undefined,
               })
             }
           />

@@ -20,6 +20,7 @@ import {
   Bell,
   Shield,
   Settings,
+  ClipboardList,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -124,6 +125,7 @@ export const adminSidebarLinks: SidebarLink[] = [
   { to: '/admin/inquiries', label: 'Stay Inquiries', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/contact-inquiries', label: 'Contact Inquiries', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/exports', label: 'Exports', icon: <FileText className="h-5 w-5" /> },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: <ClipboardList className="h-5 w-5" /> },
 ]
 
 export const profileSidebarLinks: SidebarLink[] = [

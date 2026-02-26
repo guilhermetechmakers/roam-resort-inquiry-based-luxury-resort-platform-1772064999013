@@ -48,6 +48,8 @@ export function AuthForm({
       email: initialEmail,
       password: '',
       confirmPassword: '',
+      role: 'guest',
+      website: '',
     },
   })
 
@@ -139,6 +141,17 @@ export function AuthForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Honeypot - hidden from users, bots fill it */}
+      <div className="absolute -left-[9999px] top-0 opacity-0" aria-hidden="true">
+        <Label htmlFor="signup-website">Website</Label>
+        <Input
+          id="signup-website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          {...signupForm.register('website')}
+        />
+      </div>
       <div>
         <Label htmlFor="signup-name">Name</Label>
         <Input
@@ -172,6 +185,18 @@ export function AuthForm({
             {signupForm.formState.errors.email.message}
           </p>
         )}
+      </div>
+      <div>
+        <Label htmlFor="signup-role">I am a</Label>
+        <select
+          id="signup-role"
+          className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isLoading}
+          {...signupForm.register('role')}
+        >
+          <option value="guest">Guest (requesting stays)</option>
+          <option value="host">Host (listing properties)</option>
+        </select>
       </div>
       <div>
         <Label htmlFor="signup-password">Password</Label>

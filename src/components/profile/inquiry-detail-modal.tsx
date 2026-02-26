@@ -11,6 +11,7 @@ import { useInquiryDetail, useAddInternalNote } from '@/hooks/use-inquiry-detail
 import { useAuth } from '@/contexts/auth-context'
 import { InternalNotesPanel } from './internal-notes-panel'
 import { ReceiptLinkCard } from './receipt-link-card'
+import { TimelineCard } from '@/components/activity-timeline'
 import type { Inquiry } from '@/types'
 
 function mapNote(n: Record<string, unknown>) {
@@ -18,8 +19,8 @@ function mapNote(n: Record<string, unknown>) {
     id: String(n.id ?? ''),
     inquiryId: String(n.inquiry_id ?? n.inquiryId ?? ''),
     authorId: String(n.author_id ?? n.authorId ?? ''),
-    authorName: n.author_name as string | undefined,
-    content: String(n.content ?? ''),
+    authorName: (n.author_name ?? n.authorName) as string | undefined,
+    content: String(n.content ?? (n as { text?: string }).text ?? ''),
     createdAt: String(n.created_at ?? n.createdAt ?? ''),
     created_at: n.created_at as string | undefined,
   }
@@ -127,24 +128,16 @@ export function InquiryDetailModal({
                   </p>
                 ) : (
                   (detail?.events ?? []).map((evt) => {
-                    const e = evt as unknown as Record<string, unknown>
-                    const ts = e.created_at ?? e.timestamp ?? e.createdAt ?? ''
-                    return (
-                      <div
-                        key={String(e.id ?? '')}
-                        className="flex gap-3 rounded-lg border border-border p-3"
-                      >
-                        <div className="h-2 w-2 shrink-0 rounded-full bg-accent mt-1.5" />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {String(e.event_type ?? e.eventType ?? 'Event')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(String(ts))}
-                          </p>
-                        </div>
-                      </div>
-                    )
+                    const e = evt as { id: string; eventType?: string; timestamp?: string; metadata?: Record<string, unknown> }
+                    const legacy = {
+                      id: e.id,
+                      inquiryId: inquiry?.id ?? '',
+                      type: e.eventType ?? 'status_changed',
+                      description: (e.metadata?.details as string) ?? (e.metadata?.content as string) ?? 'Event',
+                      createdAt: e.timestamp ?? '',
+                      authorName: undefined,
+                    }
+                    return <TimelineCard key={e.id} activity={legacy} />
                   })
                 )}
               </div>
@@ -157,8 +150,13 @@ export function InquiryDetailModal({
                     canEdit={isStaff}
                     onAddNote={
                       user?.id
-                        ? (content) =>
-                            addNote.mutateAsync({ content, authorId: user.id })
+                        ? async (content) => {
+                            await addNote.mutateAsync({
+                              content,
+                              authorId: user.id,
+                              authorName: user.full_name ?? user.email ?? 'Staff',
+                            })
+                          }
                         : undefined
                     }
                     isLoading={addNote.isPending}

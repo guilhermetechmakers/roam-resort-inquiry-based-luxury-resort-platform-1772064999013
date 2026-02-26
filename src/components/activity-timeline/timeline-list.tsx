@@ -1,16 +1,14 @@
-import { useState, useCallback } from 'react'
 import { Activity, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TimelineCard } from './timeline-card'
 import { TimelineFilters } from './timeline-filters'
 import type { Activity as ActivityType, ActivityFilters as ActivityFiltersType } from '@/types'
+import type { LegacyTimelineEvent } from './timeline-card'
 import { cn } from '@/lib/utils'
 
-const PAGE_SIZE = 20
-
 export interface TimelineListProps {
-  activities: ActivityType[]
-  total: number
+  activities: (ActivityType | LegacyTimelineEvent)[]
+  total?: number
   isLoading?: boolean
   hasMore?: boolean
   onLoadMore?: () => void
@@ -23,7 +21,7 @@ export interface TimelineListProps {
 
 export function TimelineList({
   activities,
-  total,
+  total: _total,
   isLoading,
   hasMore = false,
   onLoadMore,

@@ -7,12 +7,12 @@ import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
 import { useAuth } from '@/contexts/auth-context'
 import {
   InquirySummaryCard,
-  TimelinePanel,
   StatusControl,
   AdminInternalNotesPanel,
   PaymentPanel,
   ExportPanel,
 } from '@/components/admin-concierge'
+import { AdminInquiryTimeline } from '@/components/activity-timeline'
 import {
   fetchAdminInquiryDetail,
   updateInquiryStatus,
@@ -24,8 +24,8 @@ import {
   fetchInquiryActivityLog,
   createStripePaymentLink,
   markPaymentReceived,
-  buildTimelineEvents,
 } from '@/api/admin-inquiry-detail'
+import { createInternalNoteActivity, createActivity } from '@/api/activities'
 import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
 import { formatDate } from '@/lib/utils'
 import type { InquiryStatusValue } from '@/types/admin'
@@ -64,11 +64,27 @@ export function AdminInquiryDetailPage() {
   })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: InquiryStatusValue }) =>
-      updateInquiryStatus(id, status),
+    mutationFn: async ({ id, status }: { id: string; status: InquiryStatusValue }) => {
+      const prevStatus = inquiry?.status ?? 'new'
+      const updated = await updateInquiryStatus(id, status)
+      try {
+        await createActivity({
+          inquiry_id: id,
+          event_type: 'status_changed',
+          actor_id: user?.id,
+          actor_name: user?.full_name ?? user?.email ?? 'Staff',
+          metadata: { from: prevStatus, to: status },
+          is_internal: false,
+        })
+      } catch {
+        // Activities table may not exist yet
+      }
+      return updated
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
       queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['activities', inquiryId] })
       toast.success('Status updated')
     },
     onError: (err) => {
@@ -77,16 +93,28 @@ export function AdminInquiryDetailPage() {
   })
 
   const addNoteMutation = useMutation({
-    mutationFn: (text: string) =>
-      createInquiryInternalNote(
+    mutationFn: async (text: string) => {
+      await createInquiryInternalNote(
         inquiryId ?? '',
         text,
         user?.id ?? '',
         user?.full_name ?? user?.email ?? 'Staff'
-      ),
+      )
+      try {
+        await createInternalNoteActivity(
+          inquiryId ?? '',
+          text,
+          user?.id ?? '',
+          user?.full_name ?? user?.email ?? 'Staff'
+        )
+      } catch {
+        // Activities table may not exist yet
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-inquiry-notes', inquiryId] })
       queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
+      queryClient.invalidateQueries({ queryKey: ['activities', inquiryId] })
       toast.success('Note added')
     },
     onError: (err) => {
@@ -177,13 +205,6 @@ export function AdminInquiryDetailPage() {
   const handlePrint = useCallback(() => {
     window.print()
   }, [])
-
-  const timelineEvents = buildTimelineEvents(
-    inquiry ?? null,
-    notes ?? [],
-    payments ?? [],
-    activityLog ?? []
-  )
 
   useEffect(() => {
     document.title = inquiry
@@ -278,7 +299,13 @@ export function AdminInquiryDetailPage() {
             <div className="space-y-6 lg:col-span-2">
               <InquirySummaryCard inquiry={inquiry} />
 
-              <TimelinePanel events={timelineEvents} />
+              <AdminInquiryTimeline
+                inquiryId={inquiryId}
+                inquiry={inquiry}
+                notes={notes ?? []}
+                payments={payments ?? []}
+                activityLog={activityLog ?? []}
+              />
             </div>
 
             <div className="space-y-6">
