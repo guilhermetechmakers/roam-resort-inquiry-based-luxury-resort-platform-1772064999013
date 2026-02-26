@@ -91,5 +91,22 @@ export const sampleSections: TermsSection[] = [
   },
 ]
 
+/** Alias for CMS compatibility */
+export const SAMPLE_TERMS_SECTIONS = sampleSections
+
 /** Default last updated date (ISO string) */
 export const DEFAULT_LAST_UPDATED = '2025-02-26'
+
+/** Default contact info for legal inquiries */
+export const DEFAULT_CONTACT_INFO = {
+  email: 'legal@roamresort.com',
+  label: 'Legal Inquiries',
+  href: 'mailto:legal@roamresort.com',
+}
+
+/** Normalize CMS/content response to sections array - use when fetching from API */
+export function normalizeSections(content: unknown): TermsSection[] {
+  if (!content || typeof content !== 'object') return sampleSections
+  const c = content as { sections?: unknown }
+  return Array.isArray(c?.sections) ? (c.sections as TermsSection[]) : sampleSections
+}

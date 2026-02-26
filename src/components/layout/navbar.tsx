@@ -25,7 +25,13 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
       )}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link to="/" className="font-serif text-xl font-semibold text-foreground">
+        <Link
+          to="/"
+          className={cn(
+            'font-serif text-xl font-semibold',
+            transparent ? 'text-primary-foreground hover:text-primary-foreground/90' : 'text-foreground'
+          )}
+        >
           Roam Resort
         </Link>
 
@@ -35,58 +41,91 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
               key={to}
               to={to}
               className={cn(
-                'text-sm font-medium transition-colors hover:text-accent',
-                location.pathname === to ? 'text-accent' : 'text-foreground'
+                'text-sm font-medium transition-colors',
+                transparent
+                  ? 'text-primary-foreground/90 hover:text-primary-foreground'
+                  : location.pathname === to
+                    ? 'text-accent'
+                    : 'text-foreground hover:text-accent'
               )}
             >
               {label}
             </Link>
           ))}
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                'flex items-center gap-4',
+                transparent && 'text-primary-foreground'
+              )}
+            >
               <Link to="/profile">
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+                >
                   My Inquiries
                 </Button>
               </Link>
               <Link to="/settings">
-                <Button variant="ghost" size="sm">
-                  Settings
-                </Button>
-              </Link>
-              <Link to="/settings">
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+                >
                   Settings
                 </Button>
               </Link>
               {hasRole('host') && (
                 <Link to="/host">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={transparent ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
+                  >
                     Host Dashboard
                   </Button>
                 </Link>
               )}
               {hasRole('concierge') && (
                 <Link to="/admin">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={transparent ? 'border-white/50 text-primary-foreground hover:bg-white/10' : ''}
+                  >
                     Admin
                   </Button>
                 </Link>
               )}
-              <Button variant="ghost" size="sm" onClick={() => signOut()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className={transparent ? 'text-primary-foreground/90 hover:bg-white/10 hover:text-primary-foreground' : ''}
+              >
                 Sign Out
               </Button>
             </div>
           ) : (
             <Link to="/login">
-              <Button size="sm">Request a Stay</Button>
+              <Button
+                size="sm"
+                className={transparent ? 'border-white/50 bg-white/10 text-primary-foreground hover:bg-white/20' : ''}
+              >
+                Request a Stay
+              </Button>
             </Link>
           )}
         </div>
 
         <button
           type="button"
-          className="md:hidden rounded-md p-2 hover:bg-secondary"
+          className={cn(
+            'md:hidden rounded-md p-2 hover:bg-secondary',
+            transparent && 'text-primary-foreground hover:bg-white/10'
+          )}
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
@@ -111,9 +150,6 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
               <>
                 <Link to="/profile" onClick={() => setOpen(false)} className="py-2">
                   My Inquiries
-                </Link>
-                <Link to="/settings" onClick={() => setOpen(false)} className="py-2">
-                  Settings
                 </Link>
                 <Link to="/settings" onClick={() => setOpen(false)} className="py-2">
                   Settings

@@ -32,3 +32,6 @@ export interface FooterLink {
   text: string
   href: string
 }
+
+/** Alias for FooterLink (spec compatibility) */
+export type FooterLinkItem = FooterLink

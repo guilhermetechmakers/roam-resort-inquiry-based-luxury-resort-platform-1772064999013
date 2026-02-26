@@ -29,15 +29,28 @@ export function FooterLinks({
           className="flex flex-wrap justify-center gap-x-6 gap-y-2"
           aria-label="Legal and privacy links"
         >
-          {safeLinks.map((link) => (
-            <Link
-              key={`${link.href}-${link.text}`}
-              to={link.href}
-              className="text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
-            >
-              {link.text}
-            </Link>
-          ))}
+          {safeLinks.map((link) => {
+            const isExternal =
+              link.href?.startsWith('http') || link.href?.startsWith('mailto:')
+            const href = link.href ?? '#'
+            const linkClass =
+              'text-sm font-medium text-accent hover:text-accent/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded'
+            return isExternal ? (
+              <a
+                key={`${href}-${link.text}`}
+                href={href}
+                className={linkClass}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.text}
+              </a>
+            ) : (
+              <Link key={`${href}-${link.text}`} to={href} className={linkClass}>
+                {link.text}
+              </Link>
+            )
+          })}
         </nav>
         {lastUpdated ? (
           <p className="mt-6 text-center text-sm text-muted-foreground">

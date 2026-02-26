@@ -1,5 +1,5 @@
 export { TermsLayout } from './terms-layout'
-export { SectionCard } from './section-card'
+export { SectionCard, SectionCardFromSection } from './section-card'
 export { SectionHeader } from './section-header'
 export { HeroBar } from './hero-bar'
 export { PrivacyLinkBlock } from './privacy-link-block'

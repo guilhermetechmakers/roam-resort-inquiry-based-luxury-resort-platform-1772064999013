@@ -140,10 +140,10 @@ export function TermsLayout({
       </article>
 
       <FooterLinks
-        links={[
-          ...safeFooterLinks,
+        links={safeFooterLinks.length > 0 ? safeFooterLinks : [
           { text: 'Privacy Policy', href: '/privacy' },
           { text: 'Contact', href: '/contact' },
+          { text: 'Help', href: '/help' },
         ]}
         lastUpdated={formattedDate}
       />
