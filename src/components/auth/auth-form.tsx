@@ -117,7 +117,7 @@ export function AuthForm({
               </button>
             ) : (
               <Link
-                to="/forgot-password"
+                to="/password-reset"
                 className="text-sm text-accent hover:underline"
               >
                 Forgot password?

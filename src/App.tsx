@@ -9,8 +9,7 @@ import { HomePage } from '@/pages/home'
 import { DestinationsPage } from '@/pages/destinations'
 import { DestinationDetailPage } from '@/pages/destination-detail'
 import { LoginPage } from '@/pages/login'
-import { ForgotPasswordPage } from '@/pages/forgot-password'
-import { ResetPasswordPage } from '@/pages/reset-password'
+import { PasswordResetPage } from '@/pages/password-reset'
 import { InquiryFormPage } from '@/pages/inquiry-form'
 import { InquiryConfirmationPage } from '@/pages/inquiry-confirmation'
 import { ProfilePage } from '@/pages/profile'
@@ -94,10 +93,18 @@ export default function App() {
               }
             />
             <Route
+              path="/password-reset"
+              element={
+                <AppLayout>
+                  <PasswordResetPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/forgot-password"
               element={
                 <AppLayout>
-                  <ForgotPasswordPage />
+                  <PasswordResetPage />
                 </AppLayout>
               }
             />
@@ -105,7 +112,7 @@ export default function App() {
               path="/reset-password"
               element={
                 <AppLayout>
-                  <ResetPasswordPage />
+                  <PasswordResetPage />
                 </AppLayout>
               }
             />
