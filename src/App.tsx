@@ -35,6 +35,7 @@ import { CheckoutBridgePage } from '@/pages/checkout-bridge'
 import { CheckoutCompletePage } from '@/pages/checkout-complete'
 import { SettingsPage } from '@/pages/settings'
 import { StaticPage } from '@/pages/static-page'
+import { TermsOfServicePage } from '@/pages/terms-of-service'
 import { NotFoundPage } from '@/pages/not-found'
 import { ErrorPage } from '@/pages/error-page'
 
@@ -335,15 +336,8 @@ export default function App() {
             <Route
               path="/terms"
               element={
-                <AppLayout>
-                  <StaticPage
-                    title="Terms of Service"
-                    content={
-                      <p className="text-muted-foreground">
-                        Terms of service content would go here. This is a placeholder.
-                      </p>
-                    }
-                  />
+                <AppLayout transparentNav>
+                  <TermsOfServicePage />
                 </AppLayout>
               }
             />
