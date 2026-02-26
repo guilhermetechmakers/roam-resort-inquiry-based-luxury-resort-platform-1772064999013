@@ -47,7 +47,8 @@ async function fetchInquiryByIdOrReference(
         size: a.size ?? 0,
         uploaded_at: a.uploaded_at ?? '',
       }))
-      const { inquiry_attachments: _omit, ...rest } = row
+      const { inquiry_attachments: _, ...rest } = row
+      void _
       return { ...rest, attachments } as Inquiry
     }
   } catch {

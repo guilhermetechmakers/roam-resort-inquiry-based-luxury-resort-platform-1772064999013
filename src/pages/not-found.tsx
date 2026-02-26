@@ -68,12 +68,9 @@ export function NotFoundPage() {
     }
   }, [])
 
-  const handleReportSubmit = useCallback(
-    (_data: { email?: string; message: string }) => {
-      toast.success('Thank you for your report. We\'ll look into it shortly.')
-    },
-    []
-  )
+  const handleReportSubmit = useCallback(() => {
+    toast.success('Thank you for your report. We\'ll look into it shortly.')
+  }, [])
 
   return (
     <div className="min-h-screen">

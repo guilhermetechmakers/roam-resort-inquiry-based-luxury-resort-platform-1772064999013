@@ -27,10 +27,7 @@ export function PaymentSuccessPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!inquiryId) {
-      setIsLoading(false)
-      return
-    }
+    if (!inquiryId) return
     let cancelled = false
 
     const run = async () => {

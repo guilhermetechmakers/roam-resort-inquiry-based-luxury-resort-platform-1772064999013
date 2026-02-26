@@ -83,7 +83,7 @@ export function ProfilePage() {
         toast.error((err as Error).message)
       }
     },
-    [changePasswordMutation, user?.email]
+    [changePasswordMutation, user]
   )
 
   const handleInquiryClick = useCallback((inquiry: Inquiry) => {

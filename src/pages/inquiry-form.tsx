@@ -174,7 +174,7 @@ export function InquiryFormPage() {
         toast.success('Draft saved locally')
       }
     },
-    [listingId, listingParam, listing?.id, user?.id, saveDraftMutation]
+    [listingId, listingParam, listing, user, saveDraftMutation]
   )
 
   const handleSubmit = useCallback(

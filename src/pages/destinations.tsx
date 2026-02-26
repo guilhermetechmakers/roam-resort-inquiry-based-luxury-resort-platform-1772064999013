@@ -59,7 +59,8 @@ export function DestinationsPage() {
   }))
 
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, ...urlFilters }))
+    const next = { ...urlFilters }
+    queueMicrotask(() => setFilters((prev) => ({ ...prev, ...next })))
   }, [urlFilters])
 
   const updateUrl = useCallback(

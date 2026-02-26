@@ -39,11 +39,7 @@ export function CheckoutBridgePage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    if (!inquiryId) {
-      setIsLoading(false)
-      setError(true)
-      return
-    }
+    if (!inquiryId) return
     let cancelled = false
     fetchCheckoutBridge(inquiryId)
       .then((res) => {

@@ -93,7 +93,7 @@ export function isValidReference(value: unknown): boolean {
   if (value == null || value === '') return true // optional
   const s = String(value).trim()
   if (s.length > REFERENCE_MAX) return false
-  return /^[A-Za-z0-9\-]+$/.test(s)
+  return /^[A-Za-z0-9-]+$/.test(s)
 }
 
 export const contactValidation = {

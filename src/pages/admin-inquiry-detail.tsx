@@ -79,7 +79,7 @@ export function AdminInquiryDetailPage() {
       ]
     }
     return []
-  }, [paymentsFromTable, inquiry?.payment_link, inquiry?.total_amount, inquiry?.payment_state, inquiry?.updated_at, inquiry?.created_at, inquiryId])
+  }, [paymentsFromTable, inquiry, inquiryId])
 
   const { data: activityLog = [] } = useQuery({
     queryKey: ['admin-inquiry-activity', inquiryId],

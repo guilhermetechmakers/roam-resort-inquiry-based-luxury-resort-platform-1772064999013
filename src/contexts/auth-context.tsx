@@ -2,27 +2,11 @@ import * as React from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { auditLog } from '@/lib/audit-logger'
+import { AuthContext, type AuthContextValue, type AuthState } from '@/contexts/auth-context-definition'
+import type { User, UserRole } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseUserMeta = any
-import type { User, UserRole } from '@/types'
-
-interface AuthState {
-  user: User | null
-  supabaseUser: SupabaseUser | null
-  isLoading: boolean
-  isAuthenticated: boolean
-}
-
-interface AuthContextValue extends AuthState {
-  signIn: (email: string, password: string) => Promise<User>
-  signUp: (email: string, password: string, fullName?: string, role?: 'guest' | 'host' | 'concierge') => Promise<{ user: User; needsEmailVerification?: boolean }>
-  signOut: () => Promise<void>
-  hasRole: (role: UserRole) => boolean
-  requestPasswordReset: (email: string) => Promise<void>
-}
-
-export const AuthContext = React.createContext<AuthContextValue | null>(null)
 
 function mapSupabaseUser(u: SupabaseUser | null): User | null {
   if (!u) return null

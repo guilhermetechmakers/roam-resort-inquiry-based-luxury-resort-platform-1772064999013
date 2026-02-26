@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { adminSidebarLinks } from '@/components/layout/sidebar-links'
 import { useAuth } from '@/hooks/use-auth'
@@ -47,19 +47,33 @@ export function AdminInquiryListPage() {
   const [bulkNoteOpen, setBulkNoteOpen] = useState(false)
   const [drawerInquiry, setDrawerInquiry] = useState<Inquiry | null>(null)
 
-  const filters: AdminInquiryFilters = {
-    status: statusFilter === 'all' ? undefined : statusFilter,
-    payment_status:
-      !paymentStatusFilter || paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
-    destination_id: destinationId || undefined,
-    host_id: hostId || undefined,
-    guest_email: guestEmail.trim() || undefined,
-    dateFrom: dateFrom || undefined,
-    dateTo: dateTo || undefined,
-    search: search.trim() || undefined,
-    page,
-    pageSize,
-  }
+  const filters: AdminInquiryFilters = useMemo(
+    () => ({
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      payment_status:
+        !paymentStatusFilter || paymentStatusFilter === 'all' ? undefined : paymentStatusFilter,
+      destination_id: destinationId || undefined,
+      host_id: hostId || undefined,
+      guest_email: guestEmail.trim() || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      search: search.trim() || undefined,
+      page,
+      pageSize,
+    }),
+    [
+      statusFilter,
+      paymentStatusFilter,
+      destinationId,
+      hostId,
+      guestEmail,
+      dateFrom,
+      dateTo,
+      search,
+      page,
+      pageSize,
+    ]
+  )
 
   const { data, isLoading, isError, error, refetch } = useAdminInquiriesPaginated(filters)
   const { data: listings = [] } = useAdminDestinations()
@@ -77,16 +91,7 @@ export function AdminInquiryListPage() {
       pageSize: 1000,
     })
     return result?.data ?? []
-  }, [
-    search,
-    statusFilter,
-    paymentStatusFilter,
-    dateFrom,
-    dateTo,
-    destinationId,
-    hostId,
-    guestEmail,
-  ])
+  }, [filters])
 
   const handleBulkExport = useCallback(() => {
     const selected = (inquiries ?? []).filter((i) => selectedIds.has(i.id))
