@@ -36,6 +36,7 @@ import { CheckoutCompletePage } from '@/pages/checkout-complete'
 import { SettingsPage } from '@/pages/settings'
 import { StaticPage } from '@/pages/static-page'
 import { TermsOfServicePage } from '@/pages/terms-of-service'
+import { PrivacyPolicyPage } from '@/pages/privacy-policy'
 import { NotFoundPage } from '@/pages/not-found'
 import { ErrorPage } from '@/pages/error-page'
 
@@ -344,15 +345,8 @@ export default function App() {
             <Route
               path="/privacy"
               element={
-                <AppLayout>
-                  <StaticPage
-                    title="Privacy Policy"
-                    content={
-                      <p className="text-muted-foreground">
-                        Privacy policy content would go here. This is a placeholder.
-                      </p>
-                    }
-                  />
+                <AppLayout transparentNav>
+                  <PrivacyPolicyPage />
                 </AppLayout>
               }
             />

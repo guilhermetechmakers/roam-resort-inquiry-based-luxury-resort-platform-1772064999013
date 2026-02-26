@@ -105,7 +105,7 @@ export async function updateUserSettings(
   }
 }
 
-/** Initiate data export */
+/** Initiate data export - tries REST API first, then Supabase Edge Function */
 export async function initiateDataExport(): Promise<{ exportId: string; status: string }> {
   try {
     const res = await api.post<ExportResponse>('/privacy/export')
@@ -114,7 +114,22 @@ export async function initiateDataExport(): Promise<{ exportId: string; status: 
       status: res?.status ?? 'Queued',
     }
   } catch {
-    return { exportId: 'mock-' + Date.now(), status: 'Queued' }
+    try {
+      const { supabase } = await import('@/lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not authenticated')
+      const { data, error } = await supabase.functions.invoke<ExportResponse>('privacy-export', {
+        body: {},
+      })
+      if (error) throw error
+      const result = data ?? {}
+      return {
+        exportId: result?.exportId ?? '',
+        status: result?.status ?? 'Queued',
+      }
+    } catch {
+      return { exportId: 'mock-' + Date.now(), status: 'Queued' }
+    }
   }
 }
 
@@ -135,22 +150,43 @@ export async function getExportStatus(exportId: string): Promise<ExportJob | nul
   }
 }
 
-/** Initiate account deletion */
+/** Initiate account deletion - tries REST API first, then Supabase Edge Function */
 export async function initiateAccountDeletion(): Promise<{ success: boolean }> {
   try {
     await api.post('/privacy/delete')
     return { success: true }
   } catch {
-    return { success: false }
+    try {
+      const { supabase } = await import('@/lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not authenticated')
+      const { error } = await supabase.functions.invoke('privacy-delete', { body: {} })
+      if (error) throw error
+      return { success: true }
+    } catch {
+      return { success: false }
+    }
   }
 }
 
-/** Fetch privacy requests - guarded array */
+/** Fetch privacy requests - tries REST API first, then Supabase Edge Function */
 export async function fetchPrivacyRequests(): Promise<PrivacyRequest[]> {
   try {
     const res = await api.get<PrivacyRequestsResponse>('/privacy/requests')
     const list = Array.isArray(res?.requests) ? res.requests : []
-    return list
+    if (list.length > 0) return list
+  } catch {
+    // Fall through to Edge Function
+  }
+  try {
+    const { supabase } = await import('@/lib/supabase')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return []
+    const { data, error } = await supabase.functions.invoke<PrivacyRequestsResponse>('privacy-requests', {
+      body: {},
+    })
+    if (error) return []
+    return Array.isArray(data?.requests) ? data.requests : []
   } catch {
     return []
   }

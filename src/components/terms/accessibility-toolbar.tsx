@@ -3,14 +3,15 @@ import { cn } from '@/lib/utils'
 
 export interface AccessibilityToolbarProps {
   className?: string
+  contentId?: string
 }
 
-export function AccessibilityToolbar({ className }: AccessibilityToolbarProps) {
+export function AccessibilityToolbar({ className, contentId = 'terms-main-content' }: AccessibilityToolbarProps) {
   const [fontSize, setFontSize] = useState<'base' | 'large' | 'xlarge'>('base')
   const [highContrast, setHighContrast] = useState(false)
 
   const handleSkipToContent = () => {
-    const main = document.getElementById('terms-main-content')
+    const main = document.getElementById(contentId)
     main?.focus({ preventScroll: false })
     ;(main as HTMLElement)?.scrollIntoView?.({ behavior: 'smooth' })
   }
@@ -25,7 +26,7 @@ export function AccessibilityToolbar({ className }: AccessibilityToolbarProps) {
       aria-label="Accessibility options"
     >
       <a
-        href="#terms-main-content"
+        href={`#${contentId}`}
         onClick={(e) => {
           e.preventDefault()
           handleSkipToContent()
