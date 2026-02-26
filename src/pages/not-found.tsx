@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Home, AlertCircle } from 'lucide-react'
+import { Home, AlertCircle, SearchX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -23,6 +23,7 @@ export function NotFoundPage() {
   const [isReportOpen, setIsReportOpen] = useState(false)
   const [lastSearchedResults, setLastSearchedResults] = useState<Destination[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true)
   const [suggestions, setSuggestions] = useState<Destination[]>([])
 
   const safeSuggestions = Array.isArray(suggestions) ? suggestions : []
@@ -31,6 +32,7 @@ export function NotFoundPage() {
   useEffect(() => {
     let cancelled = false
     async function loadSuggestions() {
+      setIsLoadingSuggestions(true)
       try {
         const res = await fetchPublishedDestinations({
           page: 1,
@@ -41,6 +43,8 @@ export function NotFoundPage() {
         if (!cancelled) setSuggestions(list)
       } catch {
         if (!cancelled) setSuggestions([])
+      } finally {
+        if (!cancelled) setIsLoadingSuggestions(false)
       }
     }
     loadSuggestions()
@@ -61,8 +65,13 @@ export function NotFoundPage() {
       })
       const list = Array.isArray(res?.data) ? res.data : []
       setLastSearchedResults(list)
+      const count = list.length
+      if (count > 0) {
+        toast.success(`Found ${count} destination${count === 1 ? '' : 's'} matching your search.`)
+      }
     } catch {
       setLastSearchedResults([])
+      toast.error('Search failed. Please try again.')
     } finally {
       setIsSearching(false)
     }
@@ -80,11 +89,7 @@ export function NotFoundPage() {
         aria-labelledby="not-found-heading"
       >
         <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background:
-              'linear-gradient(135deg, rgb(180 149 135 / 0.15) 0%, transparent 50%, rgb(35 33 42) 100%)',
-          }}
+          className="absolute inset-0 opacity-30 gradient-hero-overlay"
           aria-hidden
         />
         <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
@@ -162,26 +167,44 @@ export function NotFoundPage() {
                 ))}
               </div>
             ) : safeResults.length > 0 ? (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {(safeResults ?? []).map((dest) => (
-                  <ContentCard
-                    key={dest.id}
-                    title={dest.title ?? 'Destination'}
-                    body={dest.excerpt ?? dest.tagline}
-                    imageUrl={dest.imageUrl}
-                    to={`/destinations/${dest.slug ?? dest.id}`}
-                  />
-                ))}
-              </div>
+              <>
+                <h3 className="sr-only">Results</h3>
+                <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {(safeResults ?? []).map((dest) => (
+                    <ContentCard
+                      key={dest.id}
+                      title={dest.title ?? 'Destination'}
+                      body={dest.excerpt ?? dest.tagline}
+                      imageUrl={dest.imageUrl}
+                      to={`/destinations/${dest.slug ?? dest.id}`}
+                    />
+                  ))}
+                </div>
+              </>
             ) : (
-              <div className="mt-8 rounded-xl border border-border bg-card p-8 text-center">
-                <p className="text-muted-foreground">
-                  No destinations match your search. Try a different term or{' '}
-                  <Link to="/destinations" className="text-accent hover:underline">
-                    browse all destinations
-                  </Link>
-                  .
+              <div
+                className="mt-8 flex flex-col items-center justify-center rounded-xl border border-border bg-card p-12 text-center animate-fade-in"
+                role="status"
+                aria-live="polite"
+              >
+                <SearchX
+                  className="h-16 w-16 text-muted-foreground/70"
+                  aria-hidden
+                />
+                <h3 className="mt-4 font-serif text-xl font-semibold text-foreground">
+                  No destinations match your search
+                </h3>
+                <p className="mt-2 max-w-md text-muted-foreground">
+                  Try a different term or browse our full collection of destinations.
                 </p>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="mt-6 min-h-[44px] border-accent/50 text-accent hover:bg-accent/10 hover:border-accent"
+                >
+                  <Link to="/destinations">Browse all destinations</Link>
+                </Button>
               </div>
             )}
           </div>
@@ -189,10 +212,11 @@ export function NotFoundPage() {
       )}
 
       {/* Suggestions section */}
-      {safeSuggestions.length > 0 && !searchQuery && (
+      {!searchQuery && (
         <section
           className="py-16 lg:py-24"
           aria-labelledby="suggestions-heading"
+          aria-busy={isLoadingSuggestions}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -204,17 +228,41 @@ export function NotFoundPage() {
             >
               Explore These Destinations
             </h2>
-            <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {(safeSuggestions ?? []).map((dest) => (
-                <ContentCard
-                  key={dest.id}
-                  title={dest.title ?? 'Destination'}
-                  body={dest.excerpt ?? dest.tagline}
-                  imageUrl={dest.imageUrl}
-                  to={`/destinations/${dest.slug ?? dest.id}`}
-                />
-              ))}
-            </div>
+            {isLoadingSuggestions ? (
+              <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-72 rounded-xl" />
+                ))}
+              </div>
+            ) : safeSuggestions.length > 0 ? (
+              <>
+                <h3 className="sr-only">Suggested destinations</h3>
+                <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                  {(safeSuggestions ?? []).map((dest) => (
+                    <ContentCard
+                      key={dest.id}
+                      title={dest.title ?? 'Destination'}
+                      body={dest.excerpt ?? dest.tagline}
+                      imageUrl={dest.imageUrl}
+                      to={`/destinations/${dest.slug ?? dest.id}`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div
+                className="mt-10 flex flex-col items-center justify-center rounded-xl border border-border bg-card p-12 text-center"
+                role="status"
+              >
+                <p className="text-muted-foreground">
+                  No suggestions available right now. Try searching above or{' '}
+                  <Link to="/destinations" className="text-accent hover:underline">
+                    browse destinations
+                  </Link>
+                  .
+                </p>
+              </div>
+            )}
           </div>
         </section>
       )}
