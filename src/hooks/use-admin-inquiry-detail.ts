@@ -13,7 +13,7 @@ import {
   createStripePaymentLink,
   markPaymentReceived,
 } from '@/api/admin'
-import type { AdminInquiryDetail, StripeLinkPayload } from '@/types/admin'
+import type { StripeLinkPayload } from '@/types/admin'
 
 export function useAdminInquiryDetail(inquiryId: string | undefined) {
   return useQuery({

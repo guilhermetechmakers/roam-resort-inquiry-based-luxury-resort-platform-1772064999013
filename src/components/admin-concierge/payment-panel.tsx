@@ -6,17 +6,24 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import type { AdminInquiryPayment, StripeLinkItem, CreateStripeLinkPayload } from '@/types/admin'
+import type { AdminInquiryPayment, StripeLinkPayload } from '@/types/admin'
+
+interface LineItem {
+  name: string
+  quantity: number
+  unitPrice: number
+  description?: string
+}
 
 export interface PaymentPanelProps {
   payments: AdminInquiryPayment[]
-  onCreateStripeLink: (payload: CreateStripeLinkPayload) => Promise<{ paymentLinkUrl: string; paymentId: string }>
+  onCreateStripeLink: (payload: StripeLinkPayload) => Promise<{ paymentLinkUrl: string; paymentId: string }>
   onMarkReceived?: (paymentId: string) => Promise<void>
   isLoading?: boolean
   className?: string
 }
 
-const DEFAULT_LINE_ITEM: StripeLinkItem = {
+const DEFAULT_LINE_ITEM: LineItem = {
   name: 'Deposit',
   quantity: 1,
   unitPrice: 0,
@@ -31,7 +38,7 @@ export function PaymentPanel({
   className,
 }: PaymentPanelProps) {
   const [amount, setAmount] = useState<string>('')
-  const [items, setItems] = useState<StripeLinkItem[]>([{ ...DEFAULT_LINE_ITEM }])
+  const [items, setItems] = useState<LineItem[]>([{ ...DEFAULT_LINE_ITEM }])
   const [notes, setNotes] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [createdUrl, setCreatedUrl] = useState<string | null>(null)
@@ -48,7 +55,7 @@ export function PaymentPanel({
     setItems((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  const updateItem = (idx: number, field: keyof StripeLinkItem, value: string | number) => {
+  const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
     setItems((prev) => {
       const next = [...prev]
       next[idx] = { ...next[idx], [field]: value }
@@ -72,9 +79,9 @@ export function PaymentPanel({
     setIsCreating(true)
     setCreatedUrl(null)
     try {
-      const payload: CreateStripeLinkPayload = {
+      const payload: StripeLinkPayload = {
         amount: finalAmount,
-        items: validItems.length > 0 ? validItems : [{ name: 'Deposit', quantity: 1, unitPrice: finalAmount, description: notes || undefined }],
+        items: validItems.length > 0 ? validItems : [{ name: 'Deposit', quantity: 1, unitPrice: finalAmount, description: notes || undefined }] as StripeLinkPayload['items'],
         notes: notes.trim() || undefined,
       }
       const { paymentLinkUrl } = await onCreateStripeLink(payload)

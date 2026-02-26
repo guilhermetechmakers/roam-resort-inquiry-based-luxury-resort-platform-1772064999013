@@ -71,7 +71,7 @@ export interface AdminInquiryDetail extends AdminInquiry {
   attachments?: AdminAttachment[]
   internalNotes?: AdminInternalNote[]
   timelineEvents?: AdminTimelineEvent[]
-  payments?: AdminPayment[]
+  payments?: AdminInquiryPayment[]
 }
 
 export interface AdminAttachment {
@@ -145,15 +145,6 @@ export interface AdminInquiryDetailNote {
   authorName: string
   text: string
   createdAt: string
-}
-
-export interface AdminTimelineEvent {
-  id: string
-  inquiryId: string
-  type: 'email' | 'status' | 'note' | 'payment'
-  description: string
-  createdAt: string
-  authorName?: string
 }
 
 export interface AdminInquiryPayment {

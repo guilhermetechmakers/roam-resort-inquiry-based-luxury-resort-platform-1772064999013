@@ -11,7 +11,14 @@ import type {
   AdminReconciliation,
   AdminDashboardMetrics,
   AdminExportFilters,
+  AdminInternalNote,
+  AdminTimelineEvent,
+  AdminInquiryDetail,
+  AdminPayment,
+  StripeLinkPayload,
 } from '@/types/admin'
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 
 /** Map inquiry status to display format */
 function toDisplayStatus(status: string): string {
@@ -127,7 +134,7 @@ function parseInternalNotes(inquiry: Inquiry): AdminInternalNote[] {
   try {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
     const arr = Array.isArray(parsed) ? parsed : []
-    return arr.map((n: { id?: string; authorName?: string; text?: string; createdAt?: string }, i: number) => ({
+    return arr.map((n: { id?: string; authorName?: string; text?: string; note?: string; createdAt?: string }, i: number) => ({
       id: n.id ?? `note-${i}`,
       inquiryId: inquiry.id,
       note: n.text ?? n.note ?? '',
@@ -163,7 +170,7 @@ function buildTimelineEvents(inquiry: Inquiry, notes: AdminInternalNote[]): Admi
       createdAt: updated,
     })
   }
-  ;(notes ?? []).forEach((n, i) => {
+  ;(notes ?? []).forEach((n) => {
     events.push({
       id: `evt-note-${n.id}`,
       inquiryId: inquiry.id,
@@ -188,7 +195,6 @@ function buildTimelineEvents(inquiry: Inquiry, notes: AdminInternalNote[]): Admi
 /** Shape Inquiry to AdminInquiryDetail */
 function shapeInquiryToDetail(i: Inquiry): AdminInquiryDetail {
   const base = shapeInquiryToAdmin(i)
-  const listing = typeof i.listing === 'object' ? i.listing : null
   const guest = typeof i.guest === 'object' ? i.guest : null
   const notes = parseInternalNotes(i)
   const timelineEvents = buildTimelineEvents(i, notes)

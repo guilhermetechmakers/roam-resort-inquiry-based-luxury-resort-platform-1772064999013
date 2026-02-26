@@ -13,7 +13,8 @@ export interface InquirySummaryCardProps {
 
 function getAttachmentUrl(att: string | Attachment): string {
   if (typeof att === 'string') return att
-  return (att as Attachment).file_url ?? (att as Attachment).url ?? ''
+  const a = att as Attachment & { url?: string }
+  return a.file_url ?? a.url ?? ''
 }
 
 function getAttachmentName(att: string | Attachment): string {

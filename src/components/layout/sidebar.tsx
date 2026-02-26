@@ -23,9 +23,10 @@ interface SidebarLink {
 interface SidebarProps {
   links: SidebarLink[]
   title?: string
+  className?: string
 }
 
-export function Sidebar({ links, title = 'Dashboard' }: SidebarProps) {
+export function Sidebar({ links, title = 'Dashboard', className }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
 
@@ -33,7 +34,8 @@ export function Sidebar({ links, title = 'Dashboard' }: SidebarProps) {
     <aside
       className={cn(
         'flex flex-col border-r border-border bg-card transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64'
+        collapsed ? 'w-16' : 'w-64',
+        className
       )}
     >
       <div className="flex h-14 items-center justify-between border-b border-border px-4">

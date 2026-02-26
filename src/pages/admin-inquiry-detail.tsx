@@ -1,71 +1,186 @@
+import { useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
 import { useAuth } from '@/contexts/auth-context'
-import { useAdminInquiries, useUpdateInquiry } from '@/hooks/use-inquiries'
-import { InquiryStatusPanel } from '@/components/inquiry'
+import {
+  InquirySummaryCard,
+  TimelinePanel,
+  StatusControl,
+  AdminInternalNotesPanel,
+  PaymentPanel,
+  ExportPanel,
+} from '@/components/admin-concierge'
+import {
+  fetchAdminInquiryDetail,
+  updateInquiryStatus,
+  fetchInquiryInternalNotes,
+  createInquiryInternalNote,
+  updateInquiryInternalNote,
+  deleteInquiryInternalNote,
+  fetchInquiryPayments,
+  createStripePaymentLink,
+  markPaymentReceived,
+  buildTimelineEvents,
+} from '@/api/admin-inquiry-detail'
+import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
 import { formatDate } from '@/lib/utils'
-import type { Inquiry, InquiryStatus } from '@/types'
-
-function exportInquiryToCsv(inquiry: Inquiry): void {
-  const rows = [
-    ['Reference', 'Listing', 'Check-in', 'Check-out', 'Guests', 'Status', 'Created'],
-    [
-      inquiry.reference,
-      typeof inquiry.listing === 'object' && inquiry.listing ? inquiry.listing.title : '—',
-      inquiry.check_in ?? '—',
-      inquiry.check_out ?? '—',
-      String(inquiry.guests_count ?? '—'),
-      inquiry.status,
-      inquiry.created_at ?? '—',
-    ],
-  ]
-  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `inquiry-${inquiry.reference}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
+import type { InquiryStatusValue } from '@/types/admin'
 
 export function AdminInquiryDetailPage() {
   const { inquiryId } = useParams<{ inquiryId: string }>()
-  const { hasRole, isLoading: authLoading } = useAuth()
-  const { data: inquiries } = useAdminInquiries()
-  const updateInquiry = useUpdateInquiry()
-  const inquiry = (inquiries ?? []).find((i) => i.id === inquiryId)
+  const { hasRole, isLoading: authLoading, user } = useAuth()
+  const queryClient = useQueryClient()
 
-  const handleStatusChange = (id: string, status: InquiryStatus) => {
-    if (!id) return
-    updateInquiry.mutate(
-      { id, payload: { status } },
-      {
-        onSuccess: () => toast.success('Status updated'),
-        onError: (err) => toast.error((err as Error).message),
-      }
-    )
-  }
+  const { data: inquiry, isLoading: inquiryLoading } = useQuery({
+    queryKey: ['admin-inquiry-detail', inquiryId],
+    queryFn: () => fetchAdminInquiryDetail(inquiryId ?? ''),
+    enabled: !!inquiryId,
+  })
 
-  const handleNotesChange = (id: string, notes: string) => {
-    if (!id) return
-    updateInquiry.mutate(
-      { id, payload: { internal_notes: notes } },
-      {
-        onSuccess: () => toast.success('Notes saved'),
-        onError: (err) => toast.error((err as Error).message),
-      }
-    )
-  }
+  const { data: notes = [], isLoading: notesLoading } = useQuery({
+    queryKey: ['admin-inquiry-notes', inquiryId, inquiry?.internal_notes],
+    queryFn: () =>
+      fetchInquiryInternalNotes(
+        inquiryId ?? '',
+        typeof inquiry?.internal_notes === 'string' ? inquiry.internal_notes : undefined
+      ),
+    enabled: !!inquiryId && !inquiryLoading,
+  })
 
-  const handleExport = () => {
-    if (inquiry) exportInquiryToCsv(inquiry)
-  }
+  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
+    queryKey: ['admin-inquiry-payments', inquiryId],
+    queryFn: () => fetchInquiryPayments(inquiryId ?? ''),
+    enabled: !!inquiryId,
+  })
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: InquiryStatusValue }) =>
+      updateInquiryStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      toast.success('Status updated')
+    },
+    onError: (err) => {
+      toast.error((err as Error).message)
+    },
+  })
+
+  const addNoteMutation = useMutation({
+    mutationFn: (text: string) =>
+      createInquiryInternalNote(
+        inquiryId ?? '',
+        text,
+        user?.id ?? '',
+        user?.full_name ?? user?.email ?? 'Staff'
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-notes', inquiryId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
+      toast.success('Note added')
+    },
+    onError: (err) => {
+      toast.error((err as Error).message)
+    },
+  })
+
+  const editNoteMutation = useMutation({
+    mutationFn: ({ noteId, text }: { noteId: string; text: string }) =>
+      updateInquiryInternalNote(inquiryId ?? '', noteId, text),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-notes', inquiryId] })
+      toast.success('Note updated')
+    },
+    onError: (err) => {
+      toast.error((err as Error).message)
+    },
+  })
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (noteId: string) =>
+      deleteInquiryInternalNote(inquiryId ?? '', noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-notes', inquiryId] })
+      toast.success('Note deleted')
+    },
+    onError: (err) => {
+      toast.error((err as Error).message)
+    },
+  })
+
+  const handleStatusChange = useCallback(
+    (status: InquiryStatusValue) => {
+      if (!inquiryId) return
+      updateStatusMutation.mutate({ id: inquiryId, status })
+    },
+    [inquiryId, updateStatusMutation]
+  )
+
+  const handleAddNote = useCallback(
+    async (text: string) => {
+      await addNoteMutation.mutateAsync(text)
+    },
+    [addNoteMutation]
+  )
+
+  const handleEditNote = useCallback(
+    async (noteId: string, text: string) => {
+      await editNoteMutation.mutateAsync({ noteId, text })
+    },
+    [editNoteMutation]
+  )
+
+  const handleDeleteNote = useCallback(
+    async (noteId: string) => {
+      await deleteNoteMutation.mutateAsync(noteId)
+    },
+    [deleteNoteMutation]
+  )
+
+  const handleCreateStripeLink = useCallback(
+    async (payload: import('@/types/admin').StripeLinkPayload) => {
+      const result = await createStripePaymentLink(inquiryId ?? '', payload)
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-payments', inquiryId] })
+      toast.success('Payment link created')
+      return result
+    },
+    [inquiryId, queryClient]
+  )
+
+  const handleMarkPaymentReceived = useCallback(
+    async (paymentId: string) => {
+      await markPaymentReceived(inquiryId ?? '', paymentId)
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-payments', inquiryId] })
+      toast.success('Payment marked as received')
+    },
+    [inquiryId, queryClient]
+  )
+
+  const handleExportCsv = useCallback(() => {
+    if (!inquiry) return
+    const shaped = shapeInquiryToAdmin(inquiry)
+    const csv = generateInquiriesCsv([shaped])
+    downloadCsv(csv, `inquiry-${inquiry.reference ?? inquiry.id}-${new Date().toISOString().slice(0, 10)}.csv`)
+    toast.success('CSV exported')
+  }, [inquiry])
+
+  const handlePrint = useCallback(() => {
+    window.print()
+  }, [])
+
+  const timelineEvents = buildTimelineEvents(inquiry ?? null, notes ?? [], payments ?? [])
+
+  useEffect(() => {
+    document.title = inquiry
+      ? `Inquiry ${inquiry.reference ?? inquiry.id} | Roam Resort`
+      : 'Inquiry | Roam Resort'
+    return () => {
+      document.title = 'Roam Resort'
+    }
+  }, [inquiry])
 
   if (authLoading) return null
   if (!hasRole('concierge')) {
@@ -76,121 +191,118 @@ export function AdminInquiryDetailPage() {
     )
   }
 
-  if (!inquiry) {
+  if (!inquiryId) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <p className="text-muted-foreground">Inquiry not found.</p>
+        <p className="text-muted-foreground">Invalid inquiry.</p>
         <Link to="/admin/inquiries" className="mt-4">
-          <Button>Back to Inquiries</Button>
+          <span className="text-accent hover:underline">Back to Inquiries</span>
         </Link>
       </div>
     )
   }
 
+  if (inquiryLoading && !inquiry) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar links={adminSidebarLinks} title="Concierge" />
+        <main className="flex-1 overflow-auto">
+          <div className="animate-pulse space-y-6 p-8">
+            <div className="h-8 w-48 rounded bg-muted" />
+            <div className="grid gap-8 lg:grid-cols-3">
+              <div className="h-64 rounded-xl bg-muted lg:col-span-2" />
+              <div className="h-64 rounded-xl bg-muted" />
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!inquiry) {
+    return (
+      <div className="flex min-h-screen">
+        <Sidebar links={adminSidebarLinks} title="Concierge" />
+        <main className="flex-1 overflow-auto">
+          <div className="flex min-h-[60vh] flex-col items-center justify-center p-8">
+            <p className="text-muted-foreground">Inquiry not found.</p>
+            <Link to="/admin/inquiries" className="mt-4">
+              <span className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-accent-foreground transition-colors hover:bg-accent/90">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Inquiries
+              </span>
+            </Link>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen">
-      <Sidebar links={adminSidebarLinks} title="Concierge" />
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
+    <div className="flex min-h-screen print:block">
+      <Sidebar links={adminSidebarLinks} title="Concierge" className="print:hidden" />
+      <main className="flex-1 overflow-auto print:flex-1">
+        <div className="p-8 print:p-4">
           <Link
             to="/admin/inquiries"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground print:hidden"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Inquiries
           </Link>
 
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-3xl font-bold animate-in fade-in slide-in-from-bottom-2 duration-300">
+                {inquiry.reference ?? inquiry.id}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Created {formatDate(inquiry.created_at ?? '')}
+              </p>
+            </div>
+          </div>
+
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <h2 className="font-serif text-xl font-semibold">{inquiry.reference}</h2>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-muted-foreground">Listing</Label>
-                    <p className="font-medium">
-                      {typeof inquiry.listing === 'object' && inquiry.listing
-                        ? inquiry.listing.title
-                        : '—'}
-                    </p>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <Label className="text-muted-foreground">Check-in</Label>
-                      <p>{inquiry.check_in ? formatDate(inquiry.check_in) : '—'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Check-out</Label>
-                      <p>{inquiry.check_out ? formatDate(inquiry.check_out) : '—'}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Guests</Label>
-                    <p>{inquiry.guests_count ?? '—'}</p>
-                  </div>
-                  {(inquiry.room_prefs ?? []).length > 0 && (
-                    <div>
-                      <Label className="text-muted-foreground">Room Preferences</Label>
-                      <p>{(inquiry.room_prefs ?? []).join(', ')}</p>
-                    </div>
-                  )}
-                  {inquiry.budget_hint && (
-                    <div>
-                      <Label className="text-muted-foreground">Budget Hint</Label>
-                      <p>{inquiry.budget_hint}</p>
-                    </div>
-                  )}
-                  {inquiry.message && (
-                    <div>
-                      <Label className="text-muted-foreground">Message</Label>
-                      <p className="mt-1 whitespace-pre-wrap">{inquiry.message}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <InquirySummaryCard inquiry={inquiry} />
+
+              <TimelinePanel events={timelineEvents} />
             </div>
 
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <h3 className="font-serif font-semibold">Status & Actions</h3>
-                </CardHeader>
-                <CardContent>
-                  <InquiryStatusPanel
-                    inquiry={inquiry}
-                    onStatusChange={handleStatusChange}
-                    onNotesChange={handleNotesChange}
-                    onExport={handleExport}
-                  />
-                </CardContent>
-              </Card>
+              <div className="rounded-xl border border-border bg-card p-6 shadow-card transition-all duration-300 hover:shadow-card-hover">
+                <StatusControl
+                  currentStatus={(inquiry.status ?? 'new') as InquiryStatusValue}
+                  onChange={handleStatusChange}
+                  disabled={updateStatusMutation.isPending}
+                />
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <h3 className="font-serif font-semibold">Payment</h3>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    Create a Stripe payment link and send to the guest. (Placeholder for Stripe
-                    Connect integration)
-                  </p>
-                  <Button className="w-full" disabled>
-                    Create Payment Link
-                  </Button>
-                </CardContent>
-              </Card>
+              <AdminInternalNotesPanel
+                notes={notes ?? []}
+                onAdd={handleAddNote}
+                onEdit={handleEditNote}
+                onDelete={handleDeleteNote}
+                isLoading={notesLoading}
+                canEdit
+              />
 
-              <Card>
-                <CardHeader>
-                  <h3 className="font-serif font-semibold">Activity</h3>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Inquiry created {formatDate(inquiry.created_at)}
-                  </p>
-                </CardContent>
-              </Card>
+              <PaymentPanel
+                payments={payments ?? []}
+                onCreateStripeLink={handleCreateStripeLink}
+                onMarkReceived={
+                  payments?.some((p) => p.status !== 'paid')
+                    ? handleMarkPaymentReceived
+                    : undefined
+                }
+                isLoading={paymentsLoading}
+              />
+
+              <ExportPanel
+                inquiry={inquiry}
+                onExportCsv={handleExportCsv}
+                onPrint={handlePrint}
+              />
             </div>
           </div>
         </div>

@@ -13,15 +13,17 @@ import {
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
-const STATUS_OPTIONS = [
+type StatusValue = 'new' | 'contacted' | 'deposit_paid' | 'confirmed' | 'cancelled'
+
+const STATUS_OPTIONS: { value: StatusValue; label: string }[] = [
   { value: 'new', label: 'New' },
   { value: 'contacted', label: 'Contacted' },
   { value: 'deposit_paid', label: 'Deposit Paid' },
   { value: 'confirmed', label: 'Confirmed' },
   { value: 'cancelled', label: 'Cancelled' },
-] as const
+]
 
-const ALLOWED_VALUES = new Set(STATUS_OPTIONS.map((s) => s.value))
+const ALLOWED_VALUES = new Set<StatusValue>(STATUS_OPTIONS.map((s) => s.value))
 
 function toApiStatus(display: string): string {
   const found = STATUS_OPTIONS.find((s) => s.label === display)
@@ -35,7 +37,7 @@ function toDisplayStatus(api: string): string {
 
 export interface StatusControlProps {
   currentStatus: string
-  onChange: (status: string) => void
+  onChange: (status: StatusValue) => void
   disabled?: boolean
   isUpdating?: boolean
   className?: string
@@ -49,10 +51,12 @@ export function StatusControl({
   className,
 }: StatusControlProps) {
   const displayValue = toDisplayStatus(currentStatus)
-  const apiValue = ALLOWED_VALUES.has(currentStatus) ? currentStatus : toApiStatus(displayValue)
+  const apiValue = ALLOWED_VALUES.has(currentStatus as StatusValue) ? currentStatus : toApiStatus(displayValue)
 
   const handleChange = (value: string) => {
-    const valid = ALLOWED_VALUES.has(value) ? value : STATUS_OPTIONS[0].value
+    const valid: StatusValue = ALLOWED_VALUES.has(value as StatusValue)
+      ? (value as StatusValue)
+      : STATUS_OPTIONS[0].value
     onChange(valid)
   }
 
