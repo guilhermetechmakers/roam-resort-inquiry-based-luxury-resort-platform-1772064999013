@@ -1,4 +1,5 @@
 export { FilterBar, type DestinationFilters, type FilterBarProps } from './filter-bar'
+export { ResultsHint, type ResultsHintProps } from './results-hint'
 export { DestinationCard, getDetailUrl } from './destination-card'
 export { DestinationCardGrid } from './destination-card-grid'
 export { EditorialSidebarBlock } from './editorial-sidebar-block'

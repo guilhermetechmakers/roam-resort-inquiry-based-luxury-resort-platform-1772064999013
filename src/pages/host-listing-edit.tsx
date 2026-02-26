@@ -1,19 +1,26 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Sidebar, hostSidebarLinks } from '@/components/layout/sidebar'
+import { ListingForm } from '@/components/host-listing/listing-form'
 import { useAuth } from '@/contexts/auth-context'
 import { useListingById } from '@/hooks/use-listings'
-import { mockListings } from '@/data/mock-listings'
+import { useCreateListing, useUpdateListing } from '@/hooks/use-host-listings'
+import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { ListingFormValues } from '@/lib/validation/listing-schema'
+import type { ListingStatus } from '@/types'
 
 export function HostListingEditPage() {
   const { listingId } = useParams<{ listingId: string }>()
+  const navigate = useNavigate()
+  const isNew = listingId === 'new' || !listingId
   const { hasRole, isLoading: authLoading } = useAuth()
-  const { data: listing, isLoading } = useListingById(listingId)
-  const fallback = listingId ? mockListings.find((l) => l.id === listingId) : null
-  const listingData = listing ?? fallback
+  const { data: listing, isLoading } = useListingById(
+    isNew ? undefined : listingId ?? undefined
+  )
+  const createListing = useCreateListing()
+  const updateListing = useUpdateListing()
 
   if (authLoading) return null
   if (!hasRole('host')) {
@@ -24,7 +31,7 @@ export function HostListingEditPage() {
     )
   }
 
-  if (isLoading && !listingData) {
+  if (!isNew && isLoading && !listing) {
     return (
       <div className="flex min-h-screen">
         <Sidebar links={hostSidebarLinks} title="Host" />
@@ -35,7 +42,7 @@ export function HostListingEditPage() {
     )
   }
 
-  if (!listingData) {
+  if (!isNew && !listing) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="text-muted-foreground">Listing not found.</p>
@@ -45,6 +52,60 @@ export function HostListingEditPage() {
       </div>
     )
   }
+
+  const handleSubmit = async (
+    values: ListingFormValues & { galleryUrls: string[]; status: ListingStatus }
+  ) => {
+    try {
+      const slug =
+        listing?.slug ??
+        values.title
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+
+      const experienceDetails = {
+        datesSuggestion: values.datesSuggestion
+          ? values.datesSuggestion.split('\n').filter(Boolean)
+          : [],
+        guestCapacity: values.guestCapacity ?? 4,
+        amenities: values.amenities
+          ? values.amenities.split(',').map((a) => a.trim()).filter(Boolean)
+          : [],
+        sampleItineraries: values.sampleItineraries
+          ? values.sampleItineraries.split('\n').filter(Boolean)
+          : [],
+      }
+
+      const payload = {
+        title: values.title,
+        slug,
+        subtitle: values.subtitle,
+        region: values.region,
+        style: values.style,
+        editorial_content: values.narrative,
+        experienceDetails,
+        gallery_urls: values.galleryUrls ?? [],
+        status: values.status,
+      }
+
+      if (isNew) {
+        const created = await createListing.mutateAsync(payload)
+        toast.success('Listing created')
+        navigate(`/host/listings/${created.id}`)
+      } else if (listing) {
+        await updateListing.mutateAsync({
+          id: listing.id,
+          payload,
+        })
+        toast.success('Listing updated')
+      }
+    } catch (err) {
+      toast.error((err as Error).message ?? 'Failed to save listing')
+    }
+  }
+
+  const isSubmitting = createListing.isPending || updateListing.isPending
 
   return (
     <div className="flex min-h-screen">
@@ -59,29 +120,22 @@ export function HostListingEditPage() {
             Back to Listings
           </Link>
 
-          <h1 className="font-serif text-3xl font-bold">Edit Listing</h1>
-          <p className="mt-2 text-muted-foreground">{listingData.title}</p>
+          <h1 className="font-serif text-3xl font-bold">
+            {isNew ? 'Create Listing' : 'Edit Listing'}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {isNew
+              ? 'Add a new destination to your portfolio.'
+              : `Editing ${listing?.title ?? 'listing'}`}
+          </p>
 
-          <Card className="mt-8">
-            <CardHeader>
-              <h2 className="font-serif text-xl font-semibold">Listing Preview</h2>
-            </CardHeader>
-            <CardContent>
-              <div
-                className="h-48 rounded-lg bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(${listingData.hero_image_url ?? listingData.gallery_urls?.[0]})`,
-                }}
-              />
-              <p className="mt-4 text-sm text-muted-foreground">
-                Full CMS with Cloudinary upload, SEO metadata, and publish controls
-                would be implemented here. This is a placeholder view.
-              </p>
-              <Link to={`/destinations/${listingData.slug}`} className="mt-4 inline-block">
-                <Button variant="outline">View Live</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="mt-8">
+            <ListingForm
+              listing={listing ?? null}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          </div>
         </div>
       </main>
     </div>

@@ -21,20 +21,33 @@ async function fetchListings(filters?: { region?: string; style?: string }): Pro
   return list
 }
 
-async function fetchListingBySlug(slug: string): Promise<Listing | null> {
+async function fetchListingBySlug(slugOrId: string): Promise<Listing | null> {
   try {
-    const { data, error } = await supabase
+    const { data: bySlug } = await supabase
       .from('listings')
       .select('*')
-      .eq('slug', slug)
+      .eq('slug', slugOrId)
       .eq('status', 'live')
       .single()
 
-    if (!error && data) return data as Listing
+    if (bySlug) return bySlug as Listing
+
+    const { data: byId } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('id', slugOrId)
+      .eq('status', 'live')
+      .single()
+
+    if (byId) return byId as Listing
   } catch {
-    // Fallback
+    // Fallback to mock
   }
-  return mockListings.find((l) => l.slug === slug) ?? null
+  return (
+    mockListings.find((l) => l.slug === slugOrId) ??
+    mockListings.find((l) => l.id === slugOrId) ??
+    null
+  )
 }
 
 export function useListings(filters?: { region?: string; style?: string }) {

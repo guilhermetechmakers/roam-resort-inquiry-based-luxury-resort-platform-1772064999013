@@ -141,3 +141,29 @@ export async function fetchFeaturedEditorial(): Promise<EditorialBlock | null> {
   const blocks = mockEditorialBlocks ?? []
   return blocks.length > 0 ? (blocks[0] ?? null) : null
 }
+
+/** Fetch related destinations (same region/style, excluding current) */
+export async function fetchRelatedDestinations(
+  excludeId: string,
+  limit = 4
+): Promise<Destination[]> {
+  try {
+    const { data } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'live')
+      .neq('id', excludeId)
+      .limit(limit + 5)
+
+    const list = Array.isArray(data) ? data : []
+    const items = list.slice(0, limit).map((l) => listingToDestination(l))
+    return items
+  } catch {
+    // Fallback to mock
+  }
+
+  const list = mockListings
+    .filter((l) => l.status === 'live' && l.id !== excludeId)
+    .slice(0, limit)
+  return list.map((l) => listingToDestination(l))
+}

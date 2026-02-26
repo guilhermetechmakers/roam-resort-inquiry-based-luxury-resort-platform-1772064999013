@@ -12,6 +12,34 @@ export interface User {
 
 export type ListingStatus = 'draft' | 'live'
 
+/** Structured experience details for destination listings */
+export interface ExperienceDetails {
+  datesSuggestion?: string[]
+  guestCapacity?: number
+  amenities?: string[]
+  sampleItineraries?: string[]
+}
+
+/** Host profile for destination listings */
+export interface HostProfile {
+  id: string
+  name: string
+  avatarUrl?: string
+  bio?: string
+  editorialNote?: string
+}
+
+/** Alias for host in listings */
+export type Host = HostProfile
+
+/** Gallery image with metadata */
+export interface ListingImage {
+  id: string
+  url: string
+  altText?: string
+  priority?: number
+}
+
 export interface Listing {
   id: string
   slug: string
@@ -23,13 +51,16 @@ export interface Listing {
   hero_image_url?: string
   gallery_urls: string[]
   editorial_content?: string
+  editorialContent?: unknown
   experience_details?: string
+  experienceDetails?: ExperienceDetails
   capacity?: number
   amenities?: string[]
   host_id: string
-  host?: User
+  host?: HostProfile | User
   created_at: string
   updated_at: string
+  published_at?: string | null
 }
 
 export type InquiryStatus =

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import {
   FilterBar,
+  ResultsHint,
   DestinationCardGrid,
   EditorialSidebarBlock,
   DestinationLoadingSkeleton,
@@ -49,6 +50,8 @@ export function DestinationsPage() {
     return list
   }, [data?.pages])
 
+  const totalCount = data?.pages?.[0]?.total ?? 0
+
   const hasActiveFilters =
     (filters.region ?? '').trim() !== '' ||
     (filters.style ?? '').trim() !== '' ||
@@ -74,8 +77,14 @@ export function DestinationsPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Filter bar */}
-        <div className="mb-12">
+        <div className="mb-8">
           <FilterBar filters={filters} onFiltersChange={setFilters} />
+          <ResultsHint
+            total={totalCount}
+            filters={filters}
+            onReset={hasActiveFilters ? handleResetFilters : undefined}
+            className="mt-4"
+          />
         </div>
 
         {/* Main content: grid + sidebar */}

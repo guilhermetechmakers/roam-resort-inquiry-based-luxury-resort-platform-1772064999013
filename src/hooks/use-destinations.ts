@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import {
   fetchPublishedDestinations,
   fetchFeaturedEditorial,
+  fetchRelatedDestinations,
   type FetchDestinationsParams,
 } from '@/api/destinations'
 
@@ -37,5 +38,13 @@ export function useFeaturedEditorial() {
   return useQuery({
     queryKey: ['editorial', 'featured'],
     queryFn: fetchFeaturedEditorial,
+  })
+}
+
+export function useRelatedDestinations(excludeId: string | undefined, limit = 4) {
+  return useQuery({
+    queryKey: ['destinations', 'related', excludeId, limit],
+    queryFn: () => (excludeId ? fetchRelatedDestinations(excludeId, limit) : []),
+    enabled: !!excludeId,
   })
 }

@@ -70,6 +70,14 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out forwards',
@@ -79,6 +87,8 @@ export default {
         'zoom-out-95': 'zoom-out-95 0.2s ease-out forwards',
         shimmer: 'shimmer 1.5s ease-in-out infinite',
         'gradient-shift': 'gradient-shift 8s ease infinite',
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },
