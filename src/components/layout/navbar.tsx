@@ -49,6 +49,16 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
                   My Inquiries
                 </Button>
               </Link>
+              <Link to="/settings">
+                <Button variant="ghost" size="sm">
+                  Settings
+                </Button>
+              </Link>
+              <Link to="/settings">
+                <Button variant="ghost" size="sm">
+                  Settings
+                </Button>
+              </Link>
               {hasRole('host') && (
                 <Link to="/host">
                   <Button variant="outline" size="sm">
@@ -101,6 +111,12 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
               <>
                 <Link to="/profile" onClick={() => setOpen(false)} className="py-2">
                   My Inquiries
+                </Link>
+                <Link to="/settings" onClick={() => setOpen(false)} className="py-2">
+                  Settings
+                </Link>
+                <Link to="/settings" onClick={() => setOpen(false)} className="py-2">
+                  Settings
                 </Link>
                 {hasRole('host') && (
                   <Link to="/host" onClick={() => setOpen(false)} className="py-2">

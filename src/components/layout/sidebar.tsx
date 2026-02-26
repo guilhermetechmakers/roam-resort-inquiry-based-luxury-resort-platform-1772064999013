@@ -9,6 +9,7 @@ import {
   Receipt,
   Bell,
   Shield,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -112,4 +113,5 @@ export const profileSidebarLinks: SidebarLink[] = [
   { to: '/profile#history', label: 'Transaction History', icon: <Receipt className="h-5 w-5" /> },
   { to: '/profile#sessions', label: 'Sessions', icon: <Shield className="h-5 w-5" /> },
   { to: '/profile#notifications', label: 'Notifications', icon: <Bell className="h-5 w-5" /> },
+  { to: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
 ]

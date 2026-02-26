@@ -326,7 +326,9 @@ export default function App() {
               path="/settings"
               element={
                 <AppLayout>
-                  <SettingsPage />
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
                 </AppLayout>
               }
             />
