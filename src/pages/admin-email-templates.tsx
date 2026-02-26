@@ -8,10 +8,17 @@ import {
   AdminEmailTemplateEditor,
   AdminEmailTemplatePreview,
 } from '@/components/admin-email'
-import { ErrorBanner } from '@/components/auth'
 import { toUserMessage } from '@/lib/errors'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export function AdminEmailTemplatesPage() {
   const { hasRole, isLoading: authLoading } = useAuth()
@@ -29,6 +36,7 @@ export function AdminEmailTemplatesPage() {
     const matchLocale = localeFilter === 'all' || t.locale === localeFilter
     return matchStatus && matchLocale
   })
+  const hasActiveFilters = statusFilter !== 'all' || localeFilter !== 'all'
 
   if (authLoading) return null
   if (!hasRole('concierge')) {
@@ -44,14 +52,6 @@ export function AdminEmailTemplatesPage() {
       <Sidebar links={adminSidebarLinks} title="Concierge" />
       <main className="flex-1 overflow-auto">
         <div className="p-8">
-          {isError && (
-            <ErrorBanner
-              message={toUserMessage(error, 'Failed to load email templates')}
-              onRetry={() => refetch()}
-              className="mb-6"
-            />
-          )}
-
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="font-serif text-3xl font-bold">Email Templates</h1>
@@ -72,30 +72,36 @@ export function AdminEmailTemplatesPage() {
             </Button>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Status</span>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="all">All</option>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
+          <div className="mt-8 flex flex-wrap gap-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Label htmlFor="status-filter" className="text-sm font-medium text-muted-foreground">
+                Status
+              </Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status-filter" className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Locale</span>
-              <select
-                value={localeFilter}
-                onChange={(e) => setLocaleFilter(e.target.value)}
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="all">All</option>
-                <option value="en">en</option>
-              </select>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Label htmlFor="locale-filter" className="text-sm font-medium text-muted-foreground">
+                Locale
+              </Label>
+              <Select value={localeFilter} onValueChange={setLocaleFilter}>
+                <SelectTrigger id="locale-filter" className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="en">en</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -103,6 +109,15 @@ export function AdminEmailTemplatesPage() {
             <AdminEmailTemplateList
               templates={filtered}
               isLoading={isLoading}
+              isError={isError}
+              errorMessage={toUserMessage(error, 'Failed to load email templates')}
+              onRetry={() => refetch()}
+              hasActiveFilters={hasActiveFilters}
+              onCreateClick={() => {
+                setCreateMode(true)
+                setSelectedId(null)
+                setEditorOpen(true)
+              }}
               selectedId={selectedId}
               onSelect={(id) => {
                 setSelectedId(id)
