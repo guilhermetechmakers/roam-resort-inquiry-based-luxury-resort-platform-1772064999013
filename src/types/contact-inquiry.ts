@@ -1,12 +1,12 @@
 /** Contact / Support inquiry types */
 
 export type ContactInquiryStatus =
-  | 'New'
-  | 'Contacted'
-  | 'In Progress'
-  | 'Deposit Paid'
-  | 'Confirmed'
-  | 'Closed'
+  | 'new'
+  | 'contacted'
+  | 'in_progress'
+  | 'deposit_paid'
+  | 'confirmed'
+  | 'closed'
 
 export type ContactInquirySubject =
   | 'General Question'
@@ -17,6 +17,12 @@ export type ContactInquirySubject =
   | 'Technical Support'
   | 'Feedback'
   | 'Other'
+
+export interface ContactInquiryDestination {
+  id?: string
+  title?: string
+  slug?: string
+}
 
 export interface ContactInquiry {
   id: string
@@ -36,7 +42,10 @@ export interface ContactInquiry {
   internal_notes: string | null
   created_at: string
   updated_at: string
+  destination?: ContactInquiryDestination | null
 }
+
+export type PreferredContactMethod = 'email' | 'phone'
 
 export interface ContactInquiryCreatePayload {
   name: string
@@ -54,10 +63,16 @@ export interface ContactInquiryCreatePayload {
 }
 
 export interface ContactInquiryCreateResponse {
-  ok: boolean
+  ok?: boolean
   id?: string
   reference?: string
   status?: string
   createdAt?: string
   message?: string
 }
+
+/** @deprecated Use ContactInquiryCreatePayload */
+export type CreateContactInquiryPayload = ContactInquiryCreatePayload
+
+/** @deprecated Use ContactInquiryCreateResponse */
+export type CreateContactInquiryResponse = ContactInquiryCreateResponse

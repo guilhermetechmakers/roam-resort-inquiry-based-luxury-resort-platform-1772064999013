@@ -30,6 +30,8 @@ import { AdminConciergeDashboardPage } from '@/pages/admin-concierge-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
 import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
 import { AdminExportsPage } from '@/pages/admin-exports'
+import { AdminContactInquiriesPage } from '@/pages/admin-contact-inquiries'
+import { ContactConfirmationPage } from '@/pages/contact-confirmation'
 import { ContactPage } from '@/pages/contact'
 import { CheckoutPage } from '@/pages/checkout'
 import { CheckoutBridgePage } from '@/pages/checkout-bridge'
@@ -311,6 +313,16 @@ export default function App() {
               }
             />
             <Route
+              path="/admin/contact-inquiries"
+              element={
+                <DashboardLayout>
+                  <ProtectedRoute role="concierge">
+                    <AdminContactInquiriesPage />
+                  </ProtectedRoute>
+                </DashboardLayout>
+              }
+            />
+            <Route
               path="/admin/exports"
               element={
                 <DashboardLayout>
@@ -325,6 +337,14 @@ export default function App() {
               element={
                 <AppLayout>
                   <ContactPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/contact/confirmation/:inquiryId"
+              element={
+                <AppLayout>
+                  <ContactConfirmationPage />
                 </AppLayout>
               }
             />

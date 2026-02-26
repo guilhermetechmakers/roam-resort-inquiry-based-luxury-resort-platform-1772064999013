@@ -121,7 +121,8 @@ export const hostSidebarLinks: SidebarLink[] = [
 
 export const adminSidebarLinks: SidebarLink[] = [
   { to: '/admin/concierge', label: 'Overview', icon: <LayoutDashboard className="h-5 w-5" />, activePaths: ['/admin'] },
-  { to: '/admin/inquiries', label: 'Inquiries', icon: <FileText className="h-5 w-5" /> },
+  { to: '/admin/inquiries', label: 'Stay Inquiries', icon: <FileText className="h-5 w-5" /> },
+  { to: '/admin/contact-inquiries', label: 'Contact Inquiries', icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/exports', label: 'Exports', icon: <FileText className="h-5 w-5" /> },
 ]
 
