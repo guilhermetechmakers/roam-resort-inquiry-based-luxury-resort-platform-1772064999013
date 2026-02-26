@@ -113,7 +113,7 @@ export function HeroGallery({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-4 top-1/2 z-20 -translate-y-1/2 h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50 hover:scale-105 transition-all"
+                className="absolute left-4 top-1/2 z-20 -translate-y-1/2 h-12 w-12 rounded-full bg-primary/30 text-primary-foreground hover:bg-primary/50 hover:scale-105 transition-all"
                 onClick={goPrev}
                 aria-label="Previous image"
               >
@@ -122,7 +122,7 @@ export function HeroGallery({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-4 top-1/2 z-20 -translate-y-1/2 h-12 w-12 rounded-full bg-black/30 text-white hover:bg-black/50 hover:scale-105 transition-all"
+                className="absolute right-4 top-1/2 z-20 -translate-y-1/2 h-12 w-12 rounded-full bg-primary/30 text-primary-foreground hover:bg-primary/50 hover:scale-105 transition-all"
                 onClick={goNext}
                 aria-label="Next image"
               >
@@ -149,7 +149,7 @@ export function HeroGallery({
                     'h-2 w-2 rounded-full transition-all duration-300',
                     idx === currentIndex
                       ? 'bg-accent w-6'
-                      : 'bg-white/50 hover:bg-white/80'
+                      : 'bg-primary-foreground/50 hover:bg-primary-foreground/80'
                   )}
                   onClick={() => setCurrentIndex(idx)}
                 />
@@ -161,7 +161,7 @@ export function HeroGallery({
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-4 bottom-24 z-20 text-white/90 hover:text-white hover:bg-white/20"
+            className="absolute right-4 bottom-24 z-20 text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/20"
             onClick={() => setLightboxOpen(true)}
             aria-label="Open lightbox"
           >
@@ -173,7 +173,7 @@ export function HeroGallery({
       {/* Lightbox */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-primary/95"
           role="dialog"
           aria-modal="true"
           aria-label="Image lightbox"
@@ -181,7 +181,7 @@ export function HeroGallery({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-4 h-12 w-12 rounded-full text-white hover:bg-white/20"
+            className="absolute right-4 top-4 h-12 w-12 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
             onClick={() => setLightboxOpen(false)}
             aria-label="Close lightbox"
           >
@@ -192,7 +192,7 @@ export function HeroGallery({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full text-white hover:bg-white/20"
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
                 onClick={goPrev}
                 aria-label="Previous image"
               >
@@ -201,7 +201,7 @@ export function HeroGallery({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full text-white hover:bg-white/20"
+                className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full text-primary-foreground hover:bg-primary-foreground/20"
                 onClick={goNext}
                 aria-label="Next image"
               >
@@ -214,7 +214,7 @@ export function HeroGallery({
             alt={currentImage.altText}
             className="max-h-[90vh] max-w-[90vw] object-contain"
           />
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm">
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-primary-foreground/80 text-sm">
             {currentIndex + 1} / {safeImages.length}
           </p>
         </div>

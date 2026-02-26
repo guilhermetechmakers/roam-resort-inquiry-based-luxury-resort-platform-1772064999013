@@ -9,6 +9,8 @@ export interface RelatedDestinationsProps {
   currentId?: string
   maxCount?: number
   className?: string
+  /** Hide the section heading when used inside a parent that provides it */
+  hideHeading?: boolean
 }
 
 const PLACEHOLDER_IMAGE =
@@ -24,6 +26,7 @@ export function RelatedDestinations({
   currentId,
   maxCount = 4,
   className,
+  hideHeading = false,
 }: RelatedDestinationsProps) {
   const items = Array.isArray(destinations) ? destinations : []
   const filtered = items
@@ -37,9 +40,11 @@ export function RelatedDestinations({
       className={cn('', className)}
       aria-label="Related destinations"
     >
-      <h2 className="font-serif text-2xl font-semibold mb-6">
-        Explore More Destinations
-      </h2>
+      {!hideHeading && (
+        <h2 className="font-serif text-2xl font-semibold mb-6">
+          Explore More Destinations
+        </h2>
+      )}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {filtered.map((dest) => {
           const href = getDetailUrl(dest)
