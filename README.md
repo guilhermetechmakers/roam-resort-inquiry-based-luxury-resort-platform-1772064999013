@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
+# Roam Resort
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Inquiry-first luxury resort web platform with curated editorial destination pages, authenticated guest inquiries, host listing management, and concierge-led payment workflows.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** + **TypeScript** + **Vite**
+- **React Router 6** for routing
+- **Tailwind CSS v3** with Roam Resort design tokens
+- **Shadcn/ui** (Radix UI primitives)
+- **TanStack React Query** for data fetching
+- **React Hook Form** + **Zod** for forms
+- **Sonner** for toasts
+- **Supabase** (Auth, Database, Storage)
+- **Lucide React** for icons
 
-## React Compiler
+## Design System
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Primary:** Deep navy (#23212A)
+- **Secondary:** Warm sand beige (#ECE1D4)
+- **Accent:** Bronze-gold (#A97C50)
+- **Typography:** Playfair Display (headlines), Inter (body)
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Install dependencies: `npm install`
+2. Copy `.env.example` to `.env` and add your Supabase credentials
+3. Build: `npm run build`
+4. Preview: `npm run preview`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Structure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── components/     # UI components (shadcn, layout)
+├── contexts/      # Auth context
+├── data/          # Mock data
+├── hooks/         # React Query hooks
+├── lib/           # Supabase, API, utils
+├── pages/         # Route pages
+└── types/         # TypeScript types
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Key Flows
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Guest:** Browse destinations → Request a Stay (auth) → Submit inquiry → Track in My Inquiries
+- **Host:** Dashboard → Create/Edit listings → View related inquiries (read-only)
+- **Concierge:** Admin dashboard → Manage inquiries → Create Stripe payment links → Export CSV
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |

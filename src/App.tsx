@@ -1,35 +1,260 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'sonner'
+import { AuthProvider } from '@/contexts/auth-context'
+import { Navbar } from '@/components/layout/navbar'
+import { Footer } from '@/components/layout/footer'
+import { HomePage } from '@/pages/home'
+import { DestinationsPage } from '@/pages/destinations'
+import { DestinationDetailPage } from '@/pages/destination-detail'
+import { LoginPage } from '@/pages/login'
+import { ForgotPasswordPage } from '@/pages/forgot-password'
+import { InquiryFormPage } from '@/pages/inquiry-form'
+import { InquiryConfirmationPage } from '@/pages/inquiry-confirmation'
+import { ProfilePage } from '@/pages/profile'
+import { HostDashboardPage } from '@/pages/host-dashboard'
+import { HostListingEditPage } from '@/pages/host-listing-edit'
+import { AdminDashboardPage } from '@/pages/admin-dashboard'
+import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
+import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
+import { AdminExportsPage } from '@/pages/admin-exports'
+import { ContactPage } from '@/pages/contact'
+import { CheckoutPage } from '@/pages/checkout'
+import { SettingsPage } from '@/pages/settings'
+import { StaticPage } from '@/pages/static-page'
+import { NotFoundPage } from '@/pages/not-found'
+import { ErrorPage } from '@/pages/error-page'
 
-function App() {
-  const [count, setCount] = useState(0)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      retry: 1,
+    },
+  },
+})
 
+function AppLayout({ children, transparentNav = false }: { children: React.ReactNode; transparentNav?: boolean }) {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="min-h-screen flex flex-col">
+      <Navbar transparent={transparentNav} />
+      <main className="flex-1 pt-16">{children}</main>
+      <Footer />
+    </div>
   )
 }
 
-export default App
+function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex pt-16">{children}</div>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <AppLayout transparentNav>
+                  <HomePage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/destinations"
+              element={
+                <AppLayout>
+                  <DestinationsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/destinations/:slug"
+              element={
+                <AppLayout>
+                  <DestinationDetailPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <AppLayout>
+                  <LoginPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <AppLayout>
+                  <ForgotPasswordPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/inquiry/:listingId"
+              element={
+                <AppLayout>
+                  <InquiryFormPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/inquiry/confirmation/:reference"
+              element={
+                <AppLayout>
+                  <InquiryConfirmationPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AppLayout>
+                  <ProfilePage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/host"
+              element={
+                <DashboardLayout>
+                  <HostDashboardPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/host/listings/:listingId"
+              element={
+                <DashboardLayout>
+                  <HostListingEditPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/host/listings/new"
+              element={
+                <DashboardLayout>
+                  <HostListingEditPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <DashboardLayout>
+                  <AdminDashboardPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/inquiries"
+              element={
+                <DashboardLayout>
+                  <AdminInquiryListPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/inquiries/:inquiryId"
+              element={
+                <DashboardLayout>
+                  <AdminInquiryDetailPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/admin/exports"
+              element={
+                <DashboardLayout>
+                  <AdminExportsPage />
+                </DashboardLayout>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <AppLayout>
+                  <ContactPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <AppLayout>
+                  <CheckoutPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AppLayout>
+                  <SettingsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/terms"
+              element={
+                <AppLayout>
+                  <StaticPage
+                    title="Terms of Service"
+                    content={
+                      <p className="text-muted-foreground">
+                        Terms of service content would go here. This is a placeholder.
+                      </p>
+                    }
+                  />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <AppLayout>
+                  <StaticPage
+                    title="Privacy Policy"
+                    content={
+                      <p className="text-muted-foreground">
+                        Privacy policy content would go here. This is a placeholder.
+                      </p>
+                    }
+                  />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/help"
+              element={
+                <AppLayout>
+                  <StaticPage
+                    title="Help"
+                    content={
+                      <p className="text-muted-foreground">
+                        Help and FAQ content would go here. This is a placeholder.
+                      </p>
+                    }
+                  />
+                </AppLayout>
+              }
+            />
+            <Route path="/404" element={<AppLayout><NotFoundPage /></AppLayout>} />
+            <Route path="/500" element={<AppLayout><ErrorPage /></AppLayout>} />
+            <Route path="*" element={<AppLayout><NotFoundPage /></AppLayout>} />
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="top-right" richColors />
+      </AuthProvider>
+    </QueryClientProvider>
+  )
+}
