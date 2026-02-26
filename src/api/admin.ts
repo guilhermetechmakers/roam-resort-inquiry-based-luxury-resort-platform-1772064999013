@@ -25,8 +25,10 @@ function toDisplayStatus(status: string): string {
   const map: Record<string, string> = {
     new: 'New',
     contacted: 'Contacted',
+    in_review: 'In Review',
     deposit_paid: 'Deposit Paid',
     confirmed: 'Confirmed',
+    closed: 'Closed',
     cancelled: 'Cancelled',
   }
   return map[status] ?? status
@@ -88,7 +90,7 @@ export async function fetchAdminInquiries(filters?: {
   try {
     let query = supabase
       .from('inquiries')
-      .select('*, listing:listings(*), guest:users(*)', { count: 'exact' })
+      .select('*, listing:listings(*), guest:profiles(*)', { count: 'exact' })
       .order('created_at', { ascending: false })
 
     if (filters?.status && filters.status !== 'all') {
@@ -244,7 +246,7 @@ export async function fetchAdminInquiryDetail(inquiryId: string): Promise<AdminI
   try {
     const { data, error } = await supabase
       .from('inquiries')
-      .select('*, listing:listings(*), guest:users(*)')
+      .select('*, listing:listings(*), guest:profiles(*)')
       .eq('id', inquiryId)
       .single()
 
@@ -265,7 +267,7 @@ export async function updateAdminInquiryStatus(
       .from('inquiries')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', inquiryId)
-      .select('*, listing:listings(*), guest:users(*)')
+      .select('*, listing:listings(*), guest:profiles(*)')
       .single()
 
     if (error || !data) return null

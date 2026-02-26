@@ -21,6 +21,7 @@ import {
   updateInquiryInternalNote,
   deleteInquiryInternalNote,
   fetchInquiryPayments,
+  fetchInquiryActivityLog,
   createStripePaymentLink,
   markPaymentReceived,
   buildTimelineEvents,
@@ -53,6 +54,12 @@ export function AdminInquiryDetailPage() {
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ['admin-inquiry-payments', inquiryId],
     queryFn: () => fetchInquiryPayments(inquiryId ?? ''),
+    enabled: !!inquiryId,
+  })
+
+  const { data: activityLog = [] } = useQuery({
+    queryKey: ['admin-inquiry-activity', inquiryId],
+    queryFn: () => fetchInquiryActivityLog(inquiryId ?? ''),
     enabled: !!inquiryId,
   })
 
@@ -171,7 +178,12 @@ export function AdminInquiryDetailPage() {
     window.print()
   }, [])
 
-  const timelineEvents = buildTimelineEvents(inquiry ?? null, notes ?? [], payments ?? [])
+  const timelineEvents = buildTimelineEvents(
+    inquiry ?? null,
+    notes ?? [],
+    payments ?? [],
+    activityLog ?? []
+  )
 
   useEffect(() => {
     document.title = inquiry

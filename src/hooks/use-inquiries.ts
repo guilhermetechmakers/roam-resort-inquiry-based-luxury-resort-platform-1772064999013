@@ -1,21 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Inquiry, ContactPreferences } from '@/types'
-import { generateReference } from '@/lib/utils'
-
-export interface CreateInquiryPayload {
-  guest_id: string
-  listing_id: string
-  check_in?: string
-  check_out?: string
-  guests_count?: number
-  message?: string
-  attachments?: string[]
-  flexible_dates?: boolean
-  room_prefs?: string[]
-  budget_hint?: string
-  contact_preferences?: ContactPreferences
-}
+import {
+  createInquiry as apiCreateInquiry,
+  saveInquiryDraft,
+  getInquiryDraft,
+  type CreateInquiryPayload,
+  type InquiryDraftData,
+} from '@/api/inquiries'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -30,7 +22,7 @@ async function fetchInquiryByIdOrReference(
   try {
     let query = supabase
       .from('inquiries')
-      .select('*, listing:listings(*)')
+      .select('*, listing:listings(*), inquiry_attachments(id, filename, storage_url, size, mime_type, uploaded_at)')
 
     if (isUuid(idOrRef)) {
       query = query.eq('id', idOrRef)
@@ -44,9 +36,28 @@ async function fetchInquiryByIdOrReference(
 
     const { data, error } = await query.single()
 
-    if (!error && data) return data as Inquiry
+    if (!error && data) {
+      const row = data as Inquiry & { inquiry_attachments?: Array<{ id: string; filename: string; storage_url?: string; size?: number; mime_type?: string; uploaded_at?: string }> }
+      const atts = Array.isArray(row.inquiry_attachments) ? row.inquiry_attachments : []
+      const attachments = atts.map((a) => ({
+        id: a.id,
+        name: a.filename,
+        file_url: a.storage_url ?? '',
+        mime_type: a.mime_type ?? 'application/octet-stream',
+        size: a.size ?? 0,
+        uploaded_at: a.uploaded_at ?? '',
+      }))
+      const { inquiry_attachments: _omit, ...rest } = row
+      return { ...rest, attachments } as Inquiry
+    }
   } catch {
-    // Fallback
+    // Fallback: try without inquiry_attachments if table doesn't exist
+    let query = supabase.from('inquiries').select('*, listing:listings(*)')
+    if (isUuid(idOrRef)) query = query.eq('id', idOrRef)
+    else query = query.eq('reference', idOrRef)
+    if (userId) query = query.eq('guest_id', userId)
+    const { data, error } = await query.single()
+    if (!error && data) return data as Inquiry
   }
   return null
 }
@@ -81,7 +92,7 @@ async function fetchAdminInquiries(): Promise<Inquiry[]> {
   try {
     const { data, error } = await supabase
       .from('inquiries')
-      .select('*, listing:listings(*), guest:users(*)')
+      .select('*, listing:listings(*), guest:profiles(*)')
       .order('created_at', { ascending: false })
 
     if (!error && data?.length) return data as Inquiry[]
@@ -91,53 +102,7 @@ async function fetchAdminInquiries(): Promise<Inquiry[]> {
   return []
 }
 
-async function createInquiry(payload: CreateInquiryPayload): Promise<Inquiry> {
-  const ref = generateReference()
-  const insertPayload = {
-    reference: ref,
-    guest_id: payload.guest_id,
-    listing_id: payload.listing_id,
-    check_in: payload.check_in,
-    check_out: payload.check_out,
-    guests_count: payload.guests_count,
-    message: payload.message,
-    attachments: payload.attachments ?? [],
-    flexible_dates: payload.flexible_dates ?? false,
-    room_prefs: payload.room_prefs ?? [],
-    budget_hint: payload.budget_hint ?? null,
-    contact_preferences: payload.contact_preferences ?? {},
-    status: 'new',
-  }
-  try {
-    const { data, error } = await supabase
-      .from('inquiries')
-      .insert(insertPayload)
-      .select()
-      .single()
-
-    if (!error && data) return data as Inquiry
-  } catch {
-    // Fallback: return mock
-  }
-  return {
-    id: crypto.randomUUID(),
-    reference: ref,
-    guest_id: payload.guest_id,
-    listing_id: payload.listing_id,
-    check_in: payload.check_in,
-    check_out: payload.check_out,
-    guests_count: payload.guests_count,
-    message: payload.message,
-    attachments: payload.attachments,
-    flexible_dates: payload.flexible_dates,
-    room_prefs: payload.room_prefs,
-    budget_hint: payload.budget_hint,
-    contact_preferences: payload.contact_preferences,
-    status: 'new',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-}
+export type { CreateInquiryPayload }
 
 export function useMyInquiries(userId: string | undefined) {
   return useQuery({
@@ -191,9 +156,33 @@ async function updateInquiry(
 export function useCreateInquiry() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: createInquiry,
+    mutationFn: (payload: CreateInquiryPayload & { attachmentFiles?: Array<{ file: File }> }) =>
+      apiCreateInquiry({
+        ...payload,
+        attachmentFiles: payload.attachmentFiles,
+      }) as Promise<Inquiry>,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+    },
+  })
+}
+
+export function useInquiryDraft(listingId: string | null) {
+  return useQuery({
+    queryKey: ['inquiry-draft', listingId],
+    queryFn: () =>
+      listingId ? getInquiryDraft(listingId) : Promise.resolve({ draft: null }),
+    enabled: !!listingId,
+  })
+}
+
+export function useSaveInquiryDraft() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ listingId, data }: { listingId: string; data: InquiryDraftData }) =>
+      saveInquiryDraft(listingId, data),
+    onSuccess: (_, { listingId }) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiry-draft', listingId] })
     },
   })
 }

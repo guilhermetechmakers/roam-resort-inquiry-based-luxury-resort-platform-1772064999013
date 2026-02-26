@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -21,12 +22,15 @@ const inquirySchema = z
     departure_date: z.string().min(1, 'Departure date required'),
     flexible_dates: z.boolean().default(false),
     guests: z.coerce.number().min(1, 'At least 1 guest').max(20),
+    rooms_count: z.coerce.number().min(1, 'At least 1 room').max(10).optional(),
     room_prefs: z.array(z.string()).min(1, 'Select at least one room preference'),
     budget_hint: z.string().max(100).optional(),
-    notes: z.string().max(NOTES_MAX).optional(),
+    notes: z.string().min(10, 'Message must be at least 10 characters').max(NOTES_MAX),
     contact_email: z.boolean().default(true),
     contact_sms: z.boolean().default(false),
     contact_phone: z.boolean().default(false),
+    consent_privacy: z.boolean().refine((v) => v === true, 'You must accept the Privacy Policy'),
+    consent_terms: z.boolean().refine((v) => v === true, 'You must accept the Terms of Service'),
   })
   .refine(
     (d) => !isPastDate(d.arrival_date),
@@ -53,17 +57,22 @@ export interface InquiryFormProps {
   className?: string
 }
 
+export type InquiryFormSubmitData = FormData & { attachments: AttachmentFile[] }
+
 const defaultValues: FormData = {
   arrival_date: '',
   departure_date: '',
   flexible_dates: false,
   guests: 2,
+  rooms_count: 1,
   room_prefs: [],
   budget_hint: '',
   notes: '',
   contact_email: true,
   contact_sms: false,
   contact_phone: false,
+  consent_privacy: false,
+  consent_terms: false,
 }
 
 export function InquiryForm({
@@ -180,22 +189,41 @@ export function InquiryForm({
         </span>
       </div>
 
-      <div>
-        <Label htmlFor="guests">Number of Guests</Label>
-        <Input
-          id="guests"
-          type="number"
-          min={1}
-          max={20}
-          className="mt-2 w-24 bg-background"
-          {...form.register('guests')}
-          aria-invalid={!!errors.guests}
-        />
-        {errors.guests && (
-          <p className="mt-1 text-sm text-destructive" role="alert">
-            {errors.guests.message}
-          </p>
-        )}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="guests">Number of Guests</Label>
+          <Input
+            id="guests"
+            type="number"
+            min={1}
+            max={20}
+            className="mt-2 w-24 bg-background"
+            {...form.register('guests')}
+            aria-invalid={!!errors.guests}
+          />
+          {errors.guests && (
+            <p className="mt-1 text-sm text-destructive" role="alert">
+              {errors.guests.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="rooms_count">Number of Rooms</Label>
+          <Input
+            id="rooms_count"
+            type="number"
+            min={1}
+            max={10}
+            className="mt-2 w-24 bg-background"
+            {...form.register('rooms_count')}
+            aria-invalid={!!errors.rooms_count}
+          />
+          {errors.rooms_count && (
+            <p className="mt-1 text-sm text-destructive" role="alert">
+              {errors.rooms_count.message}
+            </p>
+          )}
+        </div>
       </div>
 
       <div>
@@ -304,10 +332,49 @@ export function InquiryForm({
         )}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Your data is handled securely. We use it only to process your inquiry and never share it
-        with third parties. By submitting, you consent to our Privacy Policy.
-      </p>
+      <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+        <p className="text-sm font-medium text-foreground">Consent</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="consent_privacy"
+              checked={form.watch('consent_privacy')}
+              onCheckedChange={(v) => form.setValue('consent_privacy', !!v)}
+              aria-invalid={!!errors.consent_privacy}
+            />
+            <Label htmlFor="consent_privacy" className="cursor-pointer font-normal text-sm leading-relaxed">
+              I have read and accept the{' '}
+              <Link to="/privacy" className="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded">
+                Privacy Policy
+              </Link>
+            </Label>
+          </div>
+          {errors.consent_privacy && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.consent_privacy.message}
+            </p>
+          )}
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="consent_terms"
+              checked={form.watch('consent_terms')}
+              onCheckedChange={(v) => form.setValue('consent_terms', !!v)}
+              aria-invalid={!!errors.consent_terms}
+            />
+            <Label htmlFor="consent_terms" className="cursor-pointer font-normal text-sm leading-relaxed">
+              I have read and accept the{' '}
+              <Link to="/terms" className="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded">
+                Terms of Service
+              </Link>
+            </Label>
+          </div>
+          {errors.consent_terms && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.consent_terms.message}
+            </p>
+          )}
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-4">
         <Button

@@ -68,8 +68,10 @@ export interface Listing {
 export type InquiryStatus =
   | 'new'
   | 'contacted'
+  | 'in_review'
   | 'deposit_paid'
   | 'confirmed'
+  | 'closed'
   | 'cancelled'
 
 /** Contact preferences for inquiry (opt-in per channel) */

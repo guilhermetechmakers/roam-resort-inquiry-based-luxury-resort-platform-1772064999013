@@ -9,14 +9,18 @@ import {
 import type { AttachmentFile } from '@/components/inquiry'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/contexts/auth-context'
-import { useListingById } from '@/hooks/use-listings'
-import { useCreateInquiry } from '@/hooks/use-inquiries'
+import { useListingById, useListing } from '@/hooks/use-listings'
+import {
+  useCreateInquiry,
+  useInquiryDraft,
+  useSaveInquiryDraft,
+} from '@/hooks/use-inquiries'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ContactPreferences } from '@/types'
 
 const DRAFT_KEY_PREFIX = 'roam-inquiry-draft-'
 
-function loadDraft(listingId: string): Record<string, unknown> | null {
+function loadLocalDraft(listingId: string): Record<string, unknown> | null {
   try {
     const raw = localStorage.getItem(`${DRAFT_KEY_PREFIX}${listingId}`)
     if (!raw) return null
@@ -26,7 +30,7 @@ function loadDraft(listingId: string): Record<string, unknown> | null {
   }
 }
 
-function saveDraft(listingId: string, data: Record<string, unknown>) {
+function saveLocalDraft(listingId: string, data: Record<string, unknown>) {
   try {
     localStorage.setItem(`${DRAFT_KEY_PREFIX}${listingId}`, JSON.stringify(data))
   } catch {
@@ -34,29 +38,64 @@ function saveDraft(listingId: string, data: Record<string, unknown>) {
   }
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export function InquiryFormPage() {
-  const { listingId } = useParams<{ listingId: string }>()
+  const { listingId: routeListingId, slug } = useParams<{
+    listingId?: string
+    slug?: string
+  }>()
+  const listingParam = routeListingId ?? slug ?? ''
+  const isUuid = UUID_REGEX.test(listingParam)
+  const { data: listingById, isLoading: loadingById } = useListingById(isUuid ? listingParam : undefined)
+  const { data: listingBySlug, isLoading: loadingBySlug } = useListing(!isUuid ? listingParam : undefined)
+  const listing = listingById ?? listingBySlug ?? null
+  const listingId = listing?.id ?? (isUuid ? listingParam : undefined)
+  const draftListingId = listing?.id ?? (isUuid ? listingParam : null)
+  const isLoading = listingParam ? (isUuid ? loadingById : loadingBySlug) : false
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
-  const { data: listing, isLoading } = useListingById(listingId)
   const createInquiry = useCreateInquiry()
+  const saveDraftMutation = useSaveInquiryDraft()
+  const { data: serverDraftResult } = useInquiryDraft(draftListingId)
+  const serverDraft = serverDraftResult?.draft
   const [showAuthModal, setShowAuthModal] = useState(false)
 
-  const draft = loadDraft(listingId ?? '') ?? null
-  const existingDraft = draft
+  const localDraft = loadLocalDraft(listingId ?? '') ?? null
+  const d = serverDraft?.data as Record<string, unknown> | undefined
+  const existingDraft = d && typeof d === 'object'
     ? {
-        arrival_date: (draft.arrival_date as string) ?? '',
-        departure_date: (draft.departure_date as string) ?? '',
-        flexible_dates: (draft.flexible_dates as boolean) ?? false,
-        guests: (draft.guests as number) ?? 2,
-        room_prefs: Array.isArray(draft.room_prefs) ? (draft.room_prefs as string[]) : [],
-        budget_hint: (draft.budget_hint as string) ?? '',
-        notes: (draft.notes as string) ?? '',
-        contact_email: (draft.contact_email as boolean) ?? true,
-        contact_sms: (draft.contact_sms as boolean) ?? false,
-        contact_phone: (draft.contact_phone as boolean) ?? false,
+        arrival_date: (d.arrival_date as string) ?? '',
+        departure_date: (d.departure_date as string) ?? '',
+        flexible_dates: (d.flexible_dates as boolean) ?? false,
+        guests: (d.guests as number) ?? 2,
+        rooms_count: (d.rooms_count as number) ?? 1,
+        room_prefs: Array.isArray(d.room_prefs) ? (d.room_prefs as string[]) : [],
+        budget_hint: (d.budget_hint as string) ?? '',
+        notes: (d.notes as string) ?? '',
+        contact_email: (d.contact_email as boolean) ?? true,
+        contact_sms: (d.contact_sms as boolean) ?? false,
+        contact_phone: (d.contact_phone as boolean) ?? false,
+        consent_privacy: (d.consent_privacy as boolean) ?? false,
+        consent_terms: (d.consent_terms as boolean) ?? false,
       }
-    : undefined
+    : localDraft
+      ? {
+          arrival_date: (localDraft.arrival_date as string) ?? '',
+          departure_date: (localDraft.departure_date as string) ?? '',
+          flexible_dates: (localDraft.flexible_dates as boolean) ?? false,
+          guests: (localDraft.guests as number) ?? 2,
+          rooms_count: (localDraft.rooms_count as number) ?? 1,
+          room_prefs: Array.isArray(localDraft.room_prefs) ? (localDraft.room_prefs as string[]) : [],
+          budget_hint: (localDraft.budget_hint as string) ?? '',
+          notes: (localDraft.notes as string) ?? '',
+          contact_email: (localDraft.contact_email as boolean) ?? true,
+          contact_sms: (localDraft.contact_sms as boolean) ?? false,
+          contact_phone: (localDraft.contact_phone as boolean) ?? false,
+          consent_privacy: (localDraft.consent_privacy as boolean) ?? false,
+          consent_terms: (localDraft.consent_terms as boolean) ?? false,
+        }
+      : undefined
 
   const toContactPrefs = useCallback(
     (data: {
@@ -77,30 +116,64 @@ export function InquiryFormPage() {
       departure_date: string
       flexible_dates: boolean
       guests: number
+      rooms_count?: number
       room_prefs: string[]
       budget_hint?: string
       notes?: string
       contact_email?: boolean
       contact_sms?: boolean
       contact_phone?: boolean
+      consent_privacy?: boolean
+      consent_terms?: boolean
       attachments?: AttachmentFile[]
     }) => {
-      if (!listingId) return
-      saveDraft(listingId, {
+      const draftKey = listingId ?? listingParam
+      if (!draftKey) return
+      saveLocalDraft(draftKey, {
         arrival_date: data.arrival_date,
         departure_date: data.departure_date,
         flexible_dates: data.flexible_dates,
         guests: data.guests,
+        rooms_count: data.rooms_count ?? 1,
         room_prefs: data.room_prefs ?? [],
         budget_hint: data.budget_hint ?? '',
         notes: data.notes ?? '',
         contact_email: data.contact_email ?? true,
         contact_sms: data.contact_sms ?? false,
         contact_phone: data.contact_phone ?? false,
+        consent_privacy: data.consent_privacy ?? false,
+        consent_terms: data.consent_terms ?? false,
       })
-      toast.success('Draft saved')
+      if (user?.id && listing?.id) {
+        saveDraftMutation.mutate(
+          {
+            listingId: listing.id,
+            data: {
+              arrival_date: data.arrival_date,
+              departure_date: data.departure_date,
+              flexible_dates: data.flexible_dates,
+              guests: data.guests,
+              rooms_count: data.rooms_count ?? 1,
+              room_prefs: data.room_prefs ?? [],
+              budget_hint: data.budget_hint ?? '',
+              notes: data.notes ?? '',
+              contact_email: data.contact_email ?? true,
+              contact_sms: data.contact_sms ?? false,
+              contact_phone: data.contact_phone ?? false,
+              consent_privacy: data.consent_privacy ?? false,
+              consent_terms: data.consent_terms ?? false,
+            },
+          },
+          {
+            onSuccess: () => toast.success('Draft saved'),
+            onError: () => toast.error('Draft save failed'),
+          }
+        )
+      } else {
+        toast.success('Draft saved locally')
+      }
     },
-    [listingId]
+    [listingId, listingParam, listing?.id, user?.id, saveDraftMutation]
   )
 
   const handleSubmit = useCallback(
@@ -109,39 +182,44 @@ export function InquiryFormPage() {
       departure_date: string
       flexible_dates: boolean
       guests: number
+      rooms_count?: number
       room_prefs: string[]
       budget_hint?: string
       notes?: string
       contact_email?: boolean
       contact_sms?: boolean
       contact_phone?: boolean
+      consent_privacy?: boolean
+      consent_terms?: boolean
       attachments?: AttachmentFile[]
     }) => {
       if (!user || !listingId || !listing) return
       try {
         const contact_preferences = toContactPrefs(data)
+        const attachments = data.attachments ?? []
         const inquiry = await createInquiry.mutateAsync({
           guest_id: user.id,
           listing_id: listingId,
           check_in: data.arrival_date,
           check_out: data.departure_date,
           guests_count: data.guests,
-          message: data.notes,
+          rooms_count: data.rooms_count ?? 1,
+          message: data.notes ?? '',
           flexible_dates: data.flexible_dates,
           room_prefs: data.room_prefs ?? [],
           budget_hint: data.budget_hint,
           contact_preferences,
-          attachments: [], // TODO: upload attachments via API and pass URLs
+          consent_privacy: data.consent_privacy ?? false,
+          consent_terms: data.consent_terms ?? false,
+          attachmentFiles: attachments.map((a) => ({ file: a.file })),
         })
-        if (listingId) {
-          try {
-            localStorage.removeItem(`${DRAFT_KEY_PREFIX}${listingId}`)
-          } catch {
-            // Ignore
-          }
+        try {
+          localStorage.removeItem(`${DRAFT_KEY_PREFIX}${listingId}`)
+        } catch {
+          // Ignore
         }
         toast.success('Inquiry submitted successfully!')
-        navigate(`/inquiries/confirmation/${inquiry.id}`)
+        navigate(`/inquiry/confirmation/${inquiry.reference}`)
       } catch (err) {
         toast.error((err as Error).message ?? 'Failed to submit inquiry')
       }

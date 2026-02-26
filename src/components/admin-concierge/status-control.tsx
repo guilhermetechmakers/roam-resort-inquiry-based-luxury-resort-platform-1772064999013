@@ -13,8 +13,10 @@ import type { InquiryStatusValue } from '@/types/admin'
 const STATUS_OPTIONS: { value: InquiryStatusValue; label: string }[] = [
   { value: 'new', label: 'New' },
   { value: 'contacted', label: 'Contacted' },
+  { value: 'in_review', label: 'In Review' },
   { value: 'deposit_paid', label: 'Deposit Paid' },
   { value: 'confirmed', label: 'Confirmed' },
+  { value: 'closed', label: 'Closed' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
@@ -36,7 +38,7 @@ export function StatusControl({
 
   const handleChange = (value: string) => {
     const next = value as InquiryStatusValue
-    if (!['new', 'contacted', 'deposit_paid', 'confirmed', 'cancelled'].includes(next)) {
+    if (!['new', 'contacted', 'in_review', 'deposit_paid', 'confirmed', 'closed', 'cancelled'].includes(next)) {
       return
     }
     setOptimisticStatus(next)

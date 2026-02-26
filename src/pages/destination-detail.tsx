@@ -81,7 +81,7 @@ export function DestinationDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <CTAStickyPanel listingId={listing.id} />
+            <CTAStickyPanel listingId={listing.id} slug={listing.slug} />
             <ExperienceDetailsPanel
               experienceDetails={listing.experienceDetails}
               experienceDetailsText={listing.experience_details}

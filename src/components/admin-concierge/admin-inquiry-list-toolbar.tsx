@@ -14,8 +14,10 @@ const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },
   { value: 'new', label: 'New' },
   { value: 'contacted', label: 'Contacted' },
+  { value: 'in_review', label: 'In Review' },
   { value: 'deposit_paid', label: 'Deposit Paid' },
   { value: 'confirmed', label: 'Confirmed' },
+  { value: 'closed', label: 'Closed' },
   { value: 'cancelled', label: 'Cancelled' },
 ] as const
 

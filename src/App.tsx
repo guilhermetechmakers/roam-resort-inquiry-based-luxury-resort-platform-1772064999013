@@ -170,6 +170,18 @@ export default function App() {
               }
             />
             <Route
+              path="/inquiries/new"
+              element={<Navigate to="/destinations" replace />}
+            />
+            <Route
+              path="/destinations/:slugOrId/inquire"
+              element={
+                <AppLayout>
+                  <InquiryFormPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/inquiries/confirmation/:inquiryId"
               element={
                 <AppLayout>

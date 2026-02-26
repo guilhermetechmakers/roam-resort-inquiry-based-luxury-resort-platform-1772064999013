@@ -129,8 +129,10 @@ export type AdminExportType = 'inquiries' | 'reconciliations'
 export type InquiryStatusValue =
   | 'new'
   | 'contacted'
+  | 'in_review'
   | 'deposit_paid'
   | 'confirmed'
+  | 'closed'
   | 'cancelled'
 
 export interface AdminInquiryDetailAttachment {

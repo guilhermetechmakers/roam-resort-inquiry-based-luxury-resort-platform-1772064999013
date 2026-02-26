@@ -18,8 +18,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 const STATUS_OPTIONS: InquiryStatusValue[] = [
   'new',
   'contacted',
+  'in_review',
   'deposit_paid',
   'confirmed',
+  'closed',
   'cancelled',
 ]
 
@@ -27,20 +29,51 @@ function isValidStatus(s: string): s is InquiryStatusValue {
   return STATUS_OPTIONS.includes(s as InquiryStatusValue)
 }
 
-/** Fetch single inquiry by ID with listing and guest */
+/** Fetch single inquiry by ID with listing, guest, and attachments */
 export async function fetchAdminInquiryDetail(
   inquiryId: string
 ): Promise<Inquiry | null> {
   try {
     const { data, error } = await supabase
       .from('inquiries')
-      .select('*, listing:listings(*), guest:users(*)')
+      .select('*, listing:listings(*), guest:profiles(*), inquiry_attachments(id, filename, storage_url, size, mime_type, uploaded_at)')
       .eq('id', inquiryId)
       .single()
 
-    if (!error && data) return data as Inquiry
+    if (!error && data) {
+      const row = data as Inquiry & { inquiry_attachments?: Array<{ id: string; filename: string; storage_url?: string; size?: number; mime_type?: string; uploaded_at?: string }> }
+      const atts = Array.isArray(row.inquiry_attachments) ? row.inquiry_attachments : []
+      const attachments = atts.map((a) => ({
+        id: a.id,
+        name: a.filename,
+        file_url: a.storage_url ?? '',
+        mime_type: a.mime_type ?? 'application/octet-stream',
+        size: a.size ?? 0,
+        uploaded_at: a.uploaded_at ?? '',
+      }))
+      const { inquiry_attachments: _omit, ...rest } = row
+      return { ...rest, attachments } as Inquiry
+    }
   } catch {
-    // Fallback
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*, listing:listings(*), guest:profiles(*), inquiry_attachments(id, filename, storage_url, size, mime_type, uploaded_at)')
+      .eq('id', inquiryId)
+      .single()
+    if (!error && data) {
+      const row = data as Inquiry & { inquiry_attachments?: Array<{ id: string; filename: string; storage_url?: string; size?: number; mime_type?: string; uploaded_at?: string }> }
+      const atts = Array.isArray(row.inquiry_attachments) ? row.inquiry_attachments : []
+      const attachments = atts.map((a) => ({
+        id: a.id,
+        name: a.filename,
+        file_url: a.storage_url ?? '',
+        mime_type: a.mime_type ?? 'application/octet-stream',
+        size: a.size ?? 0,
+        uploaded_at: a.uploaded_at ?? '',
+      }))
+      const { inquiry_attachments: _omit, ...rest } = row
+      return { ...rest, attachments } as Inquiry
+    }
   }
   return null
 }
@@ -304,23 +337,56 @@ export async function markPaymentReceived(
   if (error) throw new Error(error.message ?? 'Failed to update payment')
 }
 
-/** Build timeline events from inquiry, notes, and payments */
+/** Fetch activity log for an inquiry */
+export async function fetchInquiryActivityLog(
+  inquiryId: string
+): Promise<Array<{ id: string; action: string; performed_by_role?: string; note?: string; created_at: string }>> {
+  try {
+    const { data, error } = await supabase
+      .from('inquiry_activity_log')
+      .select('id, action, performed_by_role, note, created_at')
+      .eq('inquiry_id', inquiryId)
+      .order('created_at', { ascending: false })
+
+    if (error) return []
+    return Array.isArray(data) ? data : []
+  } catch {
+    return []
+  }
+}
+
+/** Build timeline events from inquiry, notes, payments, and activity log */
 export function buildTimelineEvents(
   inquiry: Inquiry | null,
   notes: AdminInquiryDetailNote[],
-  payments: AdminInquiryPayment[]
+  payments: AdminInquiryPayment[],
+  activityLog: Array<{ id: string; action: string; performed_by_role?: string; note?: string; created_at: string }> = []
 ): AdminTimelineEvent[] {
   const events: AdminTimelineEvent[] = []
 
   if (!inquiry) return events
 
-  events.push({
-    id: `created-${inquiry.id}`,
-    inquiryId: inquiry.id,
-    type: 'status',
-    description: 'Inquiry created',
-    createdAt: inquiry.created_at ?? '',
-    authorName: undefined,
+  const hasCreatedInLog = (activityLog ?? []).some((a) => a.action === 'created')
+  if (!hasCreatedInLog) {
+    events.push({
+      id: `created-${inquiry.id}`,
+      inquiryId: inquiry.id,
+      type: 'status',
+      description: 'Inquiry created',
+      createdAt: inquiry.created_at ?? '',
+      authorName: undefined,
+    })
+  }
+
+  ;(activityLog ?? []).forEach((a) => {
+    events.push({
+      id: a.id,
+      inquiryId: inquiry.id,
+      type: a.action === 'created' ? 'status' : 'note',
+      description: a.note ?? a.action,
+      createdAt: a.created_at ?? '',
+      authorName: a.performed_by_role,
+    })
   })
 
   ;(notes ?? []).forEach((n) => {
