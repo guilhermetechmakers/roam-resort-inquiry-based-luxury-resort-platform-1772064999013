@@ -25,7 +25,7 @@ import {
 import { HostDashboardListingsPage } from '@/pages/host-dashboard-listings'
 import { HostListingDetailPage } from '@/pages/host-listing-detail'
 import { HostListingEditPage } from '@/pages/host-listing-edit'
-import { AdminDashboardPage } from '@/pages/admin-dashboard'
+import { AdminConciergeDashboardPage } from '@/pages/admin-concierge-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
 import { AdminInquiryDetailPage } from '@/pages/admin-inquiry-detail'
 import { AdminExportsPage } from '@/pages/admin-exports'
@@ -237,10 +237,14 @@ export default function App() {
             />
             <Route
               path="/admin"
+              element={<Navigate to="/admin/concierge" replace />}
+            />
+            <Route
+              path="/admin/concierge"
               element={
                 <DashboardLayout>
                   <ProtectedRoute role="concierge">
-                    <AdminDashboardPage />
+                    <AdminConciergeDashboardPage />
                   </ProtectedRoute>
                 </DashboardLayout>
               }
