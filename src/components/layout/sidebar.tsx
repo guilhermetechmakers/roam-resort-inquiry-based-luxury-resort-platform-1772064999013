@@ -16,6 +16,8 @@ interface SidebarLink {
   to: string
   label: string
   icon: React.ReactNode
+  /** Additional paths that should show this link as active */
+  activePaths?: string[]
 }
 
 interface SidebarProps {
@@ -52,29 +54,48 @@ export function Sidebar({ links, title = 'Dashboard' }: SidebarProps) {
         </button>
       </div>
       <nav className="flex-1 space-y-1 p-2">
-        {links.map(({ to, label, icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              location.pathname === to || location.pathname.startsWith(to + '/')
-                ? 'bg-accent/10 text-accent'
-                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-            )}
-          >
-            <span className="shrink-0">{icon}</span>
-            {!collapsed && <span>{label}</span>}
-          </Link>
-        ))}
+        {links.map(({ to, label, icon, activePaths }) => {
+          const isActive =
+            location.pathname === to ||
+            location.pathname.startsWith(to + '/') ||
+            (Array.isArray(activePaths) &&
+              activePaths.some(
+                (p) =>
+                  location.pathname === p || location.pathname.startsWith(p + '/')
+              ))
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+              )}
+            >
+              <span className="shrink-0">{icon}</span>
+              {!collapsed && <span>{label}</span>}
+            </Link>
+          )
+        })}
       </nav>
     </aside>
   )
 }
 
 export const hostSidebarLinks: SidebarLink[] = [
-  { to: '/host', label: 'Listings', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { to: '/host/listings/new', label: 'Create Listing', icon: <FileText className="h-5 w-5" /> },
+  {
+    to: '/host/dashboard/listings',
+    label: 'Listings',
+    icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  {
+    to: '/host/listings/new',
+    label: 'Create Listing',
+    icon: <FileText className="h-5 w-5" />,
+    activePaths: ['/host/listings'],
+  },
 ]
 
 export const adminSidebarLinks: SidebarLink[] = [

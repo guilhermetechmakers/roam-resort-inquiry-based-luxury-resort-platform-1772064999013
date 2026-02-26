@@ -7,6 +7,8 @@ export function useCreateListing() {
     mutationFn: (payload: CreateListingPayload) => createListing(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] })
+      queryClient.invalidateQueries({ queryKey: ['host', 'listings'] })
+      queryClient.invalidateQueries({ queryKey: ['host', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['destinations'] })
     },
   })
@@ -20,6 +22,8 @@ export function useUpdateListing() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['listing', id] })
       queryClient.invalidateQueries({ queryKey: ['listings'] })
+      queryClient.invalidateQueries({ queryKey: ['host', 'listings'] })
+      queryClient.invalidateQueries({ queryKey: ['host', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['destinations'] })
     },
   })

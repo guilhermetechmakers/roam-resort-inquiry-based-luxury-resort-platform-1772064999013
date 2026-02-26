@@ -46,8 +46,8 @@ export function HostListingEditPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="text-muted-foreground">Listing not found.</p>
-        <Link to="/host" className="ml-4">
-          <Button>Back to Dashboard</Button>
+        <Link to="/host/dashboard/listings" className="ml-4">
+          <Button>Back to Listings</Button>
         </Link>
       </div>
     )
@@ -113,7 +113,7 @@ export function HostListingEditPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-8">
           <Link
-            to="/host"
+            to="/host/dashboard/listings"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4" />

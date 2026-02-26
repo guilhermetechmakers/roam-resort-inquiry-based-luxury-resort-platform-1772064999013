@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/contexts/auth-context'
@@ -22,7 +22,7 @@ import {
   ProfileNotifications,
   ProfileSettings,
 } from '@/pages/profile'
-import { HostDashboardPage } from '@/pages/host-dashboard'
+import { HostDashboardListingsPage } from '@/pages/host-dashboard-listings'
 import { HostListingEditPage } from '@/pages/host-listing-edit'
 import { AdminDashboardPage } from '@/pages/admin-dashboard'
 import { AdminInquiryListPage } from '@/pages/admin-inquiry-list'
@@ -192,10 +192,14 @@ export default function App() {
             </Route>
             <Route
               path="/host"
+              element={<Navigate to="/host/dashboard/listings" replace />}
+            />
+            <Route
+              path="/host/dashboard/listings"
               element={
                 <DashboardLayout>
                   <ProtectedRoute role="host">
-                    <HostDashboardPage />
+                    <HostDashboardListingsPage />
                   </ProtectedRoute>
                 </DashboardLayout>
               }
