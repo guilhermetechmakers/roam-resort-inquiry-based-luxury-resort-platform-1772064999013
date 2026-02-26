@@ -34,12 +34,12 @@ export function SectionCard({
       aria-labelledby={`${id}-heading`}
     >
       <CardHeader className="pb-2">
-        <h3
+        <h2
           id={`${id}-heading`}
           className="font-serif text-xl font-semibold text-foreground"
         >
           {title}
-        </h3>
+        </h2>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-foreground/90 leading-relaxed">{body}</p>
