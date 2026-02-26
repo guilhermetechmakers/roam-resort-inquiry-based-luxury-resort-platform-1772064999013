@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { Loader2, Send, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,11 +53,26 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
 
   const handleSubmit = async (data: FormData) => {
     if (onSubmit) {
-      await onSubmit(data)
+      setIsSubmitting(true)
+      const toastId = toast.loading('Sending your message…')
+      try {
+        await onSubmit(data)
+        toast.dismiss(toastId)
+        setIsSuccess(true)
+        form.reset()
+        toast.success('Message sent. Our concierge team will respond within 24 hours.')
+      } catch (err) {
+        toast.dismiss(toastId)
+        const msg = (err as { message?: string })?.message ?? 'Failed to send message'
+        toast.error(msg)
+      } finally {
+        setIsSubmitting(false)
+      }
       return
     }
 
     setIsSubmitting(true)
+    const toastId = toast.loading('Sending your message…')
     try {
       const payload = {
         name: data.name,
@@ -65,6 +81,7 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
         message: data.message,
       }
       const result = await submitContact(payload)
+      toast.dismiss(toastId)
       if (result?.ok) {
         setIsSuccess(true)
         form.reset()
@@ -73,6 +90,7 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
         toast.error(result?.message ?? 'Something went wrong. Please try again.')
       }
     } catch (err) {
+      toast.dismiss(toastId)
       const msg = (err as { message?: string })?.message ?? 'Failed to send message'
       toast.error(msg)
     } finally {
@@ -82,10 +100,19 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
 
   if (isSuccess && !form.formState.isDirty) {
     return (
-      <Card className={cn('border-accent/30', className)}>
+      <Card
+        className={cn('border-accent/30 shadow-card', className)}
+        role="status"
+        aria-live="polite"
+        aria-label="Contact form sent successfully"
+      >
         <CardContent className="pt-6">
-          <div className="rounded-xl border border-accent/20 bg-accent/5 p-8 text-center">
-            <p className="font-serif text-xl font-semibold text-foreground">
+          <div className="rounded-xl border border-accent/20 bg-accent/5 p-6 text-center sm:p-8">
+            <MessageCircle
+              className="mx-auto h-12 w-12 text-accent"
+              aria-hidden
+            />
+            <p className="mt-4 font-serif text-xl font-semibold text-foreground">
               Thank you for reaching out
             </p>
             <p className="mt-2 text-muted-foreground">
@@ -93,8 +120,9 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
             </p>
             <Button
               variant="outline"
-              className="mt-6"
+              className="mt-6 transition-shadow duration-200 hover:shadow-card-hover"
               onClick={() => setIsSuccess(false)}
+              aria-label="Send another message to concierge"
             >
               Send another message
             </Button>
@@ -121,7 +149,7 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
         <p className="mt-4 text-muted-foreground">
           Have a question or feedback? Our team is here to help.
         </p>
-        <Card className="mt-10">
+        <Card className="mt-10 shadow-card">
           <CardHeader>
             <h3 className="font-serif text-xl font-semibold">Send a message</h3>
           </CardHeader>
@@ -130,6 +158,7 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
               onSubmit={form.handleSubmit(handleSubmit)}
               className="space-y-6"
               noValidate
+              aria-label="Contact concierge form"
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -170,7 +199,11 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
                   value={form.watch('topic') || undefined}
                   onValueChange={(v) => form.setValue('topic', v)}
                 >
-                  <SelectTrigger id="contact-topic" className="mt-2">
+                  <SelectTrigger
+                    id="contact-topic"
+                    className="mt-2"
+                    aria-label="Select contact topic (optional)"
+                  >
                     <SelectValue placeholder="Select a topic" />
                   </SelectTrigger>
                   <SelectContent>
@@ -204,9 +237,24 @@ export function ContactForm({ onSubmit, className }: ContactFormProps) {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-accent hover:bg-accent/90 shadow-accent-glow"
+                className="bg-accent text-accent-foreground shadow-card transition-all duration-200 hover:scale-[1.02] hover:bg-accent/90 hover:shadow-card-hover focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                aria-label={isSubmitting ? 'Sending message' : 'Submit contact form'}
+                aria-busy={isSubmitting}
               >
-                {isSubmitting ? 'Sending…' : 'Send Message'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2
+                      className="mr-2 h-4 w-4 animate-spin"
+                      aria-hidden
+                    />
+                    Sending…
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" aria-hidden />
+                    Send Message
+                  </>
+                )}
               </Button>
             </form>
           </CardContent>
