@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -27,6 +27,8 @@ type SignupForm = z.infer<typeof signupSchema>
 export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get('redirect') ?? '/profile'
   const { signIn, signUp } = useAuth()
 
   const loginForm = useForm<LoginForm>({
@@ -44,7 +46,7 @@ export function LoginPage() {
     try {
       await signIn(data.email, data.password)
       toast.success('Welcome back!')
-      navigate('/profile')
+      navigate(redirectTo)
     } catch (err) {
       toast.error((err as Error).message ?? 'Login failed')
     } finally {
@@ -57,7 +59,7 @@ export function LoginPage() {
     try {
       await signUp(data.email, data.password, data.fullName)
       toast.success('Check your email to verify your account.')
-      navigate('/profile')
+      navigate(redirectTo)
     } catch (err) {
       toast.error((err as Error).message ?? 'Signup failed')
     } finally {

@@ -1,28 +1,71 @@
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
 import { useAuth } from '@/contexts/auth-context'
-import { useAdminInquiries } from '@/hooks/use-inquiries'
+import { useAdminInquiries, useUpdateInquiry } from '@/hooks/use-inquiries'
+import { InquiryStatusPanel } from '@/components/inquiry'
 import { formatDate } from '@/lib/utils'
+import type { Inquiry, InquiryStatus } from '@/types'
 
-const statusOptions = ['new', 'contacted', 'deposit_paid', 'confirmed', 'cancelled']
+function exportInquiryToCsv(inquiry: Inquiry): void {
+  const rows = [
+    ['Reference', 'Listing', 'Check-in', 'Check-out', 'Guests', 'Status', 'Created'],
+    [
+      inquiry.reference,
+      typeof inquiry.listing === 'object' && inquiry.listing ? inquiry.listing.title : '—',
+      inquiry.check_in ?? '—',
+      inquiry.check_out ?? '—',
+      String(inquiry.guests_count ?? '—'),
+      inquiry.status,
+      inquiry.created_at ?? '—',
+    ],
+  ]
+  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `inquiry-${inquiry.reference}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export function AdminInquiryDetailPage() {
   const { inquiryId } = useParams<{ inquiryId: string }>()
   const { hasRole, isLoading: authLoading } = useAuth()
   const { data: inquiries } = useAdminInquiries()
-  const inquiry = inquiries?.find((i) => i.id === inquiryId)
+  const updateInquiry = useUpdateInquiry()
+  const inquiry = (inquiries ?? []).find((i) => i.id === inquiryId)
+
+  const handleStatusChange = (id: string, status: InquiryStatus) => {
+    if (!id) return
+    updateInquiry.mutate(
+      { id, payload: { status } },
+      {
+        onSuccess: () => toast.success('Status updated'),
+        onError: (err) => toast.error((err as Error).message),
+      }
+    )
+  }
+
+  const handleNotesChange = (id: string, notes: string) => {
+    if (!id) return
+    updateInquiry.mutate(
+      { id, payload: { internal_notes: notes } },
+      {
+        onSuccess: () => toast.success('Notes saved'),
+        onError: (err) => toast.error((err as Error).message),
+      }
+    )
+  }
+
+  const handleExport = () => {
+    if (inquiry) exportInquiryToCsv(inquiry)
+  }
 
   if (authLoading) return null
   if (!hasRole('concierge')) {
@@ -51,33 +94,17 @@ export function AdminInquiryDetailPage() {
         <div className="p-8">
           <Link
             to="/admin/inquiries"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Inquiries
           </Link>
 
           <div className="grid gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-serif text-xl font-semibold">
-                      {inquiry.reference}
-                    </h2>
-                    <Select defaultValue={inquiry.status}>
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s.replace('_', ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <h2 className="font-serif text-xl font-semibold">{inquiry.reference}</h2>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -102,6 +129,18 @@ export function AdminInquiryDetailPage() {
                     <Label className="text-muted-foreground">Guests</Label>
                     <p>{inquiry.guests_count ?? '—'}</p>
                   </div>
+                  {(inquiry.room_prefs ?? []).length > 0 && (
+                    <div>
+                      <Label className="text-muted-foreground">Room Preferences</Label>
+                      <p>{(inquiry.room_prefs ?? []).join(', ')}</p>
+                    </div>
+                  )}
+                  {inquiry.budget_hint && (
+                    <div>
+                      <Label className="text-muted-foreground">Budget Hint</Label>
+                      <p>{inquiry.budget_hint}</p>
+                    </div>
+                  )}
                   {inquiry.message && (
                     <div>
                       <Label className="text-muted-foreground">Message</Label>
@@ -110,30 +149,35 @@ export function AdminInquiryDetailPage() {
                   )}
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader>
-                  <h3 className="font-serif font-semibold">Internal Notes</h3>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Add internal notes (concierge only)..."
-                    rows={4}
-                  />
-                </CardContent>
-              </Card>
             </div>
 
             <div className="space-y-6">
               <Card>
                 <CardHeader>
+                  <h3 className="font-serif font-semibold">Status & Actions</h3>
+                </CardHeader>
+                <CardContent>
+                  <InquiryStatusPanel
+                    inquiry={inquiry}
+                    onStatusChange={handleStatusChange}
+                    onNotesChange={handleNotesChange}
+                    onExport={handleExport}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <h3 className="font-serif font-semibold">Payment</h3>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Create a Stripe payment link and send to the guest.
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Create a Stripe payment link and send to the guest. (Placeholder for Stripe
+                    Connect integration)
                   </p>
-                  <Button className="w-full">Create Payment Link</Button>
+                  <Button className="w-full" disabled>
+                    Create Payment Link
+                  </Button>
                 </CardContent>
               </Card>
 
