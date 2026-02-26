@@ -55,10 +55,12 @@ export function ErrorPage() {
       const flag = sessionStorage.getItem(RETRY_FLAG_KEY)
       if (flag === '1') {
         sessionStorage.removeItem(RETRY_FLAG_KEY)
-        setRetryFailedMessage(
-          'Retry failed. The server may still be unavailable. Please try again later or contact support.'
-        )
-        toast.error('Retry failed. Please try again or contact support.')
+        queueMicrotask(() => {
+          setRetryFailedMessage(
+            'Retry failed. The server may still be unavailable. Please try again later or contact support.'
+          )
+          toast.error('Retry failed. Please try again or contact support.')
+        })
       }
     } catch {
       // Ignore sessionStorage errors

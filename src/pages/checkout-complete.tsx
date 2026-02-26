@@ -117,7 +117,10 @@ export function CheckoutCompletePage() {
   }, [inquiryId, sessionId, statusParam])
 
   useEffect(() => {
-    void loadData()
+    const id = setTimeout(() => {
+      void loadData()
+    }, 0)
+    return () => clearTimeout(id)
   }, [loadData])
 
   if (!inquiryId) {
