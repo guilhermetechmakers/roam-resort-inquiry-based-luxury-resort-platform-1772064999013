@@ -26,7 +26,7 @@ export function ActivityTimelinePanel({
   const [offset, setOffset] = useState(0)
   const [filters, setFilters] = useState<ActivityFilters>({})
 
-  const { data, isLoading } = useActivities({
+  const { data, isLoading, isError, error, refetch } = useActivities({
     inquiryId,
     limit: PAGE_SIZE,
     offset,
@@ -47,6 +47,10 @@ export function ActivityTimelinePanel({
     setOffset(0)
   }, [])
 
+  const handleRetry = useCallback(() => {
+    refetch()
+  }, [refetch])
+
   return (
     <Card className={cn('transition-all duration-300', className)}>
       <CardHeader>
@@ -60,6 +64,9 @@ export function ActivityTimelinePanel({
           activities={activities}
           total={total}
           isLoading={isLoading}
+          isError={isError}
+          error={error}
+          onRetry={handleRetry}
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
           filters={showFilters ? filters : undefined}
