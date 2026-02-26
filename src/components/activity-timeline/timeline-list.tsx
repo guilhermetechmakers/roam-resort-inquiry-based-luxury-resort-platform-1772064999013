@@ -21,7 +21,6 @@ export interface TimelineListProps {
 
 export function TimelineList({
   activities,
-  total: _total,
   isLoading,
   hasMore = false,
   onLoadMore,

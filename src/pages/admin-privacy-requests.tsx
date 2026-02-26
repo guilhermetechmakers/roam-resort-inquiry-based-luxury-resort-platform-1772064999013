@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Sidebar } from '@/components/layout/sidebar'
-import { adminSidebarLinks } from '@/components/layout/sidebar'
+import { adminSidebarLinks } from '@/components/layout/sidebar-links'
 import { AdminReviewPanel, AuditLogView } from '@/components/privacy'
 import {
   fetchAdminPrivacyRequests,
@@ -9,7 +9,7 @@ import {
   fetchAuditLogs,
 } from '@/api/privacy-compliance'
 import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import type { PrivacyRequest } from '@/types/privacy-compliance'
 import type { AuditLogEntry } from '@/components/privacy/audit-log-view'
 

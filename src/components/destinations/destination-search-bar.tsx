@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { useDebounce } from '@/hooks/use-debounce'
 import { cn } from '@/lib/utils'
 import { fetchPublishedDestinations } from '@/api/destinations'
-import { getDetailUrl } from './destination-card'
+import { getDetailUrl } from '@/lib/destination-utils'
 import type { Destination } from '@/types'
 
 const DEBOUNCE_MS = 280

@@ -25,13 +25,10 @@ export function LoadingSpinner({
   className,
   delayMs = 0,
 }: LoadingSpinnerProps) {
-  const [visible, setVisible] = useState(delayMs === 0)
+  const [visible, setVisible] = useState(delayMs <= 0)
 
   useEffect(() => {
-    if (delayMs <= 0) {
-      setVisible(true)
-      return
-    }
+    if (delayMs <= 0) return
     const t = setTimeout(() => setVisible(true), delayMs)
     return () => clearTimeout(t)
   }, [delayMs])
@@ -63,7 +60,7 @@ export function GlobalLoadingBar({
 
   useEffect(() => {
     if (!isLoading) {
-      setShow(false)
+      queueMicrotask(() => setShow(false))
       return
     }
     const t = setTimeout(() => setShow(true), delayMs)

@@ -6,7 +6,7 @@ import {
   AccountSecurityActions,
   ProfileHeaderCard,
 } from '@/components/profile'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useProfile, useChangePassword } from '@/hooks/use-profile'
 
 export function ProfileSettings() {

@@ -18,12 +18,13 @@ export interface InternalNotesPanelProps {
 
 export function InternalNotesPanel({
   notes,
-  inquiryId: _inquiryId,
+  inquiryId,
   canEdit,
   onAddNote,
   isLoading,
   className,
 }: InternalNotesPanelProps) {
+  void inquiryId // Reserved for future note scoping
   const [newNote, setNewNote] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 

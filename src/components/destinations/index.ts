@@ -4,7 +4,8 @@ export {
   type ResultsHintProps,
   type ResultsHintFilters,
 } from './results-hint'
-export { DestinationCard, getDetailUrl } from './destination-card'
+export { DestinationCard } from './destination-card'
+export { getDetailUrl } from '@/lib/destination-utils'
 export {
   DestinationSearchBar,
   type DestinationSearchBarProps,

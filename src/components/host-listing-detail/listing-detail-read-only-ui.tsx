@@ -6,7 +6,8 @@
 
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { Sidebar, hostSidebarLinks } from '@/components/layout/sidebar'
+import { Sidebar } from '@/components/layout/sidebar'
+import { hostSidebarLinks } from '@/components/layout/sidebar-links'
 import { ListingHeroCard } from './listing-hero-card'
 import { EditorialPreviewPanel } from './editorial-preview-panel'
 import { InquiriesPanel } from './inquiries-panel'

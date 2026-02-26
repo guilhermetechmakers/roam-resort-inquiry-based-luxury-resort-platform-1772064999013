@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Mail, Clock, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ContactFormPage } from '@/components/contact/contact-form-page'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 
 export function ContactPage() {

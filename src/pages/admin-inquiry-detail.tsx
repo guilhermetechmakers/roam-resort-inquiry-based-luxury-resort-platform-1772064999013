@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
-import { useAuth } from '@/contexts/auth-context'
+import { Sidebar } from '@/components/layout/sidebar'
+import { adminSidebarLinks } from '@/components/layout/sidebar-links'
+import { useAuth } from '@/hooks/use-auth'
 import {
   InquirySummaryCard,
   StatusControl,

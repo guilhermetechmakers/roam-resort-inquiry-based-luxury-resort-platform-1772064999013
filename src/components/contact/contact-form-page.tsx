@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { DestinationSelector } from '@/components/contact/destination-selector'
 import { submitContactInquiry } from '@/api/contact-inquiries'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import {
   SUBJECT_OPTIONS,
   PREFERRED_CONTACT_OPTIONS,

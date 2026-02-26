@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { FileText, TrendingUp, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
-import { useAuth } from '@/contexts/auth-context'
+import { Sidebar } from '@/components/layout/sidebar'
+import { adminSidebarLinks } from '@/components/layout/sidebar-links'
+import { useAuth } from '@/hooks/use-auth'
 import { useAdminInquiries } from '@/hooks/use-inquiries'
 import { Skeleton } from '@/components/ui/skeleton'
 

@@ -51,7 +51,9 @@ export async function fetchAdminInquiryDetail(
         size: a.size ?? 0,
         uploaded_at: a.uploaded_at ?? '',
       }))
-      const { inquiry_attachments: _omit, ...rest } = row
+      const rest = Object.fromEntries(
+        Object.entries(row).filter(([k]) => k !== 'inquiry_attachments')
+      ) as Omit<typeof row, 'inquiry_attachments'>
       return { ...rest, attachments } as Inquiry
     }
   } catch {
@@ -71,7 +73,9 @@ export async function fetchAdminInquiryDetail(
         size: a.size ?? 0,
         uploaded_at: a.uploaded_at ?? '',
       }))
-      const { inquiry_attachments: _omit, ...rest } = row
+      const rest = Object.fromEntries(
+        Object.entries(row).filter(([k]) => k !== 'inquiry_attachments')
+      ) as Omit<typeof row, 'inquiry_attachments'>
       return { ...rest, attachments } as Inquiry
     }
   }

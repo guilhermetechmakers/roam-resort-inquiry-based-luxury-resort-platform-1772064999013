@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 
 const navLinks = [
   { to: '/', label: 'Home' },
@@ -21,10 +21,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
   const { isAuthenticated, signOut, hasRole } = useAuth()
 
   useEffect(() => {
-    if (!transparent) {
-      setIsScrolled(true)
-      return
-    }
+    if (!transparent) return
     const handleScroll = () => {
       setIsScrolled(window.scrollY > SCROLL_THRESHOLD)
     }

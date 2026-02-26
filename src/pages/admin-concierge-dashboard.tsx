@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, FileText, Wallet, Download, ClipboardList } from 'lucide-react'
-import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
-import { useAuth } from '@/contexts/auth-context'
+import { Sidebar } from '@/components/layout/sidebar'
+import { adminSidebarLinks } from '@/components/layout/sidebar-links'
+import { useAuth } from '@/hooks/use-auth'
 import { useAdminInquiries } from '@/hooks/use-inquiries'
 import {
   MetricCard,

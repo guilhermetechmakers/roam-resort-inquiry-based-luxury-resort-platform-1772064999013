@@ -33,11 +33,11 @@ export function ActionBar({
 
   useEffect(() => {
     if (status === 'success' && autoRedirect && redirectPath) {
-      setCountdown(Math.ceil(AUTO_REDIRECT_DELAY_MS / 1000))
+      queueMicrotask(() => setCountdown(Math.ceil(AUTO_REDIRECT_DELAY_MS / 1000)))
       const t = setTimeout(() => navigate(redirectPath, { replace: true }), AUTO_REDIRECT_DELAY_MS)
       return () => clearTimeout(t)
     } else {
-      setCountdown(null)
+      queueMicrotask(() => setCountdown(null))
     }
   }, [status, autoRedirect, redirectPath, navigate])
 

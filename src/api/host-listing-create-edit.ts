@@ -29,7 +29,7 @@ export interface CreateHostListingPayload {
   coordinates?: string
 }
 
-export interface UpdateHostListingPayload extends Partial<CreateHostListingPayload> {}
+export type UpdateHostListingPayload = Partial<CreateHostListingPayload>
 
 /** Fetch listing by ID for edit */
 export async function fetchListingForEdit(id: string): Promise<HostListingFormData | null> {

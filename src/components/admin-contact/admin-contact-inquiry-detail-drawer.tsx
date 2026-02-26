@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -52,7 +52,7 @@ export interface AdminContactInquiryDetailDrawerProps {
   onClose: () => void
 }
 
-export function AdminContactInquiryDetailDrawer({
+function AdminContactInquiryDetailDrawerInner({
   inquiry,
   open,
   onClose,
@@ -66,13 +66,6 @@ export function AdminContactInquiryDetailDrawer({
   const createMessageMutation = useCreateSupportMessage(inquiry?.id ?? null)
   const { data: templates = [] } = useEmailTemplates({ status: 'published' })
   const sendEmailMutation = useSendEmail()
-
-  useEffect(() => {
-    if (inquiry) {
-      setInternalNotes(inquiry.internal_notes ?? '')
-      setStatus(inquiry.status ?? 'new')
-    }
-  }, [inquiry])
 
   const handleSave = async () => {
     if (!inquiry) return
@@ -319,4 +312,8 @@ export function AdminContactInquiryDetailDrawer({
       </DialogContent>
     </Dialog>
   )
+}
+
+export function AdminContactInquiryDetailDrawer(props: AdminContactInquiryDetailDrawerProps) {
+  return <AdminContactInquiryDetailDrawerInner key={props.inquiry?.id ?? 'closed'} {...props} />
 }

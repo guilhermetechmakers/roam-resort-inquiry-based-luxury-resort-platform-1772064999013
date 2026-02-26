@@ -3,15 +3,11 @@ import { ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { cloudinaryThumbUrl, isCloudinaryUrl } from '@/lib/cloudinary'
+import { getDetailUrl } from '@/lib/destination-utils'
 import type { Destination } from '@/types'
 
 const PLACEHOLDER_IMAGE =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800'
-
-function getDetailUrl(destination: Destination): string {
-  const slug = destination.slug ?? destination.id
-  return `/destinations/${slug}`
-}
 
 function getOptimizedImageUrl(url: string): string {
   if (!url) return PLACEHOLDER_IMAGE
@@ -93,5 +89,3 @@ export function DestinationCard({ destination, className }: DestinationCardProps
     </Card>
   )
 }
-
-export { getDetailUrl }

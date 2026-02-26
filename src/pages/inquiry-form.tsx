@@ -9,7 +9,7 @@ import {
 } from '@/components/inquiry'
 import type { AttachmentFile } from '@/components/inquiry'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useListingById, useListing } from '@/hooks/use-listings'
 import {
   useCreateInquiry,

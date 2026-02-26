@@ -4,7 +4,7 @@
  */
 
 import { useParams } from 'react-router-dom'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { ListingDetailReadOnlyUI } from '@/components/host-listing-detail'
 
 export function HostListingDetailPage() {

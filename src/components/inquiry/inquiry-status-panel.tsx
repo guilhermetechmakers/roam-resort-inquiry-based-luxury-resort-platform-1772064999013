@@ -40,8 +40,10 @@ export function InquiryStatusPanel({
   const [status, setStatus] = useState<InquiryStatus>(inquiry.status)
 
   useEffect(() => {
-    setInternalNotes(inquiry.internal_notes ?? '')
-    setStatus(inquiry.status)
+    queueMicrotask(() => {
+      setInternalNotes(inquiry.internal_notes ?? '')
+      setStatus(inquiry.status)
+    })
   }, [inquiry.internal_notes, inquiry.status])
 
   const handleStatusChange = (value: string) => {

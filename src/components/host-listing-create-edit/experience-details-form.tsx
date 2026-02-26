@@ -28,7 +28,6 @@ export interface ExperienceDetailsFormProps {
 export function ExperienceDetailsForm({
   experience,
   onChange,
-  errors: _errors = {},
   className,
 }: ExperienceDetailsFormProps) {
   const amenities = Array.isArray(experience.amenities) ? experience.amenities : []

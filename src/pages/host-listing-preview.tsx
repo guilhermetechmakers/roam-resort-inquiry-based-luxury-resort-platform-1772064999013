@@ -6,7 +6,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Edit3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useListingById } from '@/hooks/use-listings'
 import {
   HeroGallery,

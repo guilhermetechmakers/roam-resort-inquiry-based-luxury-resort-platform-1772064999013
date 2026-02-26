@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Sidebar, adminSidebarLinks } from '@/components/layout/sidebar'
-import { useAuth } from '@/contexts/auth-context'
+import { Sidebar } from '@/components/layout/sidebar'
+import { adminSidebarLinks } from '@/components/layout/sidebar-links'
+import { useAuth } from '@/hooks/use-auth'
 import { useEmailTemplates } from '@/hooks/use-email-templates'
 import {
   AdminEmailTemplateList,

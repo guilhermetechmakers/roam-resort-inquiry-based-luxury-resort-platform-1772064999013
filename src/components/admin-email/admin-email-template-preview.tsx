@@ -40,20 +40,20 @@ export function AdminEmailTemplatePreview({
   const [testEmail, setTestEmail] = useState('')
 
   useEffect(() => {
-    if (template) {
-      const sample = SAMPLE_PAYLOADS[template.slug] ?? SAMPLE_PAYLOADS[template.name] ?? {}
-      const schema = template.substitutions_schema
-      const defaults: Record<string, string> = {}
-      if (schema && typeof schema === 'object') {
-        const keys = Array.isArray(schema)
-          ? (schema as { key?: string }[]).map((s) => s.key).filter(Boolean) as string[]
-          : Object.keys(schema)
-        for (const key of keys) {
-          defaults[key] = (sample as Record<string, string>)[key] ?? `{{${key}}}`
-        }
+    if (!template) return
+    const sample = SAMPLE_PAYLOADS[template.slug] ?? SAMPLE_PAYLOADS[template.name] ?? {}
+    const schema = template.substitutions_schema
+    const defaults: Record<string, string> = {}
+    if (schema && typeof schema === 'object') {
+      const keys = Array.isArray(schema)
+        ? (schema as { key?: string }[]).map((s) => s.key).filter(Boolean) as string[]
+        : Object.keys(schema)
+      for (const key of keys) {
+        defaults[key] = (sample as Record<string, string>)[key] ?? `{{${key}}}`
       }
-      setPayload(Object.keys(defaults).length > 0 ? defaults : sample)
     }
+    const next = Object.keys(defaults).length > 0 ? defaults : sample
+    queueMicrotask(() => setPayload(next))
   }, [template])
 
   const preview = useMemo(() => {

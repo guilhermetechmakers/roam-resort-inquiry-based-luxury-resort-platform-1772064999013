@@ -19,7 +19,7 @@ export interface CreateListingPayload {
   host_id?: string
 }
 
-export interface UpdateListingPayload extends Partial<CreateListingPayload> {}
+export type UpdateListingPayload = Partial<CreateListingPayload>
 
 async function getCurrentUserId(): Promise<string> {
   try {

@@ -59,7 +59,10 @@ export function FilterBar({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const debouncedQuery = useDebounce(searchInput, 300)
   const filtersRef = useRef(filters)
-  filtersRef.current = filters
+
+  useEffect(() => {
+    filtersRef.current = filters
+  }, [filters])
 
   useEffect(() => {
     if (debouncedQuery !== filtersRef.current.query) {
@@ -69,9 +72,9 @@ export function FilterBar({
 
   useEffect(() => {
     if (filters.query === '' && searchInput !== '') {
-      setSearchInput('')
+      queueMicrotask(() => setSearchInput(''))
     }
-  }, [filters.query])
+  }, [filters.query, searchInput])
 
   const handleQueryChange = (value: string) => {
     setSearchInput(value)

@@ -587,8 +587,9 @@ export function printInquiryDetail(): void {
 
 /** Mock reconciliations (no Supabase table yet) */
 export async function fetchAdminReconciliations(
-  _filters?: AdminExportFilters
+  filters?: AdminExportFilters
 ): Promise<{ data: AdminReconciliation[]; total: number }> {
+  void filters // Reserved for future filter support
   // Placeholder: return empty until reconciliation table exists
   return { data: [], total: 0 }
 }

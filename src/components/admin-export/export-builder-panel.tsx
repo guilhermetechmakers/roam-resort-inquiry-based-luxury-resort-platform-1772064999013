@@ -61,8 +61,9 @@ export function ExportBuilderPanel({
 }: ExportBuilderPanelProps) {
   const [selectedDataset, setSelectedDataset] = useState<ExportDataset>('inquiries')
   const [selectedFields, setSelectedFields] = useState<string[]>([])
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const defaultRange = getDefaultDateRange()
+  const [dateFrom, setDateFrom] = useState(defaultRange.from)
+  const [dateTo, setDateTo] = useState(defaultRange.to)
   const [filters, setFilters] = useState<ExportFilters>({})
   const [delimiter, setDelimiter] = useState(',')
   const [includeHeaders, setIncludeHeaders] = useState(true)
@@ -93,13 +94,7 @@ export function ExportBuilderPanel({
   const { data: hosts = [], isLoading: hostsLoading } = useExportHosts()
 
   useEffect(() => {
-    const { from, to } = getDefaultDateRange()
-    setDateFrom(from)
-    setDateTo(to)
-  }, [])
-
-  useEffect(() => {
-    setSelectedFields([])
+    queueMicrotask(() => setSelectedFields([]))
   }, [selectedDataset])
 
   const handleRangeChange = (from: string, to: string) => {

@@ -22,7 +22,7 @@ interface AuthContextValue extends AuthState {
   requestPasswordReset: (email: string) => Promise<void>
 }
 
-const AuthContext = React.createContext<AuthContextValue | null>(null)
+export const AuthContext = React.createContext<AuthContextValue | null>(null)
 
 function mapSupabaseUser(u: SupabaseUser | null): User | null {
   if (!u) return null
@@ -178,10 +178,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth() {
-  const ctx = React.useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
 }

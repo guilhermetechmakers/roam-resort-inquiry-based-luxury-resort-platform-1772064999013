@@ -77,7 +77,7 @@ const defaultValues: FormData = {
 }
 
 export function InquiryForm({
-  destinationId: _destinationId,
+  destinationId,
   destinationName,
   existingDraft,
   onSubmit,
@@ -85,6 +85,7 @@ export function InquiryForm({
   isSubmitting = false,
   className,
 }: InquiryFormProps) {
+  void destinationId // Passed by parent for draft context; form uses destinationName for display
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
 
   const form = useForm<FormData>({

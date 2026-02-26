@@ -13,28 +13,24 @@ const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`
 export async function submitContact(
   payload: ContactPayload
 ): Promise<ContactResponse | null> {
-  try {
-    const url = `${FUNCTIONS_BASE}/support-contact`
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify(payload),
-    })
-    const data = (await res.json().catch(() => ({}))) as
-      | ContactResponse
-      | { error?: string; message?: string }
-    if (!res.ok) {
-      const errMsg =
-        (data as { message?: string }).message ??
-        (data as { error?: string }).error ??
-        'Failed to send message'
-      throw new Error(errMsg)
-    }
-    return data as ContactResponse
-  } catch (err) {
-    throw err
+  const url = `${FUNCTIONS_BASE}/support-contact`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  const data = (await res.json().catch(() => ({}))) as
+    | ContactResponse
+    | { error?: string; message?: string }
+  if (!res.ok) {
+    const errMsg =
+      (data as { message?: string }).message ??
+      (data as { error?: string }).error ??
+      'Failed to send message'
+    throw new Error(errMsg)
   }
+  return data as ContactResponse
 }

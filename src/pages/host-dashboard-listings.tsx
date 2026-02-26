@@ -2,14 +2,15 @@ import { useState, useCallback, useEffect } from 'react'
 import { FileText, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Sidebar, hostSidebarLinks } from '@/components/layout/sidebar'
+import { Sidebar } from '@/components/layout/sidebar'
+import { hostSidebarLinks } from '@/components/layout/sidebar-links'
 import {
   QuickStatsPanel,
   CreateListingButton,
   InquiriesSummary,
   ListingCard,
 } from '@/components/host-dashboard'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useHostListings, useHostStats, useListingInquiries } from '@/hooks/use-host-dashboard'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Listing } from '@/types'

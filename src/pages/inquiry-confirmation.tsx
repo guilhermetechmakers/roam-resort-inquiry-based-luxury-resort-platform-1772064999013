@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useInquiryByIdOrReference } from '@/hooks/use-inquiries'
 import { formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'

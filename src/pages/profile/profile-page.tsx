@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Sidebar, profileSidebarLinks } from '@/components/layout/sidebar'
-import { useAuth } from '@/contexts/auth-context'
+import { Sidebar } from '@/components/layout/sidebar'
+import { profileSidebarLinks } from '@/components/layout/sidebar-links'
+import { useAuth } from '@/hooks/use-auth'
 import { useMyInquiries } from '@/hooks/use-inquiries'
 import {
   useProfile,

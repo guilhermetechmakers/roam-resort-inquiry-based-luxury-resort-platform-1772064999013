@@ -62,7 +62,7 @@ export function SEOEditor({
   useEffect(() => {
     const s = (slug ?? '').trim().toLowerCase()
     if (!s || !/^[a-z0-9-]+$/.test(s)) {
-      setSlugAvailability({ checking: false, available: null })
+      queueMicrotask(() => setSlugAvailability({ checking: false, available: null }))
       return
     }
 

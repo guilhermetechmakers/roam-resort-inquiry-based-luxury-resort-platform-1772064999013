@@ -6,7 +6,7 @@ import {
   InquiriesTimelinePanel,
   InquiryDetailModal,
 } from '@/components/profile'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useProfile } from '@/hooks/use-profile'
 import { useMyInquiries } from '@/hooks/use-inquiries'
 import type { Inquiry } from '@/types'

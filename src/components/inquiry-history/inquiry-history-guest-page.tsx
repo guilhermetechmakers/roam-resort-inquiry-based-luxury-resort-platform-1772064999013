@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAuth } from '@/contexts/auth-context'
+import { useAuth } from '@/hooks/use-auth'
 import { useGuestInquiries } from '@/hooks/use-guest-inquiries'
 import type { Inquiry } from '@/types'
 import {
