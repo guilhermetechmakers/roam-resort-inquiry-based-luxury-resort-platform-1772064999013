@@ -70,6 +70,24 @@ export type InquiryStatus =
   | 'confirmed'
   | 'cancelled'
 
+/** Contact preferences for inquiry (opt-in per channel) */
+export interface ContactPreferences {
+  email?: boolean
+  sms?: boolean
+  phone?: boolean
+}
+
+/** Attachment metadata for inquiry */
+export interface Attachment {
+  id: string
+  inquiry_id: string
+  file_url: string
+  mime_type: string
+  name: string
+  size: number
+  uploaded_at: string
+}
+
 export interface Inquiry {
   id: string
   reference: string
@@ -81,12 +99,18 @@ export interface Inquiry {
   check_out?: string
   guests_count?: number
   message?: string
-  attachments?: string[]
+  attachments?: string[] | Attachment[]
   status: InquiryStatus
   assigned_concierge_id?: string
   payment_link?: string
   created_at: string
   updated_at: string
+  /** Extended inquiry fields */
+  flexible_dates?: boolean
+  room_prefs?: string[]
+  budget_hint?: string
+  contact_preferences?: ContactPreferences
+  internal_notes?: string
 }
 
 export interface Activity {
