@@ -35,6 +35,8 @@ export default {
           foreground: 'rgb(var(--muted-foreground) / <alpha-value>)',
         },
         destructive: 'rgb(var(--destructive) / <alpha-value>)',
+        success: 'rgb(var(--success) / <alpha-value>)',
+        info: 'rgb(var(--info) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -87,7 +87,14 @@ export function AdminInquiryDetailPage() {
     enabled: !!inquiryId,
   })
 
-  const { data: reconciliations = [], isLoading: reconciliationsLoading } = useQuery({
+  const {
+    data: reconciliations = [],
+    isLoading: reconciliationsLoading,
+    isFetching: reconciliationsFetching,
+    isError: reconciliationsError,
+    error: reconciliationsErr,
+    refetch: refetchReconciliations,
+  } = useQuery({
     queryKey: ['admin-inquiry-reconciliations', inquiryId],
     queryFn: () => fetchInquiryReconciliations(inquiryId ?? ''),
     enabled: !!inquiryId,
@@ -398,6 +405,10 @@ export function AdminInquiryDetailPage() {
               <ReconciliationPanel
                 reconciliations={reconciliations ?? []}
                 isLoading={reconciliationsLoading}
+                onRefresh={async () => { await refetchReconciliations() }}
+                isRefreshing={reconciliationsFetching}
+                error={reconciliationsError ? (reconciliationsErr as Error) : null}
+                onRetry={() => refetchReconciliations()}
               />
 
               <ExportPanel
