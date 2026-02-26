@@ -48,10 +48,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/help"
+                  to="/about-help"
                   className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors"
                 >
-                  Help
+                  About & Help
                 </Link>
               </li>
             </ul>

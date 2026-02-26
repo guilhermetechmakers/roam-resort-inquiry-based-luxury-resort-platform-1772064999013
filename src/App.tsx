@@ -34,10 +34,10 @@ import { CheckoutPage } from '@/pages/checkout'
 import { CheckoutBridgePage } from '@/pages/checkout-bridge'
 import { CheckoutCompletePage } from '@/pages/checkout-complete'
 import { SettingsPage } from '@/pages/settings'
-import { StaticPage } from '@/pages/static-page'
 import { TermsOfServicePage } from '@/pages/terms-of-service'
 import { PrivacyPolicyPage } from '@/pages/privacy-policy'
 import { CookiePolicyPage } from '@/pages/cookie-policy'
+import { AboutHelpPage } from '@/pages/about-help'
 import { NotFoundPage } from '@/pages/not-found'
 import { ErrorPage } from '@/pages/error-page'
 
@@ -368,17 +368,26 @@ export default function App() {
               }
             />
             <Route
+              path="/about-help"
+              element={
+                <AppLayout transparentNav>
+                  <AboutHelpPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <AppLayout transparentNav>
+                  <AboutHelpPage />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/help"
               element={
-                <AppLayout>
-                  <StaticPage
-                    title="Help"
-                    content={
-                      <p className="text-muted-foreground">
-                        Help and FAQ content would go here. This is a placeholder.
-                      </p>
-                    }
-                  />
+                <AppLayout transparentNav>
+                  <AboutHelpPage />
                 </AppLayout>
               }
             />
