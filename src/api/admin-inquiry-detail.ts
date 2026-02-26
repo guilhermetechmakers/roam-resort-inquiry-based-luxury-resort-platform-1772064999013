@@ -249,14 +249,31 @@ export async function fetchInquiryPayments(
 
     if (error) return []
     const list = Array.isArray(data) ? data : []
-    return list.map((row: { id: string; inquiry_id: string; stripe_link_url?: string; amount: number; currency: string; status: string; created_at: string }) => ({
+    return list.map((row: {
+      id: string
+      inquiry_id: string
+      stripe_link_url?: string
+      stripe_link_id?: string
+      stripe_session_id?: string
+      amount: number
+      currency: string
+      status: string
+      created_at: string
+      expires_at?: string
+      reconciliation_notes?: string
+    }) => ({
       id: row.id,
       inquiryId: row.inquiry_id,
       stripeLinkUrl: row.stripe_link_url,
+      stripeLinkId: row.stripe_link_id,
+      stripeSessionId: row.stripe_session_id,
+      stripeCheckoutSessionId: row.stripe_session_id,
       amount: row.amount ?? 0,
       currency: row.currency ?? 'USD',
       status: (row.status ?? 'pending') as AdminInquiryPayment['status'],
       createdAt: row.created_at ?? '',
+      expiresAt: row.expires_at ?? undefined,
+      reconciliationNotes: row.reconciliation_notes ?? undefined,
     }))
   } catch {
     return []
@@ -276,32 +293,52 @@ export async function createStripePaymentLink(
       'Content-Type': 'application/json',
       Authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
     },
-    body: JSON.stringify({ inquiryId, ...payload }),
+    body: JSON.stringify({
+      inquiryId,
+      amount: payload.amount,
+      items: payload.items,
+      notes: payload.notes,
+      currency: payload.currency ?? 'usd',
+      useCheckoutSession: payload.useCheckoutSession ?? false,
+      expiresInDays: payload.expiresInDays,
+      accountId: payload.accountId,
+    }),
   })
 
   const json = (await res.json().catch(() => ({}))) as {
     paymentLinkUrl?: string
+    stripeLinkUrl?: string
+    stripeLinkId?: string
+    stripeCheckoutSessionId?: string
+    expiresAt?: string
     paymentId?: string
     error?: string
   }
 
-  if (!res.ok || !json.paymentLinkUrl) {
+  const paymentLinkUrl = json.paymentLinkUrl ?? json.stripeLinkUrl
+  if (!res.ok || !paymentLinkUrl) {
     throw new Error(json.error ?? 'Failed to create payment link')
   }
 
   const amount = payload.amount ?? 0
+  const currency = (payload.currency ?? 'usd').toUpperCase()
   let paymentId = json.paymentId ?? ''
 
   try {
+    const insertPayload: Record<string, unknown> = {
+      inquiry_id: inquiryId,
+      stripe_link_url: paymentLinkUrl,
+      amount,
+      currency,
+      status: 'link_created',
+    }
+    if (json.stripeLinkId) insertPayload.stripe_link_id = json.stripeLinkId
+    if (json.stripeCheckoutSessionId) insertPayload.stripe_session_id = json.stripeCheckoutSessionId
+    if (json.expiresAt) insertPayload.expires_at = json.expiresAt
+
     const { data: inserted } = await supabase
       .from('inquiry_payments')
-      .insert({
-        inquiry_id: inquiryId,
-        stripe_link_url: json.paymentLinkUrl,
-        amount,
-        currency: 'USD',
-        status: 'link_created',
-      })
+      .insert(insertPayload)
       .select('id')
       .single()
     if (inserted?.id) paymentId = inserted.id
@@ -312,13 +349,13 @@ export async function createStripePaymentLink(
   await supabase
     .from('inquiries')
     .update({
-      payment_link: json.paymentLinkUrl,
+      payment_link: paymentLinkUrl,
       updated_at: new Date().toISOString(),
     })
     .eq('id', inquiryId)
 
   return {
-    paymentLinkUrl: json.paymentLinkUrl,
+    paymentLinkUrl,
     paymentId,
   }
 }
@@ -326,19 +363,42 @@ export async function createStripePaymentLink(
 /** Mark payment as received (inquiry_payments table) */
 export async function markPaymentReceived(
   inquiryId: string,
-  paymentId: string
+  paymentId: string,
+  options?: { notes?: string; reconciliationStatus?: string }
 ): Promise<void> {
+  const updates: Record<string, unknown> = { status: 'paid', updated_at: new Date().toISOString() }
+  if (options?.notes?.trim()) {
+    updates.reconciliation_notes = options.notes.trim()
+  }
+
   const { error } = await supabase
     .from('inquiry_payments')
-    .update({ status: 'paid', updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', paymentId)
     .eq('inquiry_id', inquiryId)
 
   if (error) throw new Error(error.message ?? 'Failed to update payment')
+
+  if (options?.notes?.trim() || options?.reconciliationStatus) {
+    await createReconciliationRecord(inquiryId, paymentId, {
+      status: (options?.reconciliationStatus ?? 'paid') as 'pending' | 'paid' | 'confirmed' | 'reconciled',
+      notes: options?.notes?.trim(),
+    })
+  }
+
+  await supabase
+    .from('inquiries')
+    .update({ payment_state: 'paid', updated_at: new Date().toISOString() })
+    .eq('id', inquiryId)
 }
 
 /** Mark payment as received when payment is stored on inquiry (payment_link) - no inquiry_payments row */
-export async function markInquiryPaymentReceived(inquiryId: string): Promise<void> {
+export async function markInquiryPaymentReceived(
+  inquiryId: string,
+  options?: { notes?: string; reconciliationStatus?: string }
+): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { error } = await supabase
     .from('inquiries')
     .update({
@@ -348,6 +408,60 @@ export async function markInquiryPaymentReceived(inquiryId: string): Promise<voi
     .eq('id', inquiryId)
 
   if (error) throw new Error(error.message ?? 'Failed to update payment state')
+
+  if (options?.notes?.trim() || options?.reconciliationStatus) {
+    await createReconciliationRecord(inquiryId, undefined, {
+      status: (options?.reconciliationStatus ?? 'paid') as 'pending' | 'paid' | 'confirmed' | 'reconciled',
+      notes: options?.notes?.trim(),
+      reconciledBy: user?.id,
+    })
+  }
+}
+
+/** Create reconciliation record */
+async function createReconciliationRecord(
+  inquiryId: string,
+  _paymentId: string | undefined,
+  payload: { status: string; notes?: string; attachedFiles?: string[]; reconciledBy?: string }
+): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('inquiry_reconciliations').insert({
+      inquiry_id: inquiryId,
+      status: payload.status,
+      notes: payload.notes ?? null,
+      attached_files: payload.attachedFiles ?? [],
+      reconciled_at: new Date().toISOString(),
+      reconciled_by: payload.reconciledBy ?? user?.id ?? null,
+    })
+  } catch {
+    // Table may not exist
+  }
+}
+
+/** Fetch reconciliations for an inquiry */
+export async function fetchInquiryReconciliations(
+  inquiryId: string
+): Promise<Array<{ id: string; status: string; notes: string | null; reconciledAt: string | null; reconciledBy: string | null }>> {
+  try {
+    const { data, error } = await supabase
+      .from('inquiry_reconciliations')
+      .select('id, status, notes, reconciled_at, reconciled_by')
+      .eq('inquiry_id', inquiryId)
+      .order('reconciled_at', { ascending: false })
+
+    if (error) return []
+    const list = Array.isArray(data) ? data : []
+    return list.map((row: { id: string; status: string; notes: string | null; reconciled_at: string | null; reconciled_by: string | null }) => ({
+      id: row.id,
+      status: row.status,
+      notes: row.notes,
+      reconciledAt: row.reconciled_at,
+      reconciledBy: row.reconciled_by,
+    }))
+  } catch {
+    return []
+  }
 }
 
 /** Fetch activity log for an inquiry */

@@ -693,6 +693,46 @@ export function generateReconciliationsCsv(
   return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
 }
 
+/** Payment row for CSV export */
+export interface PaymentExportRow {
+  id: string
+  inquiryId: string
+  amount: number
+  currency: string
+  status: string
+  stripeLinkUrl?: string
+  createdAt: string
+  expiresAt?: string
+  reconciliationNotes?: string
+}
+
+/** Generate CSV string for payments */
+export function generatePaymentsCsv(payments: PaymentExportRow[]): string {
+  const headers = [
+    'ID',
+    'Inquiry ID',
+    'Amount',
+    'Currency',
+    'Status',
+    'Payment Link',
+    'Created',
+    'Expires',
+    'Reconciliation Notes',
+  ]
+  const rows = (payments ?? []).map((p) => [
+    escapeCsv(p.id),
+    escapeCsv(p.inquiryId),
+    String(p.amount ?? ''),
+    escapeCsv(p.currency ?? ''),
+    escapeCsv(p.status),
+    escapeCsv(p.stripeLinkUrl ?? ''),
+    escapeCsv(p.createdAt ?? ''),
+    escapeCsv(p.expiresAt ?? ''),
+    escapeCsv(p.reconciliationNotes ?? ''),
+  ])
+  return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+}
+
 function escapeCsv(value: unknown): string {
   if (value == null) return ''
   const s = String(value)

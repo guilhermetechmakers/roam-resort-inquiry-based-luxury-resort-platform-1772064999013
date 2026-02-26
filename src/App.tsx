@@ -41,6 +41,7 @@ import { ContactPage } from '@/pages/contact'
 import { CheckoutPage } from '@/pages/checkout'
 import { CheckoutBridgePage } from '@/pages/checkout-bridge'
 import { CheckoutCompletePage } from '@/pages/checkout-complete'
+import { PaymentSuccessPage } from '@/pages/payment-success'
 import { SettingsPage } from '@/pages/settings'
 import { TermsOfServicePage } from '@/pages/terms-of-service'
 import { PrivacyPolicyPage } from '@/pages/privacy-policy'
@@ -420,6 +421,22 @@ export default function App() {
               element={
                 <CheckoutLayout>
                   <CheckoutCompletePage />
+                </CheckoutLayout>
+              }
+            />
+            <Route
+              path="/payments/success"
+              element={
+                <CheckoutLayout>
+                  <PaymentSuccessPage />
+                </CheckoutLayout>
+              }
+            />
+            <Route
+              path="/payments/success"
+              element={
+                <CheckoutLayout>
+                  <PaymentSuccessPage />
                 </CheckoutLayout>
               }
             />

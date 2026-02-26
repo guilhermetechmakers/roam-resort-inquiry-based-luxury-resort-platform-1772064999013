@@ -10,6 +10,7 @@ import {
   StatusControl,
   AdminInternalNotesPanel,
   PaymentPanel,
+  ReconciliationPanel,
   ExportPanel,
 } from '@/components/admin-concierge'
 import { AdminInquiryTimeline } from '@/components/activity-timeline'
@@ -22,12 +23,13 @@ import {
   deleteInquiryInternalNote,
   fetchInquiryPayments,
   fetchInquiryActivityLog,
+  fetchInquiryReconciliations,
   createStripePaymentLink,
   markPaymentReceived,
   markInquiryPaymentReceived,
 } from '@/api/admin-inquiry-detail'
 import { createInternalNoteActivity, createActivity } from '@/api/activities'
-import { shapeInquiryToAdmin, generateInquiriesCsv, downloadCsv } from '@/api/admin'
+import { shapeInquiryToAdmin, generateInquiriesCsv, generatePaymentsCsv, downloadCsv } from '@/api/admin'
 import { formatDate } from '@/lib/utils'
 import type { InquiryStatusValue } from '@/types/admin'
 
@@ -81,6 +83,12 @@ export function AdminInquiryDetailPage() {
   const { data: activityLog = [] } = useQuery({
     queryKey: ['admin-inquiry-activity', inquiryId],
     queryFn: () => fetchInquiryActivityLog(inquiryId ?? ''),
+    enabled: !!inquiryId,
+  })
+
+  const { data: reconciliations = [], isLoading: reconciliationsLoading } = useQuery({
+    queryKey: ['admin-inquiry-reconciliations', inquiryId],
+    queryFn: () => fetchInquiryReconciliations(inquiryId ?? ''),
     enabled: !!inquiryId,
   })
 
@@ -207,14 +215,18 @@ export function AdminInquiryDetailPage() {
   )
 
   const handleMarkPaymentReceived = useCallback(
-    async (paymentId: string) => {
+    async (
+      paymentId: string,
+      options?: { notes?: string; reconciliationStatus?: 'pending' | 'paid' | 'confirmed' | 'reconciled' }
+    ) => {
       if (paymentId === 'inquiry-payment') {
-        await markInquiryPaymentReceived(inquiryId ?? '')
+        await markInquiryPaymentReceived(inquiryId ?? '', options)
         queryClient.invalidateQueries({ queryKey: ['admin-inquiry-detail', inquiryId] })
       } else {
-        await markPaymentReceived(inquiryId ?? '', paymentId)
+        await markPaymentReceived(inquiryId ?? '', paymentId, options)
       }
       queryClient.invalidateQueries({ queryKey: ['admin-inquiry-payments', inquiryId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-inquiry-reconciliations', inquiryId] })
       toast.success('Payment marked as received')
     },
     [inquiryId, queryClient]
@@ -227,6 +239,25 @@ export function AdminInquiryDetailPage() {
     downloadCsv(csv, `inquiry-${inquiry.reference ?? inquiry.id}-${new Date().toISOString().slice(0, 10)}.csv`)
     toast.success('CSV exported')
   }, [inquiry])
+
+  const handleExportPaymentsCsv = useCallback(() => {
+    if (!inquiryId || !inquiry) return
+    const list = payments ?? []
+    const rows = list.map((p) => ({
+      id: p.id,
+      inquiryId: p.inquiryId,
+      amount: p.amount,
+      currency: p.currency,
+      status: p.status,
+      stripeLinkUrl: p.stripeLinkUrl,
+      createdAt: p.createdAt,
+      expiresAt: p.expiresAt,
+      reconciliationNotes: p.reconciliationNotes,
+    }))
+    const csv = generatePaymentsCsv(rows)
+    downloadCsv(csv, `payments-${inquiry.reference ?? inquiryId}-${new Date().toISOString().slice(0, 10)}.csv`)
+    toast.success('Payments CSV exported')
+  }, [inquiry, inquiryId, payments])
 
   const handlePrint = useCallback(() => {
     window.print()
@@ -357,15 +388,21 @@ export function AdminInquiryDetailPage() {
                 onCreateStripeLink={handleCreateStripeLink}
                 onMarkReceived={
                   payments?.some((p) => p.status !== 'paid')
-                    ? (paymentId) => handleMarkPaymentReceived(paymentId)
+                    ? (paymentId, options) => handleMarkPaymentReceived(paymentId, options)
                     : undefined
                 }
                 isLoading={paymentsLoading}
               />
 
+              <ReconciliationPanel
+                reconciliations={reconciliations ?? []}
+                isLoading={reconciliationsLoading}
+              />
+
               <ExportPanel
                 inquiry={inquiry}
                 onExportCsv={handleExportCsv}
+                onExportPaymentsCsv={handleExportPaymentsCsv}
                 onPrint={handlePrint}
               />
             </div>

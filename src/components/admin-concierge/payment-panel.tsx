@@ -1,10 +1,25 @@
 import { useState } from 'react'
-import { Loader2, Copy, Check, CreditCard, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Copy, Check, CreditCard, Plus, Trash2, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { AdminInquiryPayment, StripeLinkPayload } from '@/types/admin'
 
@@ -15,10 +30,15 @@ interface LineItem {
   description?: string
 }
 
+export interface MarkReceivedOptions {
+  notes?: string
+  reconciliationStatus?: 'pending' | 'paid' | 'confirmed' | 'reconciled'
+}
+
 export interface PaymentPanelProps {
   payments: AdminInquiryPayment[]
   onCreateStripeLink: (payload: StripeLinkPayload) => Promise<{ paymentLinkUrl: string; paymentId: string }>
-  onMarkReceived?: (paymentId: string) => Promise<void>
+  onMarkReceived?: (paymentId: string, options?: MarkReceivedOptions) => Promise<void>
   isLoading?: boolean
   className?: string
 }
@@ -30,6 +50,21 @@ const DEFAULT_LINE_ITEM: LineItem = {
   description: '',
 }
 
+const CURRENCIES = [
+  { value: 'usd', label: 'USD' },
+  { value: 'eur', label: 'EUR' },
+  { value: 'gbp', label: 'GBP' },
+  { value: 'cad', label: 'CAD' },
+  { value: 'aud', label: 'AUD' },
+] as const
+
+const EXPIRATION_OPTIONS = [
+  { value: '0', label: 'No expiration' },
+  { value: '1', label: '1 day' },
+  { value: '7', label: '7 days' },
+  { value: '30', label: '30 days' },
+] as const
+
 export function PaymentPanel({
   payments,
   onCreateStripeLink,
@@ -40,9 +75,17 @@ export function PaymentPanel({
   const [amount, setAmount] = useState<string>('')
   const [items, setItems] = useState<LineItem[]>([{ ...DEFAULT_LINE_ITEM }])
   const [notes, setNotes] = useState('')
+  const [currency, setCurrency] = useState<string>('usd')
+  const [useCheckoutSession, setUseCheckoutSession] = useState(false)
+  const [expiresInDays, setExpiresInDays] = useState<number>(0)
   const [isCreating, setIsCreating] = useState(false)
   const [createdUrl, setCreatedUrl] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [markReceivedOpen, setMarkReceivedOpen] = useState(false)
+  const [markReceivedPaymentId, setMarkReceivedPaymentId] = useState<string | null>(null)
+  const [markReceivedNotes, setMarkReceivedNotes] = useState('')
+  const [markReceivedStatus, setMarkReceivedStatus] = useState<string>('paid')
+  const [isMarking, setIsMarking] = useState(false)
 
   const safePayments = (payments ?? []).slice()
   const latestPayment = safePayments[0] ?? null
@@ -84,11 +127,36 @@ export function PaymentPanel({
         amount: finalAmount,
         items: validItems.length > 0 ? validItems : [{ name: 'Deposit', quantity: 1, unitPrice: finalAmount, description: notes || undefined }] as StripeLinkPayload['items'],
         notes: notes.trim() || undefined,
+        currency,
+        useCheckoutSession,
+        expiresInDays: expiresInDays > 0 ? expiresInDays : undefined,
       }
       const { paymentLinkUrl } = await onCreateStripeLink(payload)
       setCreatedUrl(paymentLinkUrl)
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const openMarkReceived = (paymentId: string) => {
+    setMarkReceivedPaymentId(paymentId)
+    setMarkReceivedNotes('')
+    setMarkReceivedStatus('paid')
+    setMarkReceivedOpen(true)
+  }
+
+  const handleMarkReceived = async () => {
+    if (!markReceivedPaymentId || !onMarkReceived) return
+    setIsMarking(true)
+    try {
+      await onMarkReceived(markReceivedPaymentId, {
+        notes: markReceivedNotes.trim() || undefined,
+        reconciliationStatus: markReceivedStatus as MarkReceivedOptions['reconciliationStatus'],
+      })
+      setMarkReceivedOpen(false)
+      setMarkReceivedPaymentId(null)
+    } finally {
+      setIsMarking(false)
     }
   }
 
@@ -147,8 +215,10 @@ export function PaymentPanel({
                 {onMarkReceived && latestPayment.status !== 'paid' && (
                   <Button
                     size="sm"
-                    onClick={() => onMarkReceived(latestPayment.id)}
+                    className="bg-accent hover:bg-accent/90"
+                    onClick={() => openMarkReceived(latestPayment.id)}
                   >
+                    <FileCheck className="mr-1.5 h-4 w-4" />
                     Mark as received
                   </Button>
                 )}
@@ -160,8 +230,54 @@ export function PaymentPanel({
         <div className="space-y-4">
           <Label className="text-muted-foreground">Create payment link</Label>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="mt-1 bg-muted/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Expiration</Label>
+              <Select value={String(expiresInDays)} onValueChange={(v) => setExpiresInDays(parseInt(v, 10) || 0)}>
+                <SelectTrigger className="mt-1 bg-muted/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXPIRATION_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-3">
+            <input
+              type="checkbox"
+              id="use-checkout-session"
+              checked={useCheckoutSession}
+              onChange={(e) => setUseCheckoutSession(e.target.checked)}
+              className="h-4 w-4 rounded border-input accent-accent"
+            />
+            <Label htmlFor="use-checkout-session" className="text-sm cursor-pointer">
+              Use Checkout Session (hosted page) instead of Payment Link
+            </Label>
+          </div>
+
           <div>
-            <Label className="text-xs">Amount (USD)</Label>
+            <Label className="text-xs">Amount ({currency.toUpperCase()})</Label>
             <Input
               type="number"
               min={0}
@@ -286,6 +402,56 @@ export function PaymentPanel({
           <div className="h-16 animate-pulse rounded-lg bg-muted" />
         )}
       </CardContent>
+
+      <Dialog open={markReceivedOpen} onOpenChange={setMarkReceivedOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark payment as received</DialogTitle>
+            <DialogDescription>
+              Add optional reconciliation notes. This will update the payment status and create a reconciliation record.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="text-xs">Reconciliation status</Label>
+              <Select value={markReceivedStatus} onValueChange={setMarkReceivedStatus}>
+                <SelectTrigger className="mt-1 bg-muted/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="reconciled">Reconciled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Notes (optional)</Label>
+              <Textarea
+                placeholder="e.g. Bank transfer received, reference #12345"
+                rows={3}
+                value={markReceivedNotes}
+                onChange={(e) => setMarkReceivedNotes(e.target.value)}
+                className="mt-1 resize-none bg-muted/30"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMarkReceivedOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-accent hover:bg-accent/90"
+              onClick={handleMarkReceived}
+              disabled={isMarking}
+            >
+              {isMarking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileCheck className="mr-2 h-4 w-4" />}
+              Mark as received
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

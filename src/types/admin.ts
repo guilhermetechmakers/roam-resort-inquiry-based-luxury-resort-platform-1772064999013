@@ -44,6 +44,29 @@ export interface AdminReconciliation {
   status: ReconciliationStatusDisplay
   reconciledAt: string
   notes: string[]
+  attachedFiles?: string[]
+  reconciledBy?: string
+}
+
+export type ReconciliationStatusValue = 'pending' | 'paid' | 'confirmed' | 'reconciled'
+
+export interface ReconciliationCreatePayload {
+  status: ReconciliationStatusValue
+  notes?: string
+  attachedFiles?: string[]
+}
+
+export interface AdminReconciliationRecord {
+  id: string
+  inquiryId: string
+  paymentId?: string
+  status: ReconciliationStatusValue
+  notes?: string
+  attachedFiles: string[]
+  reconciledAt?: string
+  reconciledBy?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AdminDestination {
@@ -105,6 +128,10 @@ export interface StripeLinkPayload {
   amount: number
   items?: Array<{ name: string; quantity: number; unitPrice: number; description?: string }>
   notes?: string
+  currency?: string
+  useCheckoutSession?: boolean
+  expiresInDays?: number
+  accountId?: string
 }
 
 export interface AdminDashboardMetrics {
@@ -157,10 +184,15 @@ export interface AdminInquiryPayment {
   id: string
   inquiryId: string
   stripeLinkUrl?: string
+  stripeLinkId?: string
+  stripeSessionId?: string
+  stripeCheckoutSessionId?: string
   amount: number
+  expiresAt?: string
   currency: string
   status: 'pending' | 'link_created' | 'paid' | 'reconciled'
   createdAt: string
+  reconciliationNotes?: string
 }
 
 export interface StripeLinkItem {

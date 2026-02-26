@@ -67,16 +67,23 @@ Deno.serve(async (req) => {
     return typeof id === 'string' ? id : null
   }
 
-  const logPaymentEvent = async (inquiryId: string, evtType: string, stripeEventId: string, payload: unknown) => {
+  const logPaymentEvent = async (inquiryId: string, evtType: string, stripeEventId: string, payload: unknown): Promise<boolean> => {
     try {
-      await supabase.from('payment_event_log').insert({
+      const { data: existing } = await supabase
+        .from('payment_event_log')
+        .select('id')
+        .eq('stripe_event_id', stripeEventId)
+        .maybeSingle()
+      if (existing) return false
+      const { error } = await supabase.from('payment_event_log').insert({
         inquiry_id: inquiryId,
         event_type: evtType,
         stripe_event_id: stripeEventId,
         payload: payload ?? {},
       })
+      return !error
     } catch {
-      // Table may not exist; continue
+      return false
     }
   }
 
@@ -92,7 +99,13 @@ Deno.serve(async (req) => {
     return !error
   }
 
-  const markPaymentPaid = async (inquiryId: string, sessionId: string | null) => {
+  const markPaymentPaid = async (
+    inquiryId: string,
+    sessionId: string | null,
+    amountCents?: number,
+    currency?: string
+  ) => {
+    const now = new Date().toISOString()
     if (sessionId) {
       const { data: payments } = await supabase
         .from('inquiry_payments')
@@ -103,7 +116,7 @@ Deno.serve(async (req) => {
       if (list.length > 0 && list[0]?.id) {
         await supabase
           .from('inquiry_payments')
-          .update({ status: 'paid', updated_at: new Date().toISOString() })
+          .update({ status: 'paid', updated_at: now })
           .eq('id', list[0].id)
         return
       }
@@ -118,8 +131,16 @@ Deno.serve(async (req) => {
     if (latest?.id) {
       await supabase
         .from('inquiry_payments')
-        .update({ status: 'paid', updated_at: new Date().toISOString() })
+        .update({ status: 'paid', updated_at: now })
         .eq('id', latest.id)
+    } else if (amountCents != null && amountCents > 0) {
+      await supabase.from('inquiry_payments').insert({
+        inquiry_id: inquiryId,
+        stripe_session_id: sessionId,
+        amount: amountCents / 100,
+        currency: (currency ?? 'usd').toUpperCase(),
+        status: 'paid',
+      })
     }
   }
 
@@ -131,13 +152,20 @@ Deno.serve(async (req) => {
         const inquiryId = getInquiryId()
         const sessionId = getSessionId()
         if (!inquiryId) break
-        await logPaymentEvent(inquiryId, 'checkout.session.completed', stripeEventId, obj)
+        const isNew = await logPaymentEvent(inquiryId, 'checkout.session.completed', stripeEventId, obj)
+        if (!isNew) break
+        const amountTotal = Number((obj as { amount_total?: number }).amount_total) ?? 0
+        const currency = String((obj as { currency?: string }).currency ?? 'usd')
+        const paymentMethod = String((obj as { payment_method_types?: string[] }).payment_method_types?.[0] ?? 'card')
         await updateInquiryStatus(inquiryId, 'deposit_paid', 'paid')
-        await markPaymentPaid(inquiryId, sessionId)
+        await markPaymentPaid(inquiryId, sessionId, amountTotal, currency)
         await supabase
           .from('inquiries')
           .update({
-            payment_link: obj?.url ?? null,
+            payment_link: (obj as { url?: string })?.url ?? null,
+            stripe_checkout_session_id: sessionId,
+            payment_timestamp: new Date().toISOString(),
+            payment_method: paymentMethod,
             updated_at: new Date().toISOString(),
           })
           .eq('id', inquiryId)
@@ -147,15 +175,20 @@ Deno.serve(async (req) => {
         const meta = obj?.metadata as Record<string, string> | undefined
         const inquiryId = meta?.inquiry_id ?? getInquiryId()
         if (!inquiryId) break
-        await logPaymentEvent(inquiryId, 'payment_intent.succeeded', stripeEventId, obj)
-        await updateInquiryStatus(inquiryId, 'confirmed', 'paid')
+        const isNew = await logPaymentEvent(inquiryId, 'payment_intent.succeeded', stripeEventId, obj)
+        if (!isNew) break
+        const amount = Number((obj as { amount?: number }).amount) ?? 0
+        const currency = String((obj as { currency?: string }).currency ?? 'usd')
+        await updateInquiryStatus(inquiryId, 'deposit_paid', 'paid')
+        await markPaymentPaid(inquiryId, getSessionId(), amount, currency)
         break
       }
       case 'payment_intent.payment_failed':
       case 'checkout.session.async_payment_failed': {
         const inquiryId = getInquiryId()
         if (!inquiryId) break
-        await logPaymentEvent(inquiryId, eventType, stripeEventId, obj)
+        const isNew = await logPaymentEvent(inquiryId, eventType, stripeEventId, obj)
+        if (!isNew) break
         await updateInquiryStatus(inquiryId, 'contacted', 'pending')
         break
       }
