@@ -40,10 +40,37 @@ export async function apiFetch<T>(
   return data as T
 }
 
+async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const { supabase } = await import('@/lib/supabase')
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers: HeadersInit = {}
+  if (session?.access_token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${session.access_token}`
+  }
+  const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const err: ApiError = {
+      message: (data as { message?: string })?.message ?? res.statusText,
+      code: (data as { code?: string })?.code,
+      details: data,
+    }
+    throw err
+  }
+  return data as T
+}
+
 export const api = {
   get: <T>(path: string) => apiFetch<T>(path, { method: 'GET' }),
   post: <T>(path: string, body?: unknown) =>
     apiFetch<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
+  postForm: <T>(path: string, formData: FormData) => apiUpload<T>(path, formData),
   put: <T>(path: string, body?: unknown) =>
     apiFetch<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
   patch: <T>(path: string, body?: unknown) =>
