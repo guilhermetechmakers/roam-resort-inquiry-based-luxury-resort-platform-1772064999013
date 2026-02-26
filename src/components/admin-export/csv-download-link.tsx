@@ -14,6 +14,7 @@ export interface CSVDownloadLinkProps {
   onFetchUrl?: (exportId: string) => Promise<string | null>
   disabled?: boolean
   className?: string
+  ariaLabel?: string
 }
 
 export function CSVDownloadLink({
@@ -23,6 +24,7 @@ export function CSVDownloadLink({
   onFetchUrl,
   disabled = false,
   className,
+  ariaLabel = 'Download CSV',
 }: CSVDownloadLinkProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -76,7 +78,7 @@ export function CSVDownloadLink({
       onClick={handleClick}
       disabled={disabled || loading || (!url && !exportId)}
       aria-busy={loading}
-      aria-label="Download CSV"
+      aria-label={ariaLabel}
       className={cn('gap-1.5', className)}
     >
       {loading ? (

@@ -43,6 +43,7 @@ export interface ExportBuilderPanelProps {
     includeHeaders?: boolean
   }) => void
   isSubmitting?: boolean
+  headingId?: string
 }
 
 function getDefaultDateRange(): { from: string; to: string } {
@@ -58,6 +59,7 @@ function getDefaultDateRange(): { from: string; to: string } {
 export function ExportBuilderPanel({
   onSubmitExport,
   isSubmitting = false,
+  headingId,
 }: ExportBuilderPanelProps) {
   const [selectedDataset, setSelectedDataset] = useState<ExportDataset>('inquiries')
   const [selectedFields, setSelectedFields] = useState<string[]>([])
@@ -127,9 +129,9 @@ export function ExportBuilderPanel({
     new Date(dateFrom) <= new Date(dateTo)
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden rounded-xl border-border shadow-card">
       <CardHeader>
-        <h2 className="font-serif text-xl font-semibold">Export Builder</h2>
+        <h2 id={headingId} className="font-serif text-xl font-semibold text-foreground">Export Builder</h2>
         <p className="text-sm text-muted-foreground">
           Choose dataset, fields, date range, and filters. Click Export CSV to create a download.
         </p>

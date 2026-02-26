@@ -12,9 +12,9 @@ import type { ExportJob } from '@/types/export'
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   queued: { label: 'Queued', className: 'bg-muted text-muted-foreground' },
-  processing: { label: 'Processing', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
-  complete: { label: 'Complete', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  failed: { label: 'Failed', className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  processing: { label: 'Processing', className: 'bg-warning/20 text-warning' },
+  complete: { label: 'Complete', className: 'bg-success/20 text-success' },
+  failed: { label: 'Failed', className: 'bg-destructive/20 text-destructive' },
   cancelled: { label: 'Cancelled', className: 'bg-muted text-muted-foreground' },
 }
 
@@ -23,6 +23,7 @@ export interface ExportsListProps {
   isLoading?: boolean
   onRetry?: (exportId: string) => void
   onCancel?: (exportId: string) => void
+  onScrollToBuilder?: () => void
 }
 
 export function ExportsList({
@@ -30,6 +31,7 @@ export function ExportsList({
   isLoading = false,
   onRetry,
   onCancel,
+  onScrollToBuilder,
 }: ExportsListProps) {
   const safeExports = Array.isArray(exports) ? exports : []
 
@@ -48,16 +50,38 @@ export function ExportsList({
 
   if (safeExports.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-xl border-border shadow-card transition-shadow duration-200 hover:shadow-card-hover">
         <CardHeader>
-          <h2 className="font-serif text-xl font-semibold">Recent Exports</h2>
+          <h2 id="exports-list-heading" className="font-serif text-xl font-semibold text-foreground">Recent Exports</h2>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileSpreadsheet className="h-12 w-12 text-muted-foreground/50 mb-4" aria-hidden />
-            <p className="text-muted-foreground">No exports yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create an export above to see your download history here.
+          <div
+            className="flex flex-col items-center justify-center py-16 px-6 text-center"
+            role="status"
+            aria-live="polite"
+            aria-label="No exports yet. Create an export above to get started."
+          >
+            <div className="rounded-full bg-muted/50 p-4 mb-6">
+              <FileSpreadsheet className="h-14 w-14 text-muted-foreground" aria-hidden />
+            </div>
+            <p className="text-lg font-medium text-foreground">No exports yet</p>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+              Create an export above to see your download history here. Select fields, apply filters, and download when ready.
+            </p>
+            {onScrollToBuilder && (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={onScrollToBuilder}
+                className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90"
+                aria-label="Scroll to export builder to create your first export"
+              >
+                Create your first export
+              </Button>
+            )}
+            <p className="mt-4 text-xs text-muted-foreground">
+              Tip: Use date range presets for common periods like Last 30 days.
             </p>
           </div>
         </CardContent>
@@ -66,15 +90,20 @@ export function ExportsList({
   }
 
   return (
-    <Card>
+    <Card className="rounded-xl border-border shadow-card transition-shadow duration-200">
       <CardHeader>
-        <h2 className="font-serif text-xl font-semibold">Recent Exports</h2>
+        <h2 id="exports-list-heading" className="font-serif text-xl font-semibold text-foreground">Recent Exports</h2>
         <p className="text-sm text-muted-foreground">
           Export jobs with status and download links.
         </p>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div
+          className="space-y-4"
+          role="list"
+          aria-labelledby="exports-list-heading"
+          aria-label="List of export jobs"
+        >
           {safeExports.map((job) => (
             <ExportJobRow
               key={job.id}
@@ -109,8 +138,9 @@ function ExportJobRow({
 
   return (
     <div
+      role="listitem"
       className={cn(
-        'rounded-lg border border-border p-4 transition-colors hover:border-accent/30',
+        'rounded-lg border border-border p-4 transition-all duration-200 hover:border-accent/30 hover:shadow-sm',
         'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'
       )}
     >
@@ -152,6 +182,7 @@ function ExportJobRow({
             exportId={job.id}
             onFetchUrl={fetchDownloadUrl}
             filename={`export-${job.dataset}-${job.id.slice(0, 8)}.csv`}
+            ariaLabel={`Download CSV export ${job.dataset} (${job.id.slice(0, 8)})`}
           />
         )}
         {canRetry && onRetry && (
@@ -160,9 +191,10 @@ function ExportJobRow({
             variant="outline"
             size="sm"
             onClick={() => onRetry(job.id)}
-            aria-label="Retry export"
+            aria-label={`Retry failed export ${job.id.slice(0, 8)}`}
+            title="Retry this failed export"
           >
-            <RotateCw className="h-4 w-4" />
+            <RotateCw className="h-4 w-4" aria-hidden />
             Retry
           </Button>
         )}
@@ -172,9 +204,10 @@ function ExportJobRow({
             variant="ghost"
             size="sm"
             onClick={() => onCancel(job.id)}
-            aria-label="Cancel export"
+            aria-label={`Cancel export ${job.id.slice(0, 8)}`}
+            title="Cancel this export job"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden />
             Cancel
           </Button>
         )}
