@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { MapPin, Search, AlertCircle } from 'lucide-react'
 import { toUserMessage } from '@/lib/errors'
 import {
   AuthGateModal,
@@ -9,6 +10,7 @@ import {
 } from '@/components/inquiry'
 import type { AttachmentFile } from '@/components/inquiry'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/hooks/use-auth'
 import { useListingById, useListing } from '@/hooks/use-listings'
 import {
@@ -48,9 +50,21 @@ export function InquiryFormPage() {
   }>()
   const listingParam = routeListingId ?? slug ?? ''
   const isUuid = UUID_REGEX.test(listingParam)
-  const { data: listingById, isLoading: loadingById } = useListingById(isUuid ? listingParam : undefined)
-  const { data: listingBySlug, isLoading: loadingBySlug } = useListing(!isUuid ? listingParam : undefined)
+  const {
+    data: listingById,
+    isLoading: loadingById,
+    isError: errorById,
+    refetch: refetchById,
+  } = useListingById(isUuid ? listingParam : undefined)
+  const {
+    data: listingBySlug,
+    isLoading: loadingBySlug,
+    isError: errorBySlug,
+    refetch: refetchBySlug,
+  } = useListing(!isUuid ? listingParam : undefined)
   const listing = listingById ?? listingBySlug ?? null
+  const isError = isUuid ? errorById : errorBySlug
+  const refetch = isUuid ? refetchById : refetchBySlug
   const listingId = listing?.id ?? (isUuid ? listingParam : undefined)
   const draftListingId = listing?.id ?? (isUuid ? listingParam : null)
   const isLoading = listingParam ? (isUuid ? loadingById : loadingBySlug) : false
@@ -230,8 +244,18 @@ export function InquiryFormPage() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Skeleton className="h-12 w-48" />
+      <div
+        className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Loading authentication"
+      >
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-4 w-40" />
+        </div>
       </div>
     )
   }
@@ -247,15 +271,21 @@ export function InquiryFormPage() {
             Create an account or sign in to request a stay. Our concierge team will respond within
             24 hours.
           </p>
-          <div className="mt-6 flex gap-4">
+          <div className="mt-6 flex flex-wrap gap-4">
             <Button
               onClick={() => setShowAuthModal(true)}
               className="bg-accent text-accent-foreground hover:bg-accent/90"
+              aria-label="Open sign in modal to authenticate"
             >
               Sign In
             </Button>
-            <Link to={`/login?redirect=${encodeURIComponent(`/inquiry/${listingId ?? ''}`)}`}>
-              <Button variant="outline">Create Account</Button>
+            <Link
+              to={`/login?redirect=${encodeURIComponent(`/inquiry/${listingId ?? ''}`)}`}
+              aria-label="Navigate to create account page"
+            >
+              <Button variant="outline" aria-label="Create new account">
+                Create Account
+              </Button>
             </Link>
           </div>
         </div>
@@ -271,44 +301,162 @@ export function InquiryFormPage() {
 
   if (!listingId) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <p className="text-muted-foreground">No listing selected.</p>
-        <Link to="/destinations" className="mt-4">
-          <Button>Browse Destinations</Button>
-        </Link>
+      <div
+        className="mx-auto max-w-xl px-4 py-16 sm:py-24"
+        role="status"
+        aria-live="polite"
+      >
+        <Card className="overflow-hidden border-border bg-card shadow-card">
+          <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="rounded-full bg-secondary/50 p-4">
+              <MapPin className="h-12 w-12 text-muted-foreground" aria-hidden />
+            </div>
+            <h2 className="mt-6 font-serif text-2xl font-semibold text-foreground">
+              No destination selected
+            </h2>
+            <p className="mt-3 max-w-md text-muted-foreground">
+              To submit an inquiry, please choose a destination from our collection. Browse our
+              luxury properties and select one to get started.
+            </p>
+            <Link to="/destinations" className="mt-6">
+              <Button
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                aria-label="Browse all destinations to select one for inquiry"
+              >
+                <Search className="mr-2 h-4 w-4" aria-hidden />
+                Browse Destinations
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (isLoading && !listing) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <Skeleton className="h-64 rounded-xl" />
-        <Skeleton className="mt-8 h-96 rounded-xl" />
+      <div
+        className="mx-auto max-w-3xl px-4 py-12 sm:py-16"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Loading destination details"
+      >
+        <div className="space-y-10">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <Skeleton className="aspect-[21/9] w-full rounded-none" />
+            <div className="space-y-4 p-6 sm:p-8">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-full max-w-2xl" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-full max-w-xl" />
+            <div className="mt-8 space-y-6">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError && listingParam) {
+    return (
+      <div
+        className="mx-auto max-w-xl px-4 py-16 sm:py-24"
+        role="alert"
+        aria-live="assertive"
+      >
+        <Card className="overflow-hidden border-destructive/30 bg-card shadow-card">
+          <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="rounded-full bg-destructive/10 p-4">
+              <AlertCircle className="h-12 w-12 text-destructive" aria-hidden />
+            </div>
+            <h2 className="mt-6 font-serif text-2xl font-semibold text-foreground">
+              Something went wrong
+            </h2>
+            <p className="mt-3 max-w-md text-muted-foreground">
+              We couldn&apos;t load this destination. Please try again or browse our other
+              properties.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => refetch()}
+                aria-label="Retry loading destination"
+              >
+                Try Again
+              </Button>
+              <Link to="/destinations" aria-label="Browse all destinations">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  Browse Destinations
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (!listing) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center">
-        <p className="text-muted-foreground">Listing not found.</p>
-        <Link to="/destinations" className="mt-4">
-          <Button>Browse Destinations</Button>
-        </Link>
+      <div
+        className="mx-auto max-w-xl px-4 py-16 sm:py-24"
+        role="status"
+        aria-live="polite"
+      >
+        <Card className="overflow-hidden border-border bg-card shadow-card">
+          <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+            <div className="rounded-full bg-secondary/50 p-4">
+              <Search className="h-12 w-12 text-muted-foreground" aria-hidden />
+            </div>
+            <h2 className="mt-6 font-serif text-2xl font-semibold text-foreground">
+              Destination not found
+            </h2>
+            <p className="mt-3 max-w-md text-muted-foreground">
+              This destination may have been removed or the link might be incorrect. Browse our
+              available properties to find your perfect stay.
+            </p>
+            <Link to="/destinations" className="mt-6">
+              <Button
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                aria-label="Browse all destinations"
+              >
+                <Search className="mr-2 h-4 w-4" aria-hidden />
+                Browse Destinations
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <main
+      className="mx-auto max-w-3xl px-4 py-12 sm:py-16"
+      role="main"
+      aria-label="Inquiry form for destination"
+    >
       <div className="space-y-10">
         <div className="animate-fade-in-up">
           <DestinationHeaderCard destination={listing} />
         </div>
 
-        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <h2 className="font-serif text-2xl font-bold">Request a Stay</h2>
+        <section
+          className="animate-fade-in-up"
+          style={{ animationDelay: '0.1s' }}
+          aria-labelledby="inquiry-form-heading"
+        >
+          <h2 id="inquiry-form-heading" className="font-serif text-2xl font-bold text-foreground">
+            Request a Stay
+          </h2>
           <p className="mt-2 text-muted-foreground">
             Complete the form below. Our concierge team will respond within 24 hours.
           </p>
@@ -322,8 +470,8 @@ export function InquiryFormPage() {
             isSubmitting={createInquiry.isPending}
             className="mt-8"
           />
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }
