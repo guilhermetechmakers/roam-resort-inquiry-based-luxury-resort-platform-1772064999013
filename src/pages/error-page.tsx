@@ -3,7 +3,7 @@
  * Gracefully communicates server-side issues, offers retry, and reporting guidance.
  * Runtime-safe: no API calls; all data guarded with nullish checks.
  */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { ErrorLayoutWrapper } from '@/components/error-500'
 
@@ -13,10 +13,25 @@ interface LocationState {
   errorId?: string
 }
 
-/** Safe extraction of errorId from URL params or route state */
+/** Generate a unique error reference for support tracking */
+function generateErrorId(): string {
+  try {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let ref = 'RR-500-'
+    for (let i = 0; i < 8; i++) {
+      ref += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return ref
+  } catch {
+    return DEFAULT_ERROR_ID
+  }
+}
+
+/** Safe extraction of errorId from URL params, route state, or generated fallback */
 function useErrorId(): string {
   const [searchParams] = useSearchParams()
   const location = useLocation()
+  const generated = useMemo(() => generateErrorId(), [])
 
   const fromUrl = searchParams.get('errorId')
   const state = (location?.state ?? {}) as LocationState
@@ -25,7 +40,7 @@ function useErrorId(): string {
   const raw = fromUrl ?? fromState ?? null
   return typeof raw === 'string' && raw.trim().length > 0
     ? raw.trim()
-    : DEFAULT_ERROR_ID
+    : generated
 }
 
 export function ErrorPage() {
@@ -48,6 +63,7 @@ export function ErrorPage() {
       subtitle="Our team has been notified. Please try again, or reach out if the problem persists."
       errorId={errorId}
       onRetry={handleRetry}
+      supportEmail="support@roamresort.com"
       supportLink="/contact"
       showHomeLink
       isRetrying={isRetrying}
