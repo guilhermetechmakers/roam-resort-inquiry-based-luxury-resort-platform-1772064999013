@@ -37,7 +37,7 @@ export function Navbar({ transparent = false }: { transparent?: boolean }) {
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         overHero
-          ? 'bg-primary/90 backdrop-blur-sm border-b border-primary-foreground/10'
+          ? 'bg-primary border-b border-primary-foreground/20 shadow-md'
           : isScrolled && 'bg-background/95 backdrop-blur-sm border-b border-border shadow-sm'
       )}
     >

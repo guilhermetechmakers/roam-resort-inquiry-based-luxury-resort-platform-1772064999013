@@ -42,7 +42,7 @@ export function HeroSection({
   return (
     <section
       className={cn(
-        'relative min-h-[90vh] flex flex-col justify-end overflow-hidden',
+        'relative min-h-[90vh] flex flex-col justify-center overflow-hidden',
         className
       )}
       aria-label="Hero"
@@ -74,13 +74,13 @@ export function HeroSection({
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-32 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center animate-fade-in-up">
           <div
-            className="inline-flex items-center justify-center rounded-full bg-primary-foreground/10 p-4 mb-6"
+            className="inline-flex items-center justify-center rounded-full bg-primary-foreground/15 p-3 mb-6 ring-2 ring-primary-foreground/20"
             aria-hidden
           >
-            <Compass className="h-10 w-10 text-primary-foreground sm:h-12 sm:w-12" />
+            <Compass className="h-8 w-8 text-primary-foreground sm:h-9 sm:w-9" />
           </div>
           <h1 className="font-serif text-5xl font-bold tracking-tight text-primary-foreground sm:text-6xl lg:text-7xl">
             {title}

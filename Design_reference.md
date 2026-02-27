@@ -326,7 +326,7 @@ All dashboard pages should be nested inside the dashboard layout, not separate r
 
 ## User Design Requirements
 
-On the home page (http://localhost:5173/), the header text is white, making it difficult to read against the background. Change the header background color to a darker shade for better contrast. In the hero section, center the text and buttons, and add a small icon above the title to represent the logo. Additionally, in the featured destinations section, remove the bottom white section and place the view button over the image, similar to the title and subtitle placement.
+On the home page (http://localhost:5173/), the header text is white and becomes invisible against the background when at the top of the page. Change the header background to a darker color for better text visibility. Additionally, in the hero section, center the text and buttons, and add a small icon above the title to represent the logo. In the featured destinations section, remove the bottom white section and overlay the 'View' button on the image, similar to the title and subtitle placement.
 
 ## Implementation Notes
 

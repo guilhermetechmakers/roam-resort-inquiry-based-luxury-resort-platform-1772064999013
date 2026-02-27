@@ -28,7 +28,7 @@ function DestinationCardItem({ dest }: { dest: DestinationCard }) {
       <Link
         to={href}
         className={cn(
-          'block overflow-hidden rounded-xl border border-border bg-card shadow-card',
+          'block overflow-hidden rounded-xl border border-border shadow-card',
           'transition-all duration-300 hover:shadow-card-hover hover:scale-[1.02] hover:border-accent/60'
         )}
       >
@@ -39,8 +39,8 @@ function DestinationCardItem({ dest }: { dest: DestinationCard }) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent opacity-50" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-primary-foreground">
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/30 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-6 text-primary-foreground">
             <h3 className="font-serif text-xl font-semibold leading-tight sm:text-2xl">
               {dest.name}
             </h3>
@@ -49,9 +49,9 @@ function DestinationCardItem({ dest }: { dest: DestinationCard }) {
                 {dest.editorialSnippet}
               </p>
             )}
-            <span className="mt-4 inline-flex items-center text-primary-foreground font-medium transition-colors group-hover:text-accent">
+            <span className="mt-4 self-start inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/20 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all group-hover:bg-primary-foreground/30 group-hover:scale-105">
               View
-              <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </span>
           </div>
         </div>
