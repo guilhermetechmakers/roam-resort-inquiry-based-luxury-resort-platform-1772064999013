@@ -49,13 +49,11 @@ function DestinationCardItem({ dest }: { dest: DestinationCard }) {
                 {dest.editorialSnippet}
               </p>
             )}
+            <span className="mt-4 inline-flex items-center text-primary-foreground font-medium transition-colors group-hover:text-accent">
+              View
+              <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </span>
           </div>
-        </div>
-        <div className="p-4">
-          <span className="inline-flex items-center text-accent font-medium transition-colors group-hover:text-accent/90">
-            View
-            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </span>
         </div>
       </Link>
     </article>

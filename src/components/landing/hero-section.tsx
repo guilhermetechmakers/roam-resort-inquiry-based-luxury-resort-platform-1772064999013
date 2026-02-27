@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Compass } from 'lucide-react'
 import { InquiryGateLink } from './inquiry-gate-link'
 import { CTAButton } from './cta-button'
 import { cn } from '@/lib/utils'
@@ -75,14 +75,20 @@ export function HeroSection({
       />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-32 sm:px-6 lg:px-8">
-        <div className="max-w-2xl animate-fade-in-up">
+        <div className="mx-auto max-w-2xl text-center animate-fade-in-up">
+          <div
+            className="inline-flex items-center justify-center rounded-full bg-primary-foreground/10 p-4 mb-6"
+            aria-hidden
+          >
+            <Compass className="h-10 w-10 text-primary-foreground sm:h-12 sm:w-12" />
+          </div>
           <h1 className="font-serif text-5xl font-bold tracking-tight text-primary-foreground sm:text-6xl lg:text-7xl">
             {title}
           </h1>
-          <p className="mt-6 text-lg text-primary-foreground/90 max-w-xl">
+          <p className="mt-6 text-lg text-primary-foreground/90 max-w-xl mx-auto">
             {subtitle}
           </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
             {primaryCta && (
               <InquiryGateLink
                 destinationSlug={primaryCta.destinationSlug}

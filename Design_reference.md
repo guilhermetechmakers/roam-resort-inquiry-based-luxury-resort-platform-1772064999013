@@ -326,59 +326,7 @@ All dashboard pages should be nested inside the dashboard layout, not separate r
 
 ## User Design Requirements
 
-- Use the specified color palette (navy, sand beige, bronze-gold, soft white, charcoal).
-- Typography: Playfair Display (or similar) for headlines; Inter/Lato for UI text; maintain clear hierarchy.
-- Card design: 8–12px radius, subtle shadows, hover lift and bronze accent borders.
-- Navigation: Top navbar with transparent-to-solid transitions; minimal side navigation; keyboard-accessible menus.
-- Data Visualization: Minimal charts if used in dashboard; bronze-gold accents.
-- Interactive Elements: Bronze-gold buttons; soft beige secondary buttons; focused inputs with accent color rings.
-- Design Philosophy: Luxury editorial aesthetic, calm and welcoming admin experience, no clutter.
-
-Mandatory Coding Standards — Runtime Safety
-CRITICAL: Implement all code with runtime safety guards:
-1. Supabase-like results: const items = data ?? []
-2. Array methods guarded: (items ?? []).map(...) or Array.isArray(items) ? items.map(...) : []
-3. useState for arrays: const [items, setItems] = useState<Type[]>([])
-4. API response shapes: const list = Array.isArray(response?.data) ? response.data : []
-5. Optional chaining: obj?.property?.nested
-6. Destructuring with defaults: const { items = [], count = 0 } = response ?? {}
-
-Development Prompts for AI Tool
-- Generate a TypeScript React project scaffold with routes:
-  - /admin/inquiries
-  - /admin/inquiries/:id
-  - /admin/dashboard
-- Implement data models and API handlers on the backend per the schema, with strict input validation and authentication middleware.
-- Create reusable UI components:
-  - DataTable with pagination, server-side data fetching, and filter controls.
-  - MultiSelect/Chip filters for destinations and hosts.
-  - BulkActionBar with Export and Status Update actions.
-  - Timeline component for inquiry detail.
-  - NotesEditor for internal notes.
-  - StripeLinkButton to trigger Stripe link creation and display the URL.
-- Implement Admin CSV Export service to generate CSV from inquiries and reconciliation data; ensure streaming support and safe memory usage.
-- Implement AdminDashboardConcierge to fetch metrics and render recent inquiries with quick actions.
-- Implement AdminInquiryDetail with:
-  - Guest message timeline
-  - Status dropdown with allowed transitions
-  - Internal notes section
-  - Stripe payment link generation flow
-- Ensure all data rendering uses null-safe patterns, with fallbacks to empty arrays where appropriate.
-- Include unit and integration tests for critical flows:
-  - Filtering and searching in Admin Inquiry List
-  - Bulk export generation and content
-  - Status updates and notes posting
-  - Stripe link creation path
-- Ensure accessibility and keyboard navigation across all controls.
-- Wire up styling to match the Visual Style section: colors, typography, spacing, hover states, and card design.
-
-Notes and Caveats
-- The backend must be built to work with or without Supabase; if using Supabase-like responses, apply the runtime safety patterns as described.
-- All array manipulations must guard against null/undefined; never call .map/.filter/.reduce on potentially null values.
-- Default states in UI components must reflect array types (e.g., []), not null.
-- The final deliverable should be ready for deployment with minimal configuration and include a README with deployment steps, environment variables, and migration instructions.
-
-If you’d like, I can provide a ready-to-run boilerplate with TypeScript types, sample API handlers, and UI component scaffolds that already incorporate these runtime safety patterns.
+On the home page (http://localhost:5173/), the header text is white, making it difficult to read against the background. Change the header background color to a darker shade for better contrast. In the hero section, center the text and buttons, and add a small icon above the title to represent the logo. Additionally, in the featured destinations section, remove the bottom white section and place the view button over the image, similar to the title and subtitle placement.
 
 ## Implementation Notes
 
