@@ -23,6 +23,7 @@ export function ListingCard({ listing, onViewInquiries }: ListingCardProps) {
 
   const statusLabel = listing.status === 'live' ? 'Live' : 'Draft'
   const isLive = listing.status === 'live'
+  const isImported = !!listing.external_source
 
   return (
     <Card
@@ -45,6 +46,11 @@ export function ListingCard({ listing, onViewInquiries }: ListingCardProps) {
         >
           {statusLabel}
         </span>
+        {isImported && (
+          <span className="absolute left-3 top-3 rounded-full bg-blue-500/90 px-2.5 py-1 text-xs font-medium text-white capitalize">
+            {listing.external_source}
+          </span>
+        )}
       </div>
 
       <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
