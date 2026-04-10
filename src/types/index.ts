@@ -64,6 +64,12 @@ export interface Listing {
   created_at: string
   updated_at: string
   published_at?: string | null
+  /** Set when listing was imported from an external source (e.g. 'escapia') */
+  external_source?: string | null
+  /** The external system's unit/property identifier */
+  external_id?: string | null
+  /** Timestamp of the last external sync for this listing */
+  last_synced_at?: string | null
 }
 
 export type InquiryStatus =

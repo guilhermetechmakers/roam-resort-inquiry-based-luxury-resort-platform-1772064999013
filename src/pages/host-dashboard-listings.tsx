@@ -10,6 +10,7 @@ import {
   InquiriesSummary,
   ListingCard,
 } from '@/components/host-dashboard'
+import { EscapiaConnectPanel } from '@/components/integrations/EscapiaConnectPanel'
 import { useAuth } from '@/hooks/use-auth'
 import { useHostListings, useHostStats, useListingInquiries } from '@/hooks/use-host-dashboard'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -122,6 +123,8 @@ export function HostDashboardListingsPage() {
             className="mt-8"
           />
 
+          <EscapiaConnectPanel className="mt-6" />
+
           <div className="mt-8 space-y-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="relative flex-1 max-w-sm">
@@ -203,7 +206,7 @@ export function HostDashboardListingsPage() {
                   No listings yet
                 </h3>
                 <p className="mt-2 text-muted-foreground">
-                  Create your first editorial listing to get started.
+                  Create your first editorial listing, or connect your Escapia account above to import all your properties automatically.
                 </p>
                 <div className="mt-6">
                   <CreateListingButton />
